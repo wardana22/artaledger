@@ -1,0 +1,13 @@
+{
+  "entries": [
+    { "path": "skills/agentic-awesome-skills" },
+    { "path": "skills/context-knowledge-graph" },
+    { "path": "skills/seo-optimization" },
+    { "path": "skills/ui-ux-pro-max" },
+    { "path": "skills/code-quality-and-testing" },
+    { "path": "skills/database-schema-management" },
+    { "path": "skills/documentation-generator" },
+    { "path": "skills/ecc-agent-toolkit" },
+    { "path": "skills/graphify" }
+  ]
+}

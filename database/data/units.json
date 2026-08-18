@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "code": "KP",
+    "name": "Kantor Pusat",
+    "keywords": "KP, KANTOR PUSAT",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 2,
+    "code": "RST",
+    "name": "RS Tandun",
+    "keywords": "RST, TANDUN",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 3,
+    "code": "KU",
+    "name": "Klinik Utama",
+    "keywords": "KLINIK UTAMA, KU",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 4,
+    "code": "KPN",
+    "name": "FKTP Nusalima Pekanbaru",
+    "keywords": "FKTP NUSALIMA PEKANBARU, KPN",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 5,
+    "code": "LDA",
+    "name": "Lubuk Dalam",
+    "keywords": "LUBUK DALAM, LDA",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 6,
+    "code": "SGH",
+    "name": "Sei Galuh",
+    "keywords": "SEI GALUH, SGH",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 7,
+    "code": "SGO",
+    "name": "Sei Garo",
+    "keywords": "SEI GARO, SGO",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 8,
+    "code": "TRT",
+    "name": "Terantam",
+    "keywords": "TERANTAM, TRT",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 9,
+    "code": "KSK",
+    "name": "Kasikan",
+    "keywords": "KASIKAN, KSK",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 10,
+    "code": "SLI",
+    "name": "Sei Lindai",
+    "keywords": "SEI LINDAI, SLI",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  },
+  {
+    "id": 11,
+    "code": "SRO",
+    "name": "Sri Rokan",
+    "keywords": "SRI ROKAN, SRO",
+    "created_at": "4/8/2026 19:38:16",
+    "updated_at": "4/8/2026 19:38:16"
+  }
+]

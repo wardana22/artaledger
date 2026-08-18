@@ -1,0 +1,234 @@
+[
+  {
+    "id": 1,
+    "name": "Jurnal Koreksi",
+    "code": "JC",
+    "description": "Jurnal Koreksi",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 2,
+    "name": "Bank Masuk",
+    "code": "BM",
+    "description": "Bank Masuk",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 3,
+    "name": "Bank Keluar",
+    "code": "BK",
+    "description": "Bank Keluar",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 4,
+    "name": "Jurnal Kas",
+    "code": "JK",
+    "description": "Jurnal Kas",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 5,
+    "name": "Kas Keluar",
+    "code": "KK",
+    "description": "Kas Keluar",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 6,
+    "name": "Jurnal Gaji",
+    "code": "JGAJ",
+    "description": "Jurnal Gaji",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 7,
+    "name": "Jurnal Security",
+    "code": "JS",
+    "description": "Jurnal Security",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 8,
+    "name": "Jurnal Gaji Praktisi",
+    "code": "JGP",
+    "description": "Jurnal Gaji Praktisi",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 9,
+    "name": "Jurnal Hutang",
+    "code": "JH",
+    "description": "Jurnal Hutang",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 10,
+    "name": "Jurnal Pendapatan",
+    "code": "JREV",
+    "description": "Jurnal Pendapatan",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 11,
+    "name": "Jurnal Persediaan",
+    "code": "JINV",
+    "description": "Jurnal Persediaan",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 12,
+    "name": "Jurnal Penyusutan",
+    "code": "JDEP",
+    "description": "Jurnal Penyusutan",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 13,
+    "name": "Jurnal Gaji Karyawan Diperbantukan",
+    "code": "JGKD",
+    "description": "Jurnal Gaji Karyawan Diperbantukan",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 14,
+    "name": "Jurnal Listrik",
+    "code": "JLPTP",
+    "description": "Jurnal Listrik",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 15,
+    "name": "Jurnal Resep Luar",
+    "code": "JRL",
+    "description": "Jurnal Resep Luar",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 16,
+    "name": "Jurnal Koperasi Mitra Sejati",
+    "code": "JKMS",
+    "description": "Jurnal Koperasi Mitra Sejati",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 17,
+    "name": "Jurnal Cadangan Pajak",
+    "code": "JCP",
+    "description": "Jurnal Cadangan Pajak",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 18,
+    "name": "Jurnal Beban Imbalan Pasca Kerja",
+    "code": "JBIP",
+    "description": "Jurnal Beban Imbalan Pasca Kerja",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 19,
+    "name": "Jurnal Cadangan Bonus",
+    "code": "JCB",
+    "description": "Jurnal Cadangan Bonus",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 20,
+    "name": "Jurnal Beban Asuransi Purna Jabatan",
+    "code": "JBAP",
+    "description": "Jurnal Beban Asuransi Purna Jabatan",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 21,
+    "name": "Jurnal Tunjangan Hari Raya",
+    "code": "JTHR",
+    "description": "Jurnal Tunjangan Hari Raya",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 22,
+    "name": "Jurnal Lain-lain",
+    "code": "JLL",
+    "description": "Jurnal Lain-lain",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 23,
+    "name": "Jurnal Insentif Dokter Gigi",
+    "code": "JIDG",
+    "description": "Jurnal Insentif Dokter Gigi",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 24,
+    "name": "Jurnal Hak Guna Usaha",
+    "code": "JHGU",
+    "description": "Jurnal Hak Guna Usaha",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 25,
+    "name": "Jurnal Outsourcing",
+    "code": "JOCC",
+    "description": "Jurnal Outsourcing",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 26,
+    "name": "Jurnal Cadangan Aktuaria",
+    "code": "JCAK",
+    "description": "Jurnal Cadangan Aktuaria",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 27,
+    "name": "Jurnal Cadangan Audit",
+    "code": "JCAU",
+    "description": "Jurnal Cadangan Audit",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 28,
+    "name": "Jurnal Penutup",
+    "code": "CLS",
+    "description": "Closing Journal",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  },
+  {
+    "id": 29,
+    "name": "Jurnal Penyesuaian",
+    "code": "JPEN",
+    "description": "Adjustment Akhir Periode",
+    "created_at": "4/8/2026 19:38:25",
+    "updated_at": "4/8/2026 19:38:25"
+  }
+]
