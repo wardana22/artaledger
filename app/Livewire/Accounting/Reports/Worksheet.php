@@ -50,7 +50,7 @@ class Worksheet extends Component
                 'id' => $acc->id,
                 'parent_id' => $acc->parent_id,
                 'level' => $acc->level ?? 1,
-                'opening_balance' => (float) $acc->opening_balance,
+                'opening_balance' => 0.0, // Opening balances are posted in journal_lines
                 'debit_mutation' => 0.0,
                 'credit_mutation' => 0.0,
                 'adj_debit' => 0.0,
@@ -62,10 +62,40 @@ class Worksheet extends Component
             }
         }
 
-        // 2. Fetch General Mutations (posted, non-adjustment entries) grouped by account_id
+        // 1b. Fetch Opening Balances from Journal Lines prior to startDate or entry_type = opening_balance
+        $opResults = JournalLine::whereHas('journalEntry', function ($q) {
+            $q->where('status', 'posted')
+                ->where(function ($query) {
+                    $query->where('entry_type', 'opening_balance')
+                        ->orWhere('entry_date', '<', $this->startDate);
+                });
+        })
+            ->when($this->unitFilter !== 'all', function ($q) {
+                $q->where('unit_id', $this->unitFilter);
+            })
+            ->select('account_id')
+            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+            ->groupBy('account_id')
+            ->get();
+
+        foreach ($opResults as $res) {
+            if (isset($accountData[$res->account_id])) {
+                $acc = $accountData[$res->account_id]['account'];
+                $d = (float) $res->total_debit;
+                $c = (float) $res->total_credit;
+                if ($acc->normal_balance === 'debit') {
+                    $accountData[$res->account_id]['opening_balance'] = $d - $c;
+                } else {
+                    $accountData[$res->account_id]['opening_balance'] = $c - $d;
+                }
+            }
+        }
+
+        // 2. Fetch General Mutations (posted, non-opening, non-adjustment entries)
         $genQuery = JournalLine::whereHas('journalEntry', function ($q) {
             $q->where('status', 'posted')
                 ->where('entry_type', '!=', 'adjustment')
+                ->where('entry_type', '!=', 'opening_balance')
                 ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
         });
 
@@ -85,7 +115,7 @@ class Worksheet extends Component
             }
         }
 
-        // 3. Fetch Adjustment Mutations (posted, entry_type = adjustment) grouped by account_id
+        // 3. Fetch Adjustment Mutations (posted, entry_type = adjustment)
         $adjQuery = JournalLine::whereHas('journalEntry', function ($q) {
             $q->where('status', 'posted')
                 ->where('entry_type', 'adjustment')
@@ -123,7 +153,7 @@ class Worksheet extends Component
             }
         }
 
-        // 5. Calculate 10-column values for each account
+        // 5. Calculate 10-column values for each account & accumulate grand totals from Level 1 Categories
         $totTbDebit = 0.0;
         $totTbCredit = 0.0;
         $totAdjDebit = 0.0;
@@ -178,8 +208,8 @@ class Worksheet extends Component
             $item['bs_credit'] = $bsCredit;
             $item['has_activity'] = ($opBal != 0 || $debMut != 0 || $credMut != 0 || $adjDeb != 0 || $adjCred != 0 || $tbBal != 0 || $atbBal != 0);
 
-            // Accumulate grand totals ONLY from posting (leaf) accounts to avoid double counting
-            if (! $acc->is_group) {
+            // Accumulate grand totals ONLY from Level 1 (Top Level Group) categories to equal the report totals
+            if ($item['level'] === 1) {
                 $totTbDebit += $tbDebit;
                 $totTbCredit += $tbCredit;
                 $totAdjDebit += $adjDeb;
