@@ -106,7 +106,7 @@ class ExcelImportService
                     $rawDebit = $this->resolveCellValue($row['H'] ?? null, $sheet, 'H', $rowIndex);
                     $rawCredit = $this->resolveCellValue($row['I'] ?? null, $sheet, 'I', $rowIndex);
                 } else {
-                    // Raw Template Column Mapping: M=Tanggal, N=No.Bukti, O=Keterangan, Q=Parent, S=Sub, U=Debit, T=Kredit
+                    // Raw Template Column Mapping: M=Tanggal, N=No.Bukti, O=Keterangan, Q=Parent, S=Sub, T=Debit, U=Kredit
                     if ($this->isEmptyColumnsNtoU($row)) {
                         continue;
                     }
@@ -123,8 +123,8 @@ class ExcelImportService
                     // Prioritize S (Sub Akun), fallback to Q (Akun Induk)
                     $rawAccountCode = ! empty($subAccount) ? $subAccount : $parentAccount;
 
-                    $rawDebit = $this->resolveCellValue($row['U'] ?? null, $sheet, 'U', $rowIndex);
-                    $rawCredit = $this->resolveCellValue($row['T'] ?? null, $sheet, 'T', $rowIndex);
+                    $rawDebit = $this->resolveCellValue($row['T'] ?? null, $sheet, 'T', $rowIndex);
+                    $rawCredit = $this->resolveCellValue($row['U'] ?? null, $sheet, 'U', $rowIndex);
                 }
 
                 // Clean trailing '.0' suffix
