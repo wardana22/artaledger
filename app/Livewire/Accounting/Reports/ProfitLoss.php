@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Models\Account;
 use App\Models\JournalLine;
+use App\Models\Unit;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,6 +16,8 @@ class ProfitLoss extends Component
     public string $startDate = '';
 
     public string $endDate = '';
+
+    public string $unitFilter = 'all';
 
     public function mount(): void
     {
@@ -42,13 +45,17 @@ class ProfitLoss extends Component
         $totalRevenue = 0.0;
 
         foreach ($revenueAccounts as $acc) {
-            $mutations = JournalLine::where('account_id', $acc->id)
+            $mutQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                })
-                ->selectRaw('SUM(credit - debit) as amount')
-                ->value('amount') ?? 0;
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $mutations = $mutQuery->selectRaw('SUM(credit - debit) as amount')->value('amount') ?? 0;
 
             $amount = (float) $mutations + (float) $acc->opening_balance;
             if ($amount != 0) {
@@ -61,13 +68,17 @@ class ProfitLoss extends Component
         $totalExpense = 0.0;
 
         foreach ($expenseAccounts as $acc) {
-            $mutations = JournalLine::where('account_id', $acc->id)
+            $mutQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                })
-                ->selectRaw('SUM(debit - credit) as amount')
-                ->value('amount') ?? 0;
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $mutations = $mutQuery->selectRaw('SUM(debit - credit) as amount')->value('amount') ?? 0;
 
             $amount = (float) $mutations + (float) $acc->opening_balance;
             if ($amount != 0) {
@@ -77,6 +88,7 @@ class ProfitLoss extends Component
         }
 
         $netProfit = $totalRevenue - $totalExpense;
+        $units = Unit::all();
 
         return view('livewire.accounting.reports.profit-loss', [
             'revenueRows' => $revenueRows,
@@ -84,6 +96,7 @@ class ProfitLoss extends Component
             'expenseRows' => $expenseRows,
             'totalExpense' => $totalExpense,
             'netProfit' => $netProfit,
+            'units' => $units,
         ]);
     }
 }

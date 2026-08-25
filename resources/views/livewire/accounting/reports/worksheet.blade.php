@@ -16,7 +16,17 @@
     </div>
 
     <!-- FILTER BAR -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
+        <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Unit Perusahaan</label>
+            <select wire:model.live="unitFilter" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500 dark:text-slate-100">
+                <option value="all">🌐 Konsolidasi (Seluruh 11 Unit)</option>
+                @foreach ($units as $unit)
+                    <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
         <div>
             <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Dari Tanggal</label>
             <input wire:model.live="startDate" type="date" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-slate-100" />

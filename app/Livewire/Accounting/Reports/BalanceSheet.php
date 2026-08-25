@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Models\Account;
 use App\Models\JournalLine;
+use App\Models\Unit;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,6 +14,8 @@ use Livewire\Component;
 class BalanceSheet extends Component
 {
     public string $asOfDate = '';
+
+    public string $unitFilter = 'all';
 
     public function mount(): void
     {
@@ -27,12 +30,16 @@ class BalanceSheet extends Component
         $totalAssets = 0.0;
 
         foreach ($assetAccounts as $acc) {
-            $mutations = JournalLine::where('account_id', $acc->id)
+            $mutQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate);
-                })
-                ->selectRaw('SUM(debit - credit) as amount')
-                ->value('amount') ?? 0;
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $mutations = $mutQuery->selectRaw('SUM(debit - credit) as amount')->value('amount') ?? 0;
 
             $amount = (float) $mutations + (float) $acc->opening_balance;
             if ($amount != 0) {
@@ -47,12 +54,16 @@ class BalanceSheet extends Component
         $totalLiabilities = 0.0;
 
         foreach ($liabilityAccounts as $acc) {
-            $mutations = JournalLine::where('account_id', $acc->id)
+            $mutQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate);
-                })
-                ->selectRaw('SUM(credit - debit) as amount')
-                ->value('amount') ?? 0;
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $mutations = $mutQuery->selectRaw('SUM(credit - debit) as amount')->value('amount') ?? 0;
 
             $amount = (float) $mutations + (float) $acc->opening_balance;
             if ($amount != 0) {
@@ -67,12 +78,16 @@ class BalanceSheet extends Component
         $totalEquity = 0.0;
 
         foreach ($equityAccounts as $acc) {
-            $mutations = JournalLine::where('account_id', $acc->id)
+            $mutQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate);
-                })
-                ->selectRaw('SUM(credit - debit) as amount')
-                ->value('amount') ?? 0;
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $mutations = $mutQuery->selectRaw('SUM(credit - debit) as amount')->value('amount') ?? 0;
 
             $amount = (float) $mutations + (float) $acc->opening_balance;
             if ($amount != 0) {
@@ -82,21 +97,30 @@ class BalanceSheet extends Component
         }
 
         // Add Net Profit to Equity
-        $revenue = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'credit'))
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate))
-            ->selectRaw('SUM(credit - debit) as total')
-            ->value('total') ?? 0;
+        $revQuery = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'credit'))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate));
 
-        $expenses = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'debit'))
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate))
-            ->selectRaw('SUM(debit - credit) as total')
-            ->value('total') ?? 0;
+        if ($this->unitFilter !== 'all') {
+            $revQuery->where('unit_id', $this->unitFilter);
+        }
+
+        $revenue = $revQuery->selectRaw('SUM(credit - debit) as total')->value('total') ?? 0;
+
+        $expQuery = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'debit'))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate));
+
+        if ($this->unitFilter !== 'all') {
+            $expQuery->where('unit_id', $this->unitFilter);
+        }
+
+        $expenses = $expQuery->selectRaw('SUM(debit - credit) as total')->value('total') ?? 0;
 
         $currentNetProfit = (float) $revenue - (float) $expenses;
         $totalEquity += $currentNetProfit;
 
         $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity;
         $isBalanced = abs($totalAssets - $totalLiabilitiesAndEquity) < 0.01;
+        $units = Unit::all();
 
         return view('livewire.accounting.reports.balance-sheet', [
             'assetRows' => $assetRows,
@@ -108,6 +132,7 @@ class BalanceSheet extends Component
             'currentNetProfit' => $currentNetProfit,
             'totalLiabilitiesAndEquity' => $totalLiabilitiesAndEquity,
             'isBalanced' => $isBalanced,
+            'units' => $units,
         ]);
     }
 }
