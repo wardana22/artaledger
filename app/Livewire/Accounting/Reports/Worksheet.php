@@ -212,7 +212,9 @@ class Worksheet extends Component
             $item['bs_credit'] = $bsCredit;
             $item['has_activity'] = ($opBal != 0 || $debMut != 0 || $credMut != 0 || $adjDeb != 0 || $adjCred != 0 || $tbBal != 0 || $atbBal != 0);
 
-            // Accumulate grand totals from Level 1 Category Accounts to match standard Excel Worksheet report
+            $hasChildren = ($childCounts[$id] ?? 0) > 0;
+
+            // Accumulate Trial Balance grand totals from Level 1 Categories
             if ($item['level'] === 1) {
                 $totTbDebit += $tbDebit;
                 $totTbCredit += $tbCredit;
@@ -220,6 +222,10 @@ class Worksheet extends Component
                 $totAdjCredit += $adjCred;
                 $totAtbDebit += $atbDebit;
                 $totAtbCredit += $atbCredit;
+            }
+
+            // Accumulate Laba Rugi & Neraca grand totals from Leaf Posting Accounts to match Excel totals (8.579.534.113,29)
+            if (! $hasChildren) {
                 $totIsDebit += $isDebit;
                 $totIsCredit += $isCredit;
                 $totBsDebit += $bsDebit;

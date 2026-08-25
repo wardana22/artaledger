@@ -138,8 +138,8 @@ class ExcelImportService
                     $rawAccountCode = '';
                 }
 
-                $debit = (float) abs((float) str_replace(',', '.', (string) ($rawDebit ?? 0)));
-                $credit = (float) abs((float) str_replace(',', '.', (string) ($rawCredit ?? 0)));
+                $debit = (float) str_replace(',', '.', (string) ($rawDebit ?? 0));
+                $credit = (float) str_replace(',', '.', (string) ($rawCredit ?? 0));
 
                 // Rule: Abaikan baris jika nilai Debit dan Kredit keduanya 0 / kosong
                 if ($debit == 0 && $credit == 0) {
