@@ -19,17 +19,109 @@ class Worksheet extends Component
 
     public string $unitFilter = 'all';
 
+    public array $expandedAccountIds = [];
+
     public function mount(): void
     {
         $this->startDate = date('Y-01-01');
         $this->endDate = date('Y-12-31');
     }
 
+    public function toggleExpand(int $accountId): void
+    {
+        if (in_array($accountId, $this->expandedAccountIds)) {
+            $this->expandedAccountIds = array_values(array_diff($this->expandedAccountIds, [$accountId]));
+        } else {
+            $this->expandedAccountIds[] = $accountId;
+        }
+    }
+
     public function render()
     {
         $accounts = Account::orderBy('code', 'asc')->get();
 
-        $rows = [];
+        // 1. Build calculation map for each account
+        $accountData = [];
+        $childCounts = [];
+
+        foreach ($accounts as $acc) {
+            $accountData[$acc->id] = [
+                'account' => $acc,
+                'id' => $acc->id,
+                'parent_id' => $acc->parent_id,
+                'level' => $acc->level ?? 1,
+                'opening_balance' => (float) $acc->opening_balance,
+                'debit_mutation' => 0.0,
+                'credit_mutation' => 0.0,
+                'adj_debit' => 0.0,
+                'adj_credit' => 0.0,
+            ];
+
+            if ($acc->parent_id) {
+                $childCounts[$acc->parent_id] = ($childCounts[$acc->parent_id] ?? 0) + 1;
+            }
+        }
+
+        // 2. Fetch General Mutations (posted, non-adjustment entries) grouped by account_id
+        $genQuery = JournalLine::whereHas('journalEntry', function ($q) {
+            $q->where('status', 'posted')
+                ->where('entry_type', '!=', 'adjustment')
+                ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
+        });
+
+        if ($this->unitFilter !== 'all') {
+            $genQuery->where('unit_id', $this->unitFilter);
+        }
+
+        $genResults = $genQuery->select('account_id')
+            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+            ->groupBy('account_id')
+            ->get();
+
+        foreach ($genResults as $res) {
+            if (isset($accountData[$res->account_id])) {
+                $accountData[$res->account_id]['debit_mutation'] = (float) $res->total_debit;
+                $accountData[$res->account_id]['credit_mutation'] = (float) $res->total_credit;
+            }
+        }
+
+        // 3. Fetch Adjustment Mutations (posted, entry_type = adjustment) grouped by account_id
+        $adjQuery = JournalLine::whereHas('journalEntry', function ($q) {
+            $q->where('status', 'posted')
+                ->where('entry_type', 'adjustment')
+                ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
+        });
+
+        if ($this->unitFilter !== 'all') {
+            $adjQuery->where('unit_id', $this->unitFilter);
+        }
+
+        $adjResults = $adjQuery->select('account_id')
+            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+            ->groupBy('account_id')
+            ->get();
+
+        foreach ($adjResults as $res) {
+            if (isset($accountData[$res->account_id])) {
+                $accountData[$res->account_id]['adj_debit'] = (float) $res->total_debit;
+                $accountData[$res->account_id]['adj_credit'] = (float) $res->total_credit;
+            }
+        }
+
+        // 4. Hierarchical Rollup (Bottom-Up Accumulation from leaf to parent levels)
+        $sortedByLevelDesc = collect($accountData)->sortByDesc('level');
+        foreach ($sortedByLevelDesc as $item) {
+            if ($item['parent_id'] && isset($accountData[$item['parent_id']])) {
+                $pId = $item['parent_id'];
+                $accountData[$pId]['opening_balance'] += $item['opening_balance'];
+                $accountData[$pId]['debit_mutation'] += $item['debit_mutation'];
+                $accountData[$pId]['credit_mutation'] += $item['credit_mutation'];
+                $accountData[$pId]['adj_debit'] += $item['adj_debit'];
+                $accountData[$pId]['adj_credit'] += $item['adj_credit'];
+            }
+        }
+
+        // 5. Calculate 10-column values for each account
         $totTbDebit = 0.0;
         $totTbCredit = 0.0;
         $totAdjDebit = 0.0;
@@ -41,108 +133,93 @@ class Worksheet extends Component
         $totBsDebit = 0.0;
         $totBsCredit = 0.0;
 
-        foreach ($accounts as $acc) {
-            $openingBalance = (float) $acc->opening_balance;
+        foreach ($accountData as $id => &$item) {
+            $acc = $item['account'];
+            $opBal = $item['opening_balance'];
+            $debMut = $item['debit_mutation'];
+            $credMut = $item['credit_mutation'];
+            $adjDeb = $item['adj_debit'];
+            $adjCred = $item['adj_credit'];
 
-            // General Mutations (Non-adjustment entries)
-            $genQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) {
-                    $q->where('status', 'posted')
-                        ->where('entry_type', '!=', 'adjustment')
-                        ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                });
-
-            if ($this->unitFilter !== 'all') {
-                $genQuery->where('unit_id', $this->unitFilter);
-            }
-
-            $generalMutations = $genQuery->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
-
-            $debitMutation = (float) ($generalMutations->total_debit ?? 0);
-            $creditMutation = (float) ($generalMutations->total_credit ?? 0);
-
-            // Adjustment Mutations (entry_type = adjustment)
-            $adjQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) {
-                    $q->where('status', 'posted')
-                        ->where('entry_type', 'adjustment')
-                        ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                });
-
-            if ($this->unitFilter !== 'all') {
-                $adjQuery->where('unit_id', $this->unitFilter);
-            }
-
-            $adjMutations = $adjQuery->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
-
-            $adjDebit = (float) ($adjMutations->total_debit ?? 0);
-            $adjCredit = (float) ($adjMutations->total_credit ?? 0);
-
-            // 1. Trial Balance (Neraca Saldo Sebelum Penyesuaian)
             if ($acc->normal_balance === 'debit') {
-                $tbBal = $openingBalance + ($debitMutation - $creditMutation);
-                $tbDebit = $tbBal;
-                $tbCredit = 0.0;
+                $tbBal = $opBal + ($debMut - $credMut);
+                $tbDebit = $tbBal > 0 ? $tbBal : 0.0;
+                $tbCredit = $tbBal < 0 ? abs($tbBal) : 0.0;
+
+                $atbBal = $tbBal + ($adjDeb - $adjCred);
+                $atbDebit = $atbBal > 0 ? $atbBal : 0.0;
+                $atbCredit = $atbBal < 0 ? abs($atbBal) : 0.0;
             } else {
-                $tbBal = $openingBalance + ($creditMutation - $debitMutation);
-                $tbCredit = $tbBal;
-                $tbDebit = 0.0;
+                $tbBal = $opBal + ($credMut - $debMut);
+                $tbCredit = $tbBal > 0 ? $tbBal : 0.0;
+                $tbDebit = $tbBal < 0 ? abs($tbBal) : 0.0;
+
+                $atbBal = $tbBal + ($adjCred - $adjDeb);
+                $atbCredit = $atbBal > 0 ? $atbBal : 0.0;
+                $atbDebit = $atbBal < 0 ? abs($atbBal) : 0.0;
             }
 
-            // Skip zero rows
-            if ($openingBalance == 0 && $debitMutation == 0 && $creditMutation == 0 && $tbBal == 0 && $adjDebit == 0 && $adjCredit == 0) {
+            $isDebit = $acc->report_type === 'laba_rugi' ? $atbDebit : 0.0;
+            $isCredit = $acc->report_type === 'laba_rugi' ? $atbCredit : 0.0;
+            $bsDebit = $acc->report_type !== 'laba_rugi' ? $atbDebit : 0.0;
+            $bsCredit = $acc->report_type !== 'laba_rugi' ? $atbCredit : 0.0;
+
+            $item['tb_debit'] = $tbDebit;
+            $item['tb_credit'] = $tbCredit;
+            $item['adj_debit'] = $adjDeb;
+            $item['adj_credit'] = $adjCred;
+            $item['atb_debit'] = $atbDebit;
+            $item['atb_credit'] = $atbCredit;
+            $item['is_debit'] = $isDebit;
+            $item['is_credit'] = $isCredit;
+            $item['bs_debit'] = $bsDebit;
+            $item['bs_credit'] = $bsCredit;
+            $item['has_activity'] = ($opBal != 0 || $debMut != 0 || $credMut != 0 || $adjDeb != 0 || $adjCred != 0 || $tbBal != 0 || $atbBal != 0);
+
+            // Accumulate grand totals ONLY from posting (leaf) accounts to avoid double counting
+            if (! $acc->is_group) {
+                $totTbDebit += $tbDebit;
+                $totTbCredit += $tbCredit;
+                $totAdjDebit += $adjDeb;
+                $totAdjCredit += $adjCred;
+                $totAtbDebit += $atbDebit;
+                $totAtbCredit += $atbCredit;
+                $totIsDebit += $isDebit;
+                $totIsCredit += $isCredit;
+                $totBsDebit += $bsDebit;
+                $totBsCredit += $bsCredit;
+            }
+        }
+        unset($item);
+
+        // 6. Build visible rows for the template according to Level <= 3 and Expand state
+        $rows = [];
+        foreach ($accountData as $id => $item) {
+            $acc = $item['account'];
+            $level = $item['level'];
+            $hasChildren = ($childCounts[$id] ?? 0) > 0;
+            $isExpanded = in_array($id, $this->expandedAccountIds);
+
+            // Skip zero activity accounts
+            if (! $item['has_activity']) {
                 continue;
             }
 
-            // 2. Adjusted Trial Balance (Neraca Saldo Disesuaikan)
-            if ($acc->normal_balance === 'debit') {
-                $atbBal = $tbBal + ($adjDebit - $adjCredit);
-                $atbDebit = $atbBal;
-                $atbCredit = 0.0;
+            // By default, display Level 1, 2, and 3
+            if ($level <= 3) {
+                $rows[] = array_merge($item, [
+                    'has_children' => $hasChildren,
+                    'is_expanded' => $isExpanded,
+                ]);
             } else {
-                $atbBal = $tbBal + ($adjCredit - $adjDebit);
-                $atbCredit = $atbBal;
-                $atbDebit = 0.0;
+                // For Level 4+, show only if parent ID is expanded
+                if ($acc->parent_id && in_array($acc->parent_id, $this->expandedAccountIds)) {
+                    $rows[] = array_merge($item, [
+                        'has_children' => $hasChildren,
+                        'is_expanded' => $isExpanded,
+                    ]);
+                }
             }
-
-            // 3. Income Statement vs Balance Sheet split
-            $isDebit = 0.0;
-            $isCredit = 0.0;
-            $bsDebit = 0.0;
-            $bsCredit = 0.0;
-
-            if ($acc->report_type === 'laba_rugi') {
-                $isDebit = $atbDebit;
-                $isCredit = $atbCredit;
-            } else {
-                $bsDebit = $atbDebit;
-                $bsCredit = $atbCredit;
-            }
-
-            $totTbDebit += $tbDebit;
-            $totTbCredit += $tbCredit;
-            $totAdjDebit += $adjDebit;
-            $totAdjCredit += $adjCredit;
-            $totAtbDebit += $atbDebit;
-            $totAtbCredit += $atbCredit;
-            $totIsDebit += $isDebit;
-            $totIsCredit += $isCredit;
-            $totBsDebit += $bsDebit;
-            $totBsCredit += $bsCredit;
-
-            $rows[] = [
-                'account' => $acc,
-                'tb_debit' => $tbDebit,
-                'tb_credit' => $tbCredit,
-                'adj_debit' => $adjDebit,
-                'adj_credit' => $adjCredit,
-                'atb_debit' => $atbDebit,
-                'atb_credit' => $atbCredit,
-                'is_debit' => $isDebit,
-                'is_credit' => $isCredit,
-                'bs_debit' => $bsDebit,
-                'bs_credit' => $bsCredit,
-            ];
         }
 
         $netProfitFromIs = $totIsCredit - $totIsDebit;

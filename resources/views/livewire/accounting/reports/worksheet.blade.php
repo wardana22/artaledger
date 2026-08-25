@@ -41,17 +41,22 @@
     <!-- WORKSHEET 10-COLUMN TABLE -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
         <div class="px-6 py-4 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">
-                Lembar Kerja Akuntansi (Periode {{ $startDate }} s/d {{ $endDate }})
-            </h3>
+            <div>
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">
+                    Lembar Kerja Akuntansi Hierarkis (Periode {{ $startDate }} s/d {{ $endDate }})
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Menampilkan Akun Level 1, 2, dan 3 (Akumulasi Otomatis). Klik tombol <strong>[+] Detail</strong> pada akun Level 3 untuk melihat rincian anak akun.
+                </p>
+            </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left text-[11px] text-slate-600 dark:text-slate-300 border-collapse">
                 <thead class="bg-slate-100 dark:bg-slate-800/80 uppercase font-bold text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th rowspan="2" class="px-3 py-3 border-r border-slate-200 dark:border-slate-700 w-24">Kode</th>
-                        <th rowspan="2" class="px-3 py-3 border-r border-slate-200 dark:border-slate-700 min-w-[200px]">Nama Akun</th>
+                        <th rowspan="2" class="px-3 py-3 border-r border-slate-200 dark:border-slate-700 w-28">Kode</th>
+                        <th rowspan="2" class="px-3 py-3 border-r border-slate-200 dark:border-slate-700 min-w-[240px]">Nama Akun</th>
                         <th colspan="2" class="px-3 py-1.5 text-center border-r border-slate-200 dark:border-slate-700 bg-indigo-50/50 dark:bg-indigo-950/20">Neraca Saldo</th>
                         <th colspan="2" class="px-3 py-1.5 text-center border-r border-slate-200 dark:border-slate-700 bg-amber-50/50 dark:bg-amber-950/20">Penyesuaian</th>
                         <th colspan="2" class="px-3 py-1.5 text-center border-r border-slate-200 dark:border-slate-700 bg-blue-50/50 dark:bg-blue-950/20">NS Disesuaikan</th>
@@ -73,11 +78,30 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     @forelse ($rows as $row)
-                        @php $acc = $row['account']; @endphp
-                        <tr class="{{ $acc->is_group ? 'bg-slate-50/70 dark:bg-slate-800/30 font-bold' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40' }}">
-                            <td class="px-3 py-2 font-mono font-bold border-r border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200">{{ $acc->code }}</td>
-                            <td class="px-3 py-2 border-r border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-100" style="padding-left: {{ min(($acc->level - 1) * 0.75, 2.5) }}rem;">
-                                {{ $acc->name }}
+                        @php 
+                            $acc = $row['account']; 
+                            $level = $row['level'];
+                        @endphp
+                        <tr class="transition-colors {{ 
+                            $level === 1 ? 'bg-indigo-500/10 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-extrabold text-xs uppercase' : (
+                            $level === 2 ? 'bg-slate-100/80 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 font-bold' : (
+                            $level === 3 ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/40 font-semibold' : 
+                            'bg-slate-50/50 dark:bg-slate-900/60 hover:bg-indigo-50/30 text-slate-600 dark:text-slate-300 font-normal italic'
+                            )) 
+                        }}">
+                            <td class="px-3 py-2 font-mono border-r border-slate-100 dark:border-slate-800 {{ $level <= 2 ? 'font-bold' : '' }}">
+                                {{ $acc->code }}
+                            </td>
+                            <td class="px-3 py-2 border-r border-slate-100 dark:border-slate-800" style="padding-left: {{ ($level - 1) * 1.25 + 0.75 }}rem;">
+                                @if ($row['has_children'] && $level === 3)
+                                    <button 
+                                        wire:click="toggleExpand({{ $acc->id }})" 
+                                        title="{{ $row['is_expanded'] ? 'Sembunyikan Anak Akun' : 'Tampilkan Anak Akun' }}"
+                                        class="inline-flex items-center gap-1 mr-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-mono font-extrabold text-[10px] transition-all">
+                                        {{ $row['is_expanded'] ? '[-] Sembunyikan' : '[+] Detail' }}
+                                    </button>
+                                @endif
+                                <span>{{ $acc->name }}</span>
                             </td>
                             <!-- NS -->
                             <td class="px-2 py-2 text-right font-mono border-r border-slate-100 dark:border-slate-800 text-indigo-600 dark:text-indigo-400">
@@ -124,7 +148,7 @@
                 <!-- SUBTOTAL FOOTER -->
                 <tfoot class="bg-slate-100 dark:bg-slate-800/80 font-bold border-t border-slate-200 dark:border-slate-700">
                     <tr>
-                        <td colspan="2" class="px-3 py-2.5 text-right uppercase text-slate-600 dark:text-slate-300">Subtotal:</td>
+                        <td colspan="2" class="px-3 py-2.5 text-right uppercase text-slate-600 dark:text-slate-300">Total Akumulasi:</td>
                         <td class="px-2 py-2.5 text-right font-mono border-r border-slate-200 dark:border-slate-700 text-indigo-600">{{ number_format($totTbDebit, 2, ',', '.') }}</td>
                         <td class="px-2 py-2.5 text-right font-mono border-r border-slate-200 dark:border-slate-700 text-purple-600">{{ number_format($totTbCredit, 2, ',', '.') }}</td>
                         <td class="px-2 py-2.5 text-right font-mono border-r border-slate-200 dark:border-slate-700 text-amber-600">{{ number_format($totAdjDebit, 2, ',', '.') }}</td>
