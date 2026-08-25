@@ -214,7 +214,7 @@ class Worksheet extends Component
                     'is_expanded' => $isExpanded,
                 ]);
             } else {
-                // For Level 4+, show only if parent ID is expanded
+                // For Level 4+, show if its direct parent_id is expanded
                 if ($acc->parent_id && in_array($acc->parent_id, $this->expandedAccountIds)) {
                     $rows[] = array_merge($item, [
                         'has_children' => $hasChildren,

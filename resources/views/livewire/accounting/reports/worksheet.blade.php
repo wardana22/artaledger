@@ -93,7 +93,7 @@
                                 {{ $acc->code }}
                             </td>
                             <td class="px-3 py-2 border-r border-slate-100 dark:border-slate-800" style="padding-left: {{ ($level - 1) * 1.25 + 0.75 }}rem;">
-                                @if ($row['has_children'] && $level === 3)
+                                @if ($row['has_children'])
                                     <button 
                                         wire:click="toggleExpand({{ $acc->id }})" 
                                         title="{{ $row['is_expanded'] ? 'Sembunyikan Anak Akun' : 'Tampilkan Anak Akun' }}"
