@@ -19,64 +19,164 @@ class TrialBalance extends Component
 
     public string $unitFilter = 'all';
 
+    public array $expandedAccountIds = [];
+
     public function mount(): void
     {
         $this->startDate = date('Y-01-01');
         $this->endDate = date('Y-12-31');
     }
 
+    public function toggleAccount(int $accountId): void
+    {
+        if (in_array($accountId, $this->expandedAccountIds)) {
+            $this->expandedAccountIds = array_values(array_diff($this->expandedAccountIds, [$accountId]));
+        } else {
+            $this->expandedAccountIds[] = $accountId;
+        }
+    }
+
     public function render()
     {
         $accounts = Account::orderBy('code', 'asc')->get();
 
-        $rows = [];
+        $accountData = [];
+        $childCounts = [];
+
+        foreach ($accounts as $acc) {
+            $accountData[$acc->id] = [
+                'account' => $acc,
+                'id' => $acc->id,
+                'parent_id' => $acc->parent_id,
+                'level' => $acc->level ?? 1,
+                'opening_balance' => 0.0,
+                'debit_mutation' => 0.0,
+                'credit_mutation' => 0.0,
+            ];
+
+            if ($acc->parent_id) {
+                $childCounts[$acc->parent_id] = ($childCounts[$acc->parent_id] ?? 0) + 1;
+            }
+        }
+
+        // 1. Fetch Opening Balances from Journal Lines
+        $opResults = JournalLine::whereHas('journalEntry', function ($q) {
+            $q->where('status', 'posted')
+                ->where(function ($query) {
+                    $query->where('entry_type', 'opening_balance')
+                        ->orWhere('entry_date', '<', $this->startDate);
+                });
+        })
+            ->when($this->unitFilter !== 'all', function ($q) {
+                $q->where('unit_id', $this->unitFilter);
+            })
+            ->select('account_id')
+            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+            ->groupBy('account_id')
+            ->get();
+
+        foreach ($opResults as $res) {
+            if (isset($accountData[$res->account_id])) {
+                $acc = $accountData[$res->account_id]['account'];
+                $d = (float) $res->total_debit;
+                $c = (float) $res->total_credit;
+                if ($acc->normal_balance === 'debit') {
+                    $accountData[$res->account_id]['opening_balance'] = $d - $c;
+                } else {
+                    $accountData[$res->account_id]['opening_balance'] = $c - $d;
+                }
+            }
+        }
+
+        // 2. Fetch Period Mutations
+        $mutQuery = JournalLine::whereHas('journalEntry', function ($q) {
+            $q->where('status', 'posted')
+                ->where('entry_type', '!=', 'opening_balance')
+                ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
+        });
+
+        if ($this->unitFilter !== 'all') {
+            $mutQuery->where('unit_id', $this->unitFilter);
+        }
+
+        $mutResults = $mutQuery->select('account_id')
+            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+            ->groupBy('account_id')
+            ->get();
+
+        foreach ($mutResults as $res) {
+            if (isset($accountData[$res->account_id])) {
+                $accountData[$res->account_id]['debit_mutation'] = (float) $res->total_debit;
+                $accountData[$res->account_id]['credit_mutation'] = (float) $res->total_credit;
+            }
+        }
+
+        // 3. Hierarchical Rollup: Iterate level by level from max level down to 2
+        $maxLevel = collect($accountData)->max('level') ?: 4;
+        for ($lvl = $maxLevel; $lvl > 1; $lvl--) {
+            foreach ($accountData as $id => $item) {
+                if ($item['level'] == $lvl && $item['parent_id'] && isset($accountData[$item['parent_id']])) {
+                    $pId = $item['parent_id'];
+                    $accountData[$pId]['opening_balance'] += $accountData[$id]['opening_balance'];
+                    $accountData[$pId]['debit_mutation'] += $accountData[$id]['debit_mutation'];
+                    $accountData[$pId]['credit_mutation'] += $accountData[$id]['credit_mutation'];
+                }
+            }
+        }
+
+        // 4. Calculate Final Balances and Accumulate Grand Totals
         $totalDebit = 0.0;
         $totalCredit = 0.0;
 
-        foreach ($accounts as $acc) {
-            $openingBalance = (float) $acc->opening_balance;
-
-            $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) {
-                    $q->where('status', 'posted')
-                        ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                });
-
-            if ($this->unitFilter !== 'all') {
-                $mutQuery->where('unit_id', $this->unitFilter);
-            }
-
-            $mutations = $mutQuery->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
-
-            $debitMutation = (float) ($mutations->total_debit ?? 0);
-            $creditMutation = (float) ($mutations->total_credit ?? 0);
+        foreach ($accountData as $id => &$item) {
+            $acc = $item['account'];
+            $opBal = $item['opening_balance'];
+            $debMut = $item['debit_mutation'];
+            $credMut = $item['credit_mutation'];
 
             if ($acc->normal_balance === 'debit') {
-                $endingBalance = $openingBalance + ($debitMutation - $creditMutation);
-                $finalDebit = $endingBalance;
-                $finalCredit = 0.0;
+                $endingBalance = $opBal + ($debMut - $credMut);
+                $finalDebit = $endingBalance > 0 ? $endingBalance : 0.0;
+                $finalCredit = $endingBalance < 0 ? abs($endingBalance) : 0.0;
             } else {
-                $endingBalance = $openingBalance + ($creditMutation - $debitMutation);
-                $finalCredit = $endingBalance;
-                $finalDebit = 0.0;
+                $endingBalance = $opBal + ($credMut - $debMut);
+                $finalCredit = $endingBalance > 0 ? $endingBalance : 0.0;
+                $finalDebit = $endingBalance < 0 ? abs($endingBalance) : 0.0;
             }
 
-            // Skip zero balance accounts if no mutation
-            if ($openingBalance == 0 && $debitMutation == 0 && $creditMutation == 0 && $endingBalance == 0) {
+            $item['final_debit'] = $finalDebit;
+            $item['final_credit'] = $finalCredit;
+            $item['has_activity'] = ($opBal != 0 || $debMut != 0 || $credMut != 0 || $endingBalance != 0);
+
+            $hasChildren = ($childCounts[$id] ?? 0) > 0;
+
+            if (! $hasChildren) {
+                $totalDebit += $finalDebit;
+                $totalCredit += $finalCredit;
+            }
+        }
+        unset($item);
+
+        // 5. Build Visible Rows based on Level <= 3 and Expand state
+        $rows = [];
+        foreach ($accountData as $id => $item) {
+            $acc = $item['account'];
+            $level = $item['level'];
+            $hasChildren = ($childCounts[$id] ?? 0) > 0;
+            $isExpanded = in_array($id, $this->expandedAccountIds);
+
+            if ($level > 3 && ! $this->isAncestorExpanded($acc, $accountData)) {
                 continue;
             }
 
-            $totalDebit += $finalDebit;
-            $totalCredit += $finalCredit;
+            if (! $item['has_activity']) {
+                continue;
+            }
 
-            $rows[] = [
-                'account' => $acc,
-                'opening_balance' => $openingBalance,
-                'debit_mutation' => $debitMutation,
-                'credit_mutation' => $creditMutation,
-                'final_debit' => $finalDebit,
-                'final_credit' => $finalCredit,
-            ];
+            $rows[] = array_merge($item, [
+                'has_children' => $hasChildren,
+                'is_expanded' => $isExpanded,
+            ]);
         }
 
         $isBalanced = abs($totalDebit - $totalCredit) < 0.01;
@@ -89,5 +189,27 @@ class TrialBalance extends Component
             'isBalanced' => $isBalanced,
             'units' => $units,
         ]);
+    }
+
+    private function isAncestorExpanded(Account $account, array $accountData): bool
+    {
+        $currentParentId = $account->parent_id;
+
+        while ($currentParentId) {
+            if (! isset($accountData[$currentParentId])) {
+                break;
+            }
+
+            $parentItem = $accountData[$currentParentId];
+            if ($parentItem['level'] >= 3) {
+                if (! in_array($currentParentId, $this->expandedAccountIds)) {
+                    return false;
+                }
+            }
+
+            $currentParentId = $parentItem['parent_id'];
+        }
+
+        return true;
     }
 }

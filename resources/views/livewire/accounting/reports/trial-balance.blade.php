@@ -74,29 +74,48 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     @forelse ($rows as $row)
-                        @php $acc = $row['account']; @endphp
-                        <tr class="{{ $acc->is_group ? 'bg-slate-50/50 dark:bg-slate-800/20 font-bold' : 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40' }}">
-                            <td class="px-5 py-3 font-mono font-bold text-slate-800 dark:text-slate-200">
+                        @php
+                            $acc = $row['account'];
+                            $level = $acc->level ?? 1;
+                            
+                            $rowClass = match ($level) {
+                                1 => 'bg-slate-100/90 dark:bg-slate-800/90 font-extrabold text-slate-900 dark:text-white border-t-2 border-slate-200 dark:border-slate-700',
+                                2 => 'bg-slate-50/70 dark:bg-slate-800/40 font-bold text-slate-800 dark:text-slate-100',
+                                3 => 'font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900',
+                                default => 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 bg-white dark:bg-slate-900',
+                            };
+                        @endphp
+                        <tr class="{{ $rowClass }}">
+                            <td class="px-5 py-2.5 font-mono font-bold text-slate-800 dark:text-slate-200">
                                 {{ $acc->code }}
                             </td>
-                            <td class="px-5 py-3 text-slate-800 dark:text-slate-100" style="padding-left: {{ min(($acc->level - 1) * 1.25, 4) }}rem;">
-                                {{ $acc->name }}
+                            <td class="px-5 py-2.5 text-slate-800 dark:text-slate-100" style="padding-left: {{ ($level - 1) * 1.5 + 0.75 }}rem;">
+                                @if ($row['has_children'])
+                                    <button wire:click="toggleAccount({{ $acc->id }})" class="inline-flex items-center gap-1.5 focus:outline-none group hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                        <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-transform duration-200 shrink-0 {{ $row['is_expanded'] ? 'rotate-90 text-indigo-500' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                        <span class="text-left">{{ $acc->name }}</span>
+                                    </button>
+                                @else
+                                    <span class="inline-block pl-5 text-left">{{ $acc->name }}</span>
+                                @endif
                             </td>
-                            <td class="px-5 py-3 text-center">
+                            <td class="px-5 py-2.5 text-center">
                                 <span class="px-2 py-0.5 text-[10px] font-extrabold rounded uppercase {{ $acc->is_group ? 'bg-indigo-500/10 text-indigo-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' }}">
                                     {{ $acc->is_group ? 'Header' : 'Detail' }}
                                 </span>
                             </td>
-                            <td class="px-5 py-3 text-right font-mono text-indigo-600 dark:text-indigo-400">
-                                {{ $row['debit_mutation'] > 0 ? number_format($row['debit_mutation'], 2, ',', '.') : '-' }}
+                            <td class="px-5 py-2.5 text-right font-mono text-indigo-600 dark:text-indigo-400">
+                                {{ $row['debit_mutation'] > 0.001 ? number_format($row['debit_mutation'], 2, ',', '.') : '-' }}
                             </td>
-                            <td class="px-5 py-3 text-right font-mono text-purple-600 dark:text-purple-400">
-                                {{ $row['credit_mutation'] > 0 ? number_format($row['credit_mutation'], 2, ',', '.') : '-' }}
+                            <td class="px-5 py-2.5 text-right font-mono text-purple-600 dark:text-purple-400">
+                                {{ $row['credit_mutation'] > 0.001 ? number_format($row['credit_mutation'], 2, ',', '.') : '-' }}
                             </td>
-                            <td class="px-5 py-3 text-right font-mono font-bold text-indigo-700 dark:text-indigo-300">
+                            <td class="px-5 py-2.5 text-right font-mono font-bold text-indigo-700 dark:text-indigo-300">
                                 {{ abs($row['final_debit']) > 0.001 ? number_format($row['final_debit'], 2, ',', '.') : '-' }}
                             </td>
-                            <td class="px-5 py-3 text-right font-mono font-bold text-purple-700 dark:text-purple-300">
+                            <td class="px-5 py-2.5 text-right font-mono font-bold text-purple-700 dark:text-purple-300">
                                 {{ abs($row['final_credit']) > 0.001 ? number_format($row['final_credit'], 2, ',', '.') : '-' }}
                             </td>
                         </tr>
