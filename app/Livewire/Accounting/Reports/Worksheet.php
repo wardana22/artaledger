@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Models\Account;
 use App\Models\JournalLine;
+use App\Models\Unit;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,6 +16,8 @@ class Worksheet extends Component
     public string $startDate = '';
 
     public string $endDate = '';
+
+    public string $unitFilter = 'all';
 
     public function mount(): void
     {
@@ -42,27 +45,35 @@ class Worksheet extends Component
             $openingBalance = (float) $acc->opening_balance;
 
             // General Mutations (Non-adjustment entries)
-            $generalMutations = JournalLine::where('account_id', $acc->id)
+            $genQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')
                         ->where('entry_type', '!=', 'adjustment')
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                })
-                ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-                ->first();
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $genQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $generalMutations = $genQuery->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
 
             $debitMutation = (float) ($generalMutations->total_debit ?? 0);
             $creditMutation = (float) ($generalMutations->total_credit ?? 0);
 
             // Adjustment Mutations (entry_type = adjustment)
-            $adjMutations = JournalLine::where('account_id', $acc->id)
+            $adjQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')
                         ->where('entry_type', 'adjustment')
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                })
-                ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-                ->first();
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $adjQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $adjMutations = $adjQuery->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
 
             $adjDebit = (float) ($adjMutations->total_debit ?? 0);
             $adjCredit = (float) ($adjMutations->total_credit ?? 0);
@@ -136,6 +147,7 @@ class Worksheet extends Component
 
         $netProfitFromIs = $totIsCredit - $totIsDebit;
         $netProfitFromBs = $totBsDebit - $totBsCredit;
+        $units = Unit::all();
 
         return view('livewire.accounting.reports.worksheet', [
             'rows' => $rows,
@@ -151,6 +163,7 @@ class Worksheet extends Component
             'totBsCredit' => $totBsCredit,
             'netProfitFromIs' => $netProfitFromIs,
             'netProfitFromBs' => $netProfitFromBs,
+            'units' => $units,
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Models\Account;
 use App\Models\JournalLine;
+use App\Models\Unit;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,6 +14,8 @@ use Livewire\Component;
 class GeneralLedger extends Component
 {
     public ?int $selectedAccountId = null;
+
+    public string $unitFilter = 'all';
 
     public string $startDate = '';
 
@@ -47,15 +50,21 @@ class GeneralLedger extends Component
             // Sum opening balance of header + children
             $openingBalance = (float) Account::whereIn('id', $targetAccountIds)->sum('opening_balance');
 
-            $lines = JournalLine::with(['journalEntry', 'account'])
+            $linesQuery = JournalLine::with(['journalEntry', 'account', 'unit'])
                 ->whereIn('account_id', $targetAccountIds)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                })
-                ->get()
-                ->sortBy('journalEntry.entry_date');
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $linesQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $lines = $linesQuery->get()->sortBy('journalEntry.entry_date');
         }
+
+        $units = Unit::all();
 
         return view('livewire.accounting.reports.general-ledger', [
             'accounts' => $accounts,
@@ -63,6 +72,7 @@ class GeneralLedger extends Component
             'lines' => $lines,
             'openingBalance' => $openingBalance,
             'childAccountsCount' => $childAccountsCount,
+            'units' => $units,
         ]);
     }
 }

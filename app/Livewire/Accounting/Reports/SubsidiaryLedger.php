@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Models\Account;
 use App\Models\JournalLine;
+use App\Models\Unit;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,6 +14,8 @@ use Livewire\Component;
 class SubsidiaryLedger extends Component
 {
     public ?int $selectedAccountId = null;
+
+    public string $unitFilter = 'all';
 
     public string $startDate = '';
 
@@ -38,21 +41,28 @@ class SubsidiaryLedger extends Component
         if ($selectedAccount) {
             $openingBalance = (float) $selectedAccount->opening_balance;
 
-            $lines = JournalLine::with('journalEntry')
+            $linesQuery = JournalLine::with(['journalEntry', 'unit'])
                 ->where('account_id', $selectedAccount->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                })
-                ->get()
-                ->sortBy('journalEntry.entry_date');
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $linesQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $lines = $linesQuery->get()->sortBy('journalEntry.entry_date');
         }
+
+        $units = Unit::all();
 
         return view('livewire.accounting.reports.subsidiary-ledger', [
             'accounts' => $accounts,
             'selectedAccount' => $selectedAccount,
             'lines' => $lines,
             'openingBalance' => $openingBalance,
+            'units' => $units,
         ]);
     }
 }

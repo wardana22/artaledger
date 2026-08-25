@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Models\Account;
 use App\Models\JournalLine;
+use App\Models\Unit;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,6 +16,8 @@ class TrialBalance extends Component
     public string $startDate = '';
 
     public string $endDate = '';
+
+    public string $unitFilter = 'all';
 
     public function mount(): void
     {
@@ -33,13 +36,17 @@ class TrialBalance extends Component
         foreach ($accounts as $acc) {
             $openingBalance = (float) $acc->opening_balance;
 
-            $mutations = JournalLine::where('account_id', $acc->id)
+            $mutQuery = JournalLine::where('account_id', $acc->id)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted')
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-                })
-                ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
-                ->first();
+                });
+
+            if ($this->unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $mutations = $mutQuery->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')->first();
 
             $debitMutation = (float) ($mutations->total_debit ?? 0);
             $creditMutation = (float) ($mutations->total_credit ?? 0);
@@ -73,12 +80,14 @@ class TrialBalance extends Component
         }
 
         $isBalanced = abs($totalDebit - $totalCredit) < 0.01;
+        $units = Unit::all();
 
         return view('livewire.accounting.reports.trial-balance', [
             'rows' => $rows,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
             'isBalanced' => $isBalanced,
+            'units' => $units,
         ]);
     }
 }
