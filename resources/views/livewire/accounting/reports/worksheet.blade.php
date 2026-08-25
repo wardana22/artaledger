@@ -46,7 +46,7 @@
                     Lembar Kerja Akuntansi Hierarkis (Periode {{ $startDate }} s/d {{ $endDate }})
                 </h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Menampilkan Akun Level 1, 2, dan 3 (Akumulasi Otomatis). Klik tombol <strong>[+] Detail</strong> pada akun Level 3 untuk melihat rincian anak akun.
+                    Menampilkan Akun Level 1, 2, dan 3 (Akumulasi Otomatis). Klik ikon panah (<strong>▶</strong>) di samping nama akun untuk melihat rincian anak akun.
                 </p>
             </div>
         </div>
@@ -96,10 +96,15 @@
                                 @if ($row['has_children'])
                                     <button 
                                         wire:click="toggleExpand({{ $acc->id }})" 
-                                        title="{{ $row['is_expanded'] ? 'Sembunyikan Anak Akun' : 'Tampilkan Anak Akun' }}"
-                                        class="inline-flex items-center gap-1 mr-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-mono font-extrabold text-[10px] transition-all">
-                                        {{ $row['is_expanded'] ? '[-] Sembunyikan' : '[+] Detail' }}
+                                        title="{{ $row['is_expanded'] ? 'Sembunyikan rincian anak akun' : 'Tampilkan rincian anak akun' }}"
+                                        class="inline-flex items-center justify-center p-1 rounded-md text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/10 transition-all mr-1 focus:outline-none shrink-0"
+                                        aria-label="Toggle children">
+                                        <svg class="w-3.5 h-3.5 transform transition-transform duration-200 {{ $row['is_expanded'] ? 'rotate-90 text-indigo-500 font-bold' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                        </svg>
                                     </button>
+                                @else
+                                    <span class="inline-block w-4 mr-1"></span>
                                 @endif
                                 <span>{{ $acc->name }}</span>
                             </td>
