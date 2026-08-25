@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Accounting\Journals;
 
+use App\Domain\Accounting\Services\JournalPostingService;
 use App\Domain\Accounting\Services\JournalReversalService;
 use App\Models\Company;
 use App\Models\JournalEntry;
@@ -34,6 +35,19 @@ class AdjustmentIndex extends Component
             $reversal = $reversalService->reverseJournalEntry($journal, auth()->id());
 
             session()->flash('message', "Jurnal penyesuaian {$journal->entry_number} berhasil dibalikkan (reverse) dengan jurnal baru {$reversal->entry_number}.");
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function deleteJournal(int $journalId): void
+    {
+        try {
+            $journal = JournalEntry::findOrFail($journalId);
+            $service = new JournalPostingService;
+            $service->deleteJournalEntry($journal);
+
+            session()->flash('message', "Jurnal penyesuaian {$journal->entry_number} berhasil dihapus.");
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
         }
