@@ -108,16 +108,18 @@ class Worksheet extends Component
             }
         }
 
-        // 4. Hierarchical Rollup (Bottom-Up Accumulation from leaf to parent levels)
-        $sortedByLevelDesc = collect($accountData)->sortByDesc('level');
-        foreach ($sortedByLevelDesc as $item) {
-            if ($item['parent_id'] && isset($accountData[$item['parent_id']])) {
-                $pId = $item['parent_id'];
-                $accountData[$pId]['opening_balance'] += $item['opening_balance'];
-                $accountData[$pId]['debit_mutation'] += $item['debit_mutation'];
-                $accountData[$pId]['credit_mutation'] += $item['credit_mutation'];
-                $accountData[$pId]['adj_debit'] += $item['adj_debit'];
-                $accountData[$pId]['adj_credit'] += $item['adj_credit'];
+        // 4. Hierarchical Rollup: Iterate level by level from highest to lowest (e.g. Level 5, 4, 3, 2)
+        $maxLevel = collect($accountData)->max('level') ?: 4;
+        for ($lvl = $maxLevel; $lvl > 1; $lvl--) {
+            foreach ($accountData as $id => $item) {
+                if ($item['level'] == $lvl && $item['parent_id'] && isset($accountData[$item['parent_id']])) {
+                    $pId = $item['parent_id'];
+                    $accountData[$pId]['opening_balance'] += $accountData[$id]['opening_balance'];
+                    $accountData[$pId]['debit_mutation'] += $accountData[$id]['debit_mutation'];
+                    $accountData[$pId]['credit_mutation'] += $accountData[$id]['credit_mutation'];
+                    $accountData[$pId]['adj_debit'] += $accountData[$id]['adj_debit'];
+                    $accountData[$pId]['adj_credit'] += $accountData[$id]['adj_credit'];
+                }
             }
         }
 
