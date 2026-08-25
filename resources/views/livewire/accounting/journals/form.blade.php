@@ -86,10 +86,11 @@
                     <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">
                         <tr>
                             <th class="px-4 py-3 w-10 text-center">#</th>
-                            <th class="px-4 py-3 min-w-[260px]">Pilih Akun Posting *</th>
-                            <th class="px-4 py-3 min-w-[200px]">Deskripsi Line</th>
-                            <th class="px-4 py-3 w-40 text-right">Debit (Rp)</th>
-                            <th class="px-4 py-3 w-40 text-right">Kredit (Rp)</th>
+                            <th class="px-4 py-3 min-w-[240px]">Pilih Akun Posting *</th>
+                            <th class="px-4 py-3 min-w-[160px]">Unit Perusahaan</th>
+                            <th class="px-4 py-3 min-w-[180px]">Deskripsi Line</th>
+                            <th class="px-4 py-3 w-36 text-right">Debit (Rp)</th>
+                            <th class="px-4 py-3 w-36 text-right">Kredit (Rp)</th>
                             <th class="px-4 py-3 w-12 text-center">Hapus</th>
                         </tr>
                     </thead>
@@ -105,6 +106,15 @@
                                         @endforeach
                                     </select>
                                     @error("lines.{$index}.account_id") <span class="text-[10px] text-rose-500 block">{{ $message }}</span> @enderror
+                                </td>
+                                <td class="px-4 py-3">
+                                    <select wire:model="lines.{{ $index }}.unit_id" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">-- Pilih Unit (Opsional) --</option>
+                                        @foreach ($units as $unit)
+                                            <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error("lines.{$index}.unit_id") <span class="text-[10px] text-rose-500 block">{{ $message }}</span> @enderror
                                 </td>
                                 <td class="px-4 py-3">
                                     <input wire:model="lines.{{ $index }}.description" type="text" placeholder="Opsional" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs dark:text-slate-100" />

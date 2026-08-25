@@ -116,6 +116,7 @@ class JournalPostingService
                     'journal_entry_id' => $journalEntry->id,
                     'line_no' => $index + 1,
                     'account_id' => $line['account_id'],
+                    'unit_id' => ! empty($line['unit_id']) ? $line['unit_id'] : null,
                     'description' => $line['description'] ?? $entryData['description'] ?? null,
                     'debit' => (float) ($line['debit'] ?? 0),
                     'credit' => (float) ($line['credit'] ?? 0),

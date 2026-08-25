@@ -5,6 +5,7 @@ namespace App\Livewire\Accounting\Journals;
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Models\Account;
 use App\Models\JournalType;
+use App\Models\Unit;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -72,6 +73,7 @@ class JournalForm extends Component
     public function addLine(): void
     {
         $this->lines[] = [
+            'unit_id' => '',
             'account_id' => '',
             'description' => '',
             'debit' => 0,
@@ -115,6 +117,7 @@ class JournalForm extends Component
             'description' => 'required|string|max:255',
             'lines' => 'required|array|min:2',
             'lines.*.account_id' => 'required|exists:accounts,id',
+            'lines.*.unit_id' => 'nullable|exists:units,id',
             'lines.*.debit' => 'numeric|min:0',
             'lines.*.credit' => 'numeric|min:0',
         ]);
@@ -151,10 +154,12 @@ class JournalForm extends Component
         // Only postable accounts (is_group = false)
         $accounts = Account::posting()->active()->orderBy('code', 'asc')->get();
         $journalTypes = JournalType::orderBy('code')->get();
+        $units = Unit::all();
 
         return view('livewire.accounting.journals.form', [
             'accounts' => $accounts,
             'journalTypes' => $journalTypes,
+            'units' => $units,
         ]);
     }
 }
