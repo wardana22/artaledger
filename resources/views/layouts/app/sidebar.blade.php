@@ -142,49 +142,63 @@
         @fluxScripts
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                document.addEventListener('click', function(e) {
-                    let target = e.target.closest('[wire\\:confirm]');
-                    if (!target) return;
+            (function() {
+                let isBypassingConfirm = false;
 
-                    let message = target.getAttribute('wire:confirm');
-                    if (!message) return;
+                // Override native window.confirm to prevent standard browser dialog popups
+                window.confirm = function(message) {
+                    if (isBypassingConfirm) {
+                        return true;
+                    }
+                    return false;
+                };
 
-                    e.stopImmediatePropagation();
-                    e.preventDefault();
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.addEventListener('click', function(e) {
+                        if (isBypassingConfirm) return;
 
-                    let lowerMsg = message.toLowerCase();
-                    let isDanger = lowerMsg.includes('hapus') || lowerMsg.includes('delete') || lowerMsg.includes('balikkan') || lowerMsg.includes('reverse');
+                        let target = e.target.closest('[wire\\:confirm]');
+                        if (!target) return;
 
-                    Swal.fire({
-                        title: 'Konfirmasi Tindakan',
-                        text: message,
-                        icon: isDanger ? 'warning' : 'question',
-                        showCancelButton: true,
-                        confirmButtonText: isDanger ? 'Ya, Eksekusi' : 'Ya, Lanjutkan',
-                        cancelButtonText: 'Batal',
-                        customClass: {
-                            popup: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 text-slate-800 dark:text-slate-100 font-sans',
-                            title: 'text-slate-900 dark:text-slate-100 font-bold text-lg tracking-tight',
-                            htmlContainer: 'text-slate-600 dark:text-slate-300 text-sm mt-2 font-medium',
-                            confirmButton: isDanger 
-                                ? 'px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-500/20 transition-all text-xs cursor-pointer ml-3'
-                                : 'px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all text-xs cursor-pointer ml-3',
-                            cancelButton: 'px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-all text-xs cursor-pointer'
-                        },
-                        buttonsStyling: false,
-                        background: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
-                        color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#0f172a',
-                        backdrop: `rgba(15, 23, 42, 0.75)`
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            target.removeAttribute('wire:confirm');
-                            target.click();
-                            target.setAttribute('wire:confirm', message);
-                        }
-                    });
-                }, true);
-            });
+                        let message = target.getAttribute('wire:confirm');
+                        if (!message) return;
+
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+
+                        let lowerMsg = message.toLowerCase();
+                        let isDanger = lowerMsg.includes('hapus') || lowerMsg.includes('delete') || lowerMsg.includes('balikkan') || lowerMsg.includes('reverse');
+
+                        Swal.fire({
+                            title: 'Konfirmasi Tindakan',
+                            text: message,
+                            icon: isDanger ? 'warning' : 'question',
+                            showCancelButton: true,
+                            confirmButtonText: isDanger ? 'Ya, Eksekusi' : 'Ya, Lanjutkan',
+                            cancelButtonText: 'Batal',
+                            customClass: {
+                                popup: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 text-slate-800 dark:text-slate-100 font-sans',
+                                title: 'text-slate-900 dark:text-slate-100 font-bold text-lg tracking-tight',
+                                htmlContainer: 'text-slate-600 dark:text-slate-300 text-sm mt-2 font-medium',
+                                confirmButton: isDanger 
+                                    ? 'px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-lg shadow-rose-500/20 transition-all text-xs cursor-pointer ml-3'
+                                    : 'px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all text-xs cursor-pointer ml-3',
+                                cancelButton: 'px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-all text-xs cursor-pointer'
+                            },
+                            buttonsStyling: false,
+                            background: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
+                            color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#0f172a',
+                            backdrop: `rgba(15, 23, 42, 0.75)`
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                isBypassingConfirm = true;
+                                target.click();
+                                isBypassingConfirm = false;
+                            }
+                        });
+                    }, true);
+                });
+            })();
         </script>
     </body>
 </html>
