@@ -47,6 +47,7 @@ Route::middleware(['web'])->group(function () {
     Route::get('/accounting/import', JournalImportWizard::class)->name('accounting.import.index');
     Route::get('/accounting/journals', JournalIndex::class)->name('accounting.journals.index');
     Route::get('/accounting/journals/create', JournalForm::class)->name('accounting.journals.create');
+    Route::get('/accounting/journals/{id}/edit', JournalForm::class)->name('accounting.journals.edit');
     Route::get('/accounting/adjustments', AdjustmentIndex::class)->name('accounting.adjustments.index');
     Route::get('/accounting/adjustments/create', AdjustmentForm::class)->name('accounting.adjustments.create');
 

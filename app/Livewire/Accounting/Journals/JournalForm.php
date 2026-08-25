@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Journals;
 
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\JournalType;
 use App\Models\Unit;
 use Carbon\Carbon;
@@ -27,34 +28,71 @@ class JournalForm extends Component
 
     public array $lines = [];
 
-    public function mount(): void
+    public ?int $journal_entry_id = null;
+
+    public bool $is_edit = false;
+
+    public function mount(?int $id = null): void
     {
-        $this->entry_date = date('Y-m-d');
+        if ($id) {
+            $journal = JournalEntry::with('lines')->findOrFail($id);
+            if ($journal->status === 'reversed') {
+                session()->flash('error', "Jurnal {$journal->entry_number} berstatus Reversal dan tidak dapat di-edit.");
+                $this->redirect(route('accounting.journals.index'), navigate: true);
 
-        // Default to JK or BM or first type
-        $defaultType = JournalType::where('code', 'JK')->first() ?? JournalType::first();
-        if ($defaultType) {
-            $this->journal_type_id = $defaultType->id;
-            $this->generateAutoDocNumber();
+                return;
+            }
+
+            $this->is_edit = true;
+            $this->journal_entry_id = $journal->id;
+            $this->entry_date = $journal->entry_date->format('Y-m-d');
+            $this->journal_type_id = $journal->journal_type_id;
+            $this->document_number = $journal->document_number ?? '';
+            $this->is_auto_document_number = (bool) $journal->is_auto_document_number;
+            $this->description = $journal->description ?? '';
+
+            $this->lines = [];
+            foreach ($journal->lines as $line) {
+                $this->lines[] = [
+                    'unit_id' => $line->unit_id ?? '',
+                    'account_id' => $line->account_id,
+                    'description' => $line->description ?? '',
+                    'debit' => (float) $line->debit,
+                    'credit' => (float) $line->credit,
+                ];
+            }
+        } else {
+            $this->entry_date = date('Y-m-d');
+
+            // Default to JK or BM or first type
+            $defaultType = JournalType::where('code', 'JK')->first() ?? JournalType::first();
+            if ($defaultType) {
+                $this->journal_type_id = $defaultType->id;
+                $this->generateAutoDocNumber();
+            }
+
+            $this->addLine();
+            $this->addLine();
         }
-
-        $this->addLine();
-        $this->addLine();
     }
 
     public function updatedJournalTypeId(): void
     {
-        $this->generateAutoDocNumber();
+        if (! $this->is_edit) {
+            $this->generateAutoDocNumber();
+        }
     }
 
     public function updatedEntryDate(): void
     {
-        $this->generateAutoDocNumber();
+        if (! $this->is_edit) {
+            $this->generateAutoDocNumber();
+        }
     }
 
     public function updatedIsAutoDocumentNumber(): void
     {
-        if ($this->is_auto_document_number) {
+        if ($this->is_auto_document_number && ! $this->is_edit) {
             $this->generateAutoDocNumber();
         }
     }
@@ -130,19 +168,36 @@ class JournalForm extends Component
 
         try {
             $service = new JournalPostingService;
-            $journal = $service->postManualEntry(
-                [
-                    'entry_date' => $this->entry_date,
-                    'journal_type_id' => $this->journal_type_id,
-                    'document_number' => $this->document_number,
-                    'is_auto_document_number' => $this->is_auto_document_number,
-                    'description' => $this->description,
-                ],
-                $this->lines,
-                auth()->id()
-            );
 
-            session()->flash('message', "Jurnal {$journal->entry_number} berhasil diposting ke General Ledger!");
+            if ($this->is_edit && $this->journal_entry_id) {
+                $journal = JournalEntry::findOrFail($this->journal_entry_id);
+                $service->updateManualEntry(
+                    $journal,
+                    [
+                        'entry_date' => $this->entry_date,
+                        'journal_type_id' => $this->journal_type_id,
+                        'document_number' => $this->document_number,
+                        'description' => $this->description,
+                    ],
+                    $this->lines,
+                    auth()->id()
+                );
+                session()->flash('message', "Jurnal {$journal->entry_number} berhasil diperbarui!");
+            } else {
+                $journal = $service->postManualEntry(
+                    [
+                        'entry_date' => $this->entry_date,
+                        'journal_type_id' => $this->journal_type_id,
+                        'document_number' => $this->document_number,
+                        'is_auto_document_number' => $this->is_auto_document_number,
+                        'description' => $this->description,
+                    ],
+                    $this->lines,
+                    auth()->id()
+                );
+                session()->flash('message', "Jurnal {$journal->entry_number} berhasil diposting ke General Ledger!");
+            }
+
             $this->redirect(route('accounting.journals.index'), navigate: true);
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());

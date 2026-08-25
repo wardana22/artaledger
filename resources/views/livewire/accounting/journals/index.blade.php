@@ -120,29 +120,43 @@
                                 Rp {{ number_format($journal->total_credit, 2, ',', '.') }}
                             </td>
                             <td class="px-5 py-3.5 text-center whitespace-nowrap">
-                                @if ($journal->status === 'posted')
-                                    @if ($journal->source_type === 'reversal' || str_starts_with($journal->document_number ?? '', 'REV-') || str_starts_with($journal->description ?? '', 'REVERSAL:'))
-                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-200 dark:bg-slate-800 text-slate-500 border border-slate-300 dark:border-slate-700" title="Jurnal Reversal Dikunci (Tidak dapat di-reverse kembali)">
-                                            REVERSAL
-                                        </span>
-                                    @else
-                                        <button 
-                                            wire:click="reverseJournal({{ $journal->id }})"
-                                            wire:confirm="Apakah Anda yakin ingin membalikkan (reverse) jurnal ini?"
-                                            title="Reverse Jurnal"
-                                            class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all">
-                                            Reverse
-                                        </button>
+                                <div class="flex items-center justify-center gap-1.5">
+                                    @if ($journal->status !== 'reversed')
+                                        <a 
+                                            href="{{ route('accounting.journals.edit', $journal->id) }}"
+                                            wire:navigate
+                                            title="Edit Jurnal"
+                                            class="px-2 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-bold transition-all">
+                                            Edit
+                                        </a>
                                     @endif
-                                @elseif ($journal->status === 'reversed')
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-500/10 text-rose-500 border border-rose-500/25">
-                                        REVERSED
-                                    </span>
-                                @else
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/25">
-                                        DRAFT
-                                    </span>
-                                @endif
+
+                                    @if ($journal->status === 'posted')
+                                        @if (! ($journal->source_type === 'reversal' || str_starts_with($journal->document_number ?? '', 'REV-') || str_starts_with($journal->description ?? '', 'REVERSAL:')))
+                                            <button 
+                                                wire:click="reverseJournal({{ $journal->id }})"
+                                                wire:confirm="Apakah Anda yakin ingin membalikkan (reverse) jurnal ini?"
+                                                title="Reverse Jurnal"
+                                                class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition-all">
+                                                Reverse
+                                            </button>
+                                        @endif
+                                    @endif
+
+                                    @if ($journal->status !== 'reversed')
+                                        <button 
+                                            wire:click="deleteJournal({{ $journal->id }})"
+                                            wire:confirm="Apakah Anda yakin ingin menghapus jurnal {{ $journal->entry_number }} secara permanen?"
+                                            title="Hapus Jurnal"
+                                            class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all">
+                                            Hapus
+                                        </button>
+                                    @else
+                                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-500/10 text-slate-500 border border-slate-500/25">
+                                            REVERSED
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Accounting\Journals;
 
+use App\Domain\Accounting\Services\JournalPostingService;
 use App\Domain\Accounting\Services\JournalReversalService;
 use App\Models\JournalEntry;
 use App\Models\Unit;
@@ -47,6 +48,19 @@ class JournalIndex extends Component
             $reversal = $service->reverseJournalEntry($entry, auth()->id(), 'Pembalikan manual Jurnal '.$entry->entry_number);
 
             session()->flash('message', "Jurnal {$entry->entry_number} berhasil dibalikkan. Jurnal Reversal: {$reversal->entry_number}.");
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function deleteJournal(int $id): void
+    {
+        try {
+            $entry = JournalEntry::findOrFail($id);
+            $service = new JournalPostingService;
+            $service->deleteJournalEntry($entry);
+
+            session()->flash('message', "Jurnal {$entry->entry_number} berhasil dihapus.");
         } catch (\Exception $e) {
             session()->flash('error', $e->getMessage());
         }

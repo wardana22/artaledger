@@ -128,6 +128,97 @@ class JournalPostingService
     }
 
     /**
+     * Update an existing manual journal entry and sync lines transactionally.
+     */
+    public function updateManualEntry(JournalEntry $journalEntry, array $entryData, array $linesData, ?int $userId = null): JournalEntry
+    {
+        if ($journalEntry->status === 'reversed') {
+            throw new Exception("Jurnal Reversal ({$journalEntry->entry_number}) berstatus terkunci dan tidak dapat di-edit.");
+        }
+
+        $companyId = $entryData['company_id'] ?? $journalEntry->company_id;
+        $entryDate = Carbon::parse($entryData['entry_date']);
+
+        // 1. Check Accounting Period Status
+        $period = AccountingPeriod::where('company_id', $companyId)
+            ->where('year', $entryDate->year)
+            ->where('month', $entryDate->month)
+            ->first();
+
+        if ($period && ! $period->isOpen()) {
+            throw new Exception("Gagal update! Periode akuntansi ({$entryDate->format('F Y')}) berstatus '{$period->status}'. Edit hanya diizinkan pada periode 'open'.");
+        }
+
+        // 2. Validate Lines & Balance
+        $totalDebit = 0.0;
+        $totalCredit = 0.0;
+
+        if (count($linesData) < 2) {
+            throw new Exception('Jurnal harus memiliki minimal 2 baris transaksi.');
+        }
+
+        foreach ($linesData as $index => $line) {
+            $account = Account::find($line['account_id']);
+            if (! $account) {
+                throw new Exception('Baris #'.($index + 1).": Akun ID {$line['account_id']} tidak ditemukan.");
+            }
+            if ($account->is_group) {
+                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' adalah Header Group.");
+            }
+            if (! $account->is_active) {
+                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' tidak aktif.");
+            }
+            $totalDebit += (float) ($line['debit'] ?? 0);
+            $totalCredit += (float) ($line['credit'] ?? 0);
+        }
+
+        if (abs($totalDebit - $totalCredit) >= 0.01) {
+            throw new Exception('Jurnal tidak seimbang (Unbalanced)! Total Debit ('.number_format($totalDebit, 2, ',', '.').') != Total Kredit ('.number_format($totalCredit, 2, ',', '.').').');
+        }
+
+        return DB::transaction(function () use ($journalEntry, $entryDate, $entryData, $linesData) {
+            $journalEntry->update([
+                'entry_date' => $entryDate->format('Y-m-d'),
+                'document_number' => $entryData['document_number'] ?? $journalEntry->document_number,
+                'journal_type_id' => $entryData['journal_type_id'] ?? $journalEntry->journal_type_id,
+                'description' => $entryData['description'] ?? $journalEntry->description,
+            ]);
+
+            // Replace lines
+            $journalEntry->lines()->delete();
+
+            foreach ($linesData as $index => $line) {
+                JournalLine::create([
+                    'journal_entry_id' => $journalEntry->id,
+                    'line_no' => $index + 1,
+                    'account_id' => $line['account_id'],
+                    'unit_id' => ! empty($line['unit_id']) ? $line['unit_id'] : null,
+                    'description' => $line['description'] ?? $entryData['description'] ?? null,
+                    'debit' => (float) ($line['debit'] ?? 0),
+                    'credit' => (float) ($line['credit'] ?? 0),
+                ]);
+            }
+
+            return $journalEntry;
+        });
+    }
+
+    /**
+     * Delete a journal entry and its lines.
+     */
+    public function deleteJournalEntry(JournalEntry $journalEntry): void
+    {
+        if ($journalEntry->status === 'reversed') {
+            throw new Exception("Jurnal Reversal ({$journalEntry->entry_number}) berstatus terkunci dan tidak dapat dihapus.");
+        }
+
+        DB::transaction(function () use ($journalEntry) {
+            $journalEntry->lines()->delete();
+            $journalEntry->delete();
+        });
+    }
+
+    /**
      * Generate unique journal entry number (JU-YYYY-MM-XXXXXX, AJP-YYYY-MM-XXXXXX, etc)
      */
     public function generateEntryNumber(int $companyId, \DateTimeInterface $date, string $entryType = 'general'): string
