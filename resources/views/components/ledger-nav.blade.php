@@ -1,11 +1,6 @@
 @php
-    $isGlActive = request()->routeIs('accounting.reports.general-ledger*') 
-        || request()->is('accounting/reports/general-ledger*') 
-        || str_contains(request()->header('referer', ''), '/accounting/reports/general-ledger');
-        
-    $isSlActive = request()->routeIs('accounting.reports.subsidiary-ledger*') 
-        || request()->is('accounting/reports/subsidiary-ledger*') 
-        || str_contains(request()->header('referer', ''), '/accounting/reports/subsidiary-ledger');
+    $isGlActive = request()->routeIs('accounting.reports.general-ledger*') || request()->is('accounting/reports/general-ledger*');
+    $isSlActive = request()->routeIs('accounting.reports.subsidiary-ledger*') || request()->is('accounting/reports/subsidiary-ledger*');
 @endphp
 
 <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6 overflow-x-auto">
