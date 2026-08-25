@@ -55,6 +55,7 @@ class Worksheet extends Component
                 'credit_mutation' => 0.0,
                 'adj_debit' => 0.0,
                 'adj_credit' => 0.0,
+                'has_direct_lines' => false,
             ];
 
             if ($acc->parent_id) {
@@ -88,6 +89,7 @@ class Worksheet extends Component
                 } else {
                     $accountData[$res->account_id]['opening_balance'] = $c - $d;
                 }
+                $accountData[$res->account_id]['has_direct_lines'] = true;
             }
         }
 
@@ -112,6 +114,7 @@ class Worksheet extends Component
             if (isset($accountData[$res->account_id])) {
                 $accountData[$res->account_id]['debit_mutation'] = (float) $res->total_debit;
                 $accountData[$res->account_id]['credit_mutation'] = (float) $res->total_credit;
+                $accountData[$res->account_id]['has_direct_lines'] = true;
             }
         }
 
@@ -135,6 +138,7 @@ class Worksheet extends Component
             if (isset($accountData[$res->account_id])) {
                 $accountData[$res->account_id]['adj_debit'] = (float) $res->total_debit;
                 $accountData[$res->account_id]['adj_credit'] = (float) $res->total_credit;
+                $accountData[$res->account_id]['has_direct_lines'] = true;
             }
         }
 
@@ -208,18 +212,21 @@ class Worksheet extends Component
             $item['bs_credit'] = $bsCredit;
             $item['has_activity'] = ($opBal != 0 || $debMut != 0 || $credMut != 0 || $adjDeb != 0 || $adjCred != 0 || $tbBal != 0 || $atbBal != 0);
 
-            // Accumulate grand totals ONLY from Level 1 (Top Level Group) categories to equal the report totals
-            if ($item['level'] === 1) {
-                $totTbDebit += $tbDebit;
-                $totTbCredit += $tbCredit;
-                $totAdjDebit += $adjDeb;
-                $totAdjCredit += $adjCred;
-                $totAtbDebit += $atbDebit;
-                $totAtbCredit += $atbCredit;
-                $totIsDebit += $isDebit;
-                $totIsCredit += $isCredit;
-                $totBsDebit += $bsDebit;
-                $totBsCredit += $bsCredit;
+            // Accumulate grand totals from all Posting (Leaf) accounts to achieve 100% balance
+            $hasChildren = ($childCounts[$id] ?? 0) > 0;
+            if (! $hasChildren || $item['has_direct_lines']) {
+                if (! $hasChildren) {
+                    $totTbDebit += $tbDebit;
+                    $totTbCredit += $tbCredit;
+                    $totAdjDebit += $adjDeb;
+                    $totAdjCredit += $adjCred;
+                    $totAtbDebit += $atbDebit;
+                    $totAtbCredit += $atbCredit;
+                    $totIsDebit += $isDebit;
+                    $totIsCredit += $isCredit;
+                    $totBsDebit += $bsDebit;
+                    $totBsCredit += $bsCredit;
+                }
             }
         }
         unset($item);
