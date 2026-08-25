@@ -1,5 +1,5 @@
 <div class="p-6 space-y-6">
-    <x-journal-nav />
+    <x-journal-nav active="jurnal-umum" />
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

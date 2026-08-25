@@ -1,6 +1,8 @@
+@props(['active' => null])
+
 @php
-    $isJurnalUmumActive = request()->routeIs('accounting.journals.*') || request()->is('accounting/journals*');
-    $isAjpActive = request()->routeIs('accounting.adjustments.*') || request()->is('accounting/adjustments*');
+    $isJurnalUmumActive = $active === 'jurnal-umum' || ($active === null && (request()->routeIs('accounting.journals.*') || request()->is('accounting/journals*')));
+    $isAjpActive = $active === 'ajp' || ($active === null && (request()->routeIs('accounting.adjustments.*') || request()->is('accounting/adjustments*')));
 @endphp
 
 <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6 overflow-x-auto">

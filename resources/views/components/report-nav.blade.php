@@ -1,7 +1,9 @@
+@props(['active' => null])
+
 @php
-    $isWorksheetActive = request()->routeIs('accounting.reports.worksheet*') || request()->is('accounting/reports/worksheet*');
-    $isTrialBalanceActive = request()->routeIs('accounting.reports.trial-balance*') || request()->is('accounting/reports/trial-balance*');
-    $isBalanceSheetActive = request()->routeIs('accounting.reports.balance-sheet*') || request()->is('accounting/reports/balance-sheet*');
+    $isWorksheetActive = $active === 'worksheet' || ($active === null && (request()->routeIs('accounting.reports.worksheet*') || request()->is('accounting/reports/worksheet*')));
+    $isTrialBalanceActive = $active === 'trial-balance' || ($active === null && (request()->routeIs('accounting.reports.trial-balance*') || request()->is('accounting/reports/trial-balance*')));
+    $isBalanceSheetActive = $active === 'balance-sheet' || ($active === null && (request()->routeIs('accounting.reports.balance-sheet*') || request()->is('accounting/reports/balance-sheet*')));
 @endphp
 
 <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6 overflow-x-auto">

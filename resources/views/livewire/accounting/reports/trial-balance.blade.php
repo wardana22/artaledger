@@ -1,5 +1,5 @@
 <div class="p-6 space-y-6">
-    <x-report-nav />
+    <x-report-nav active="trial-balance" />
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
