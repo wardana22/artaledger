@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Journals;
 
 use App\Domain\Accounting\Services\JournalReversalService;
 use App\Models\JournalEntry;
+use App\Models\Unit;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -19,6 +20,8 @@ class JournalIndex extends Component
 
     public string $statusFilter = 'all';
 
+    public string $unitFilter = 'all';
+
     public int $perPage = 25;
 
     public function updatingSearch(): void
@@ -27,6 +30,11 @@ class JournalIndex extends Component
     }
 
     public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingUnitFilter(): void
     {
         $this->resetPage();
     }
@@ -46,17 +54,20 @@ class JournalIndex extends Component
 
     public function render()
     {
-        $query = JournalEntry::with(['lines.account', 'journalType', 'postedBy', 'period'])
+        $query = JournalEntry::with(['lines.account', 'lines.unit', 'journalType', 'postedBy', 'period'])
             ->when($this->search !== '', fn ($q) => $q->where(fn ($sq) => $sq->where('entry_number', 'like', "%{$this->search}%")
                 ->orWhere('document_number', 'like', "%{$this->search}%")
                 ->orWhere('description', 'like', "%{$this->search}%")))
             ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->unitFilter !== 'all', fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->where('unit_id', $this->unitFilter)))
             ->orderByDesc('id');
 
         $journals = $query->paginate($this->perPage);
+        $units = Unit::all();
 
         return view('livewire.accounting.journals.index', [
             'journals' => $journals,
+            'units' => $units,
         ]);
     }
 }

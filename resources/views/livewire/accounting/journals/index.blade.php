@@ -68,6 +68,13 @@
                 <option value="draft">Draft</option>
                 <option value="reversed">Reversed</option>
             </select>
+
+            <select wire:model.live="unitFilter" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 font-medium">
+                <option value="all">🌐 Konsolidasi (Semua Unit)</option>
+                @foreach ($units as $unit)
+                    <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
+                @endforeach
+            </select>
         </div>
     </div>
 
