@@ -108,37 +108,26 @@ class OpeningBalanceIndex extends Component
                 continue;
             }
 
-            $netDebit = 0.0;
-            $netCredit = 0.0;
+            $debitVal = 0.0;
+            $creditVal = 0.0;
 
             if ($acc->normal_balance === 'debit') {
-                $bal = ($d - $c);
-                if ($bal > 0) {
-                    $netDebit = $bal;
-                } elseif ($bal < 0) {
-                    $netCredit = abs($bal);
-                }
+                $debitVal = ($d - $c);
+                $totalDebit += $debitVal;
             } else {
-                $bal = ($c - $d);
-                if ($bal > 0) {
-                    $netCredit = $bal;
-                } elseif ($bal < 0) {
-                    $netDebit = abs($bal);
-                }
+                $creditVal = ($c - $d);
+                $totalCredit += $creditVal;
             }
 
-            if ($netDebit == 0 && $netCredit == 0) {
+            if ($debitVal == 0 && $creditVal == 0) {
                 continue;
             }
-
-            $totalDebit += $netDebit;
-            $totalCredit += $netCredit;
 
             $linesCollection->push((object) [
                 'id' => $acc->id,
                 'account' => $acc,
-                'debit' => $netDebit,
-                'credit' => $netCredit,
+                'debit' => $debitVal,
+                'credit' => $creditVal,
             ]);
         }
 

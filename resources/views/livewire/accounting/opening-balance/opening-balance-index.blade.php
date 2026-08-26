@@ -154,10 +154,10 @@
                                 @endif
                             </td>
                             <td class="px-5 py-3.5 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
-                                {{ $line->debit > 0 ? number_format($line->debit, 2, ',', '.') : '0' }}
+                                {{ $line->debit != 0 ? number_format($line->debit, 2, ',', '.') : '0' }}
                             </td>
                             <td class="px-5 py-3.5 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
-                                {{ $line->credit > 0 ? number_format($line->credit, 2, ',', '.') : '0' }}
+                                {{ $line->credit != 0 ? number_format($line->credit, 2, ',', '.') : '0' }}
                             </td>
                         </tr>
                     @empty
