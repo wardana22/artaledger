@@ -116,8 +116,8 @@ class BalanceSheet extends Component
             $hasChildren = ($childCounts[$id] ?? 0) > 0;
             $isExpanded = in_array($id, $this->expandedAccountIds);
 
-            // Accumulate totals from leaf posting accounts
-            if (! $hasChildren) {
+            // Accumulate subtotals from Level 1 Category Headers
+            if ($level === 1) {
                 if (str_starts_with($acc->code, '1')) {
                     $totalAssets += $amount;
                 } elseif (str_starts_with($acc->code, '2')) {
