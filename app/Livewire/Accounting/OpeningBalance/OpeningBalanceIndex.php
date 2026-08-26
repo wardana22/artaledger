@@ -75,13 +75,23 @@ class OpeningBalanceIndex extends Component
         $totalDebit = 0.0;
         $totalCredit = 0.0;
 
+        $isFirstPeriod = $selectedPeriod && ($selectedPeriod->id === $periods->first()?->id);
+
         foreach ($accounts as $acc) {
             $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) use ($startDate) {
+                ->whereHas('journalEntry', function ($q) use ($startDate, $isFirstPeriod) {
                     $q->where('status', 'posted')
-                        ->where(function ($subQ) use ($startDate) {
-                            $subQ->where('entry_type', 'opening_balance')
-                                ->orWhere('entry_date', '<', $startDate);
+                        ->where(function ($subQ) use ($startDate, $isFirstPeriod) {
+                            if ($isFirstPeriod) {
+                                $subQ->where('entry_number', 'like', 'SA-%')
+                                    ->orWhere('entry_type', 'opening_balance')
+                                    ->orWhere('source_type', 'opening_balance')
+                                    ->orWhere('entry_date', '<=', $startDate);
+                            } else {
+                                $subQ->where('entry_type', 'opening_balance')
+                                    ->orWhere('source_type', 'opening_balance')
+                                    ->orWhere('entry_date', '<', $startDate);
+                            }
                         });
                 });
 
