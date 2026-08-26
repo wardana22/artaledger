@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Accounting\OpeningBalance;
 
+use App\Models\Account;
 use App\Models\AccountingPeriod;
-use App\Models\Company;
-use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Unit;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -54,64 +54,97 @@ class OpeningBalanceIndex extends Component
 
     public function render()
     {
-        $companyId = Company::first()?->id ?? 1;
         $periods = AccountingPeriod::orderBy('start_date', 'asc')->get();
-
         $selectedPeriod = $periods->firstWhere('id', $this->periodId) ?? $periods->first();
 
-        // Fetch Opening Balance Entries up to or within the selected period
-        $openingQuery = JournalEntry::where('company_id', $companyId)
-            ->where('status', 'posted');
+        $startDate = $selectedPeriod ? $selectedPeriod->start_date : date('Y-01-01');
 
-        if ($selectedPeriod) {
-            $openingQuery->whereDate('entry_date', '<=', $selectedPeriod->start_date);
+        $query = Account::active();
+
+        if (! empty($this->search)) {
+            $term = '%'.$this->search.'%';
+            $query->where(function ($q) use ($term) {
+                $q->where('code', 'like', $term)
+                    ->orWhere('name', 'like', $term);
+            });
         }
 
-        $openingEntry = JournalEntry::where('status', 'posted')
-            ->where(function ($q) {
-                $q->where('entry_number', 'SA-2025-001')
-                    ->orWhere('source_type', 'opening_balance')
-                    ->orWhere('entry_type', 'opening');
-            })
-            ->first();
+        $accounts = $query->orderBy('code', 'asc')->get();
 
-        $lines = collect();
+        $linesCollection = collect();
         $totalDebit = 0.0;
         $totalCredit = 0.0;
 
-        if ($openingEntry) {
-            $totalDebit = (float) $openingEntry->lines()->sum('debit');
-            $totalCredit = (float) $openingEntry->lines()->sum('credit');
-
-            $query = JournalLine::with('account', 'unit')
-                ->where('journal_entry_id', $openingEntry->id);
-
-            if ($this->unitFilter !== 'all') {
-                $query->where('unit_id', $this->unitFilter);
-            }
-
-            if (! empty($this->search)) {
-                $term = '%'.$this->search.'%';
-                $query->where(function ($q) use ($term) {
-                    $q->where('description', 'like', $term)
-                        ->orWhereHas('account', function ($accQ) use ($term) {
-                            $accQ->where('code', 'like', $term)
-                                ->orWhere('name', 'like', $term);
+        foreach ($accounts as $acc) {
+            $mutQuery = JournalLine::where('account_id', $acc->id)
+                ->whereHas('journalEntry', function ($q) use ($startDate) {
+                    $q->where('status', 'posted')
+                        ->where(function ($subQ) use ($startDate) {
+                            $subQ->where('entry_type', 'opening_balance')
+                                ->orWhere('entry_date', '<', $startDate);
                         });
                 });
+
+            if ($this->unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $this->unitFilter);
             }
 
-            $lines = $query->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
-                ->orderBy('accounts.code', 'asc')
-                ->select('journal_lines.*')
-                ->paginate($this->perPage);
+            $totals = $mutQuery->selectRaw('SUM(debit) as tot_debit, SUM(credit) as tot_credit')->first();
+
+            $d = (float) ($totals->tot_debit ?? 0);
+            $c = (float) ($totals->tot_credit ?? 0);
+
+            if ($d == 0 && $c == 0 && (float) $acc->opening_balance == 0) {
+                continue;
+            }
+
+            $netDebit = 0.0;
+            $netCredit = 0.0;
+
+            if ($acc->normal_balance === 'debit') {
+                $bal = ($d - $c);
+                if ($bal > 0) {
+                    $netDebit = $bal;
+                } elseif ($bal < 0) {
+                    $netCredit = abs($bal);
+                }
+            } else {
+                $bal = ($c - $d);
+                if ($bal > 0) {
+                    $netCredit = $bal;
+                } elseif ($bal < 0) {
+                    $netDebit = abs($bal);
+                }
+            }
+
+            if ($netDebit == 0 && $netCredit == 0) {
+                continue;
+            }
+
+            $totalDebit += $netDebit;
+            $totalCredit += $netCredit;
+
+            $linesCollection->push((object) [
+                'id' => $acc->id,
+                'account' => $acc,
+                'debit' => $netDebit,
+                'credit' => $netCredit,
+            ]);
         }
+
+        $page = $this->getPage();
+        $paginatedLines = new LengthAwarePaginator(
+            $linesCollection->slice(($page - 1) * $this->perPage, $this->perPage)->values(),
+            $linesCollection->count(),
+            $this->perPage,
+            $page,
+            ['path' => LengthAwarePaginator::resolveCurrentPath()]
+        );
 
         $units = Unit::all();
 
         return view('livewire.accounting.opening-balance.opening-balance-index', [
-            'openingEntry' => $openingEntry,
-            'lines' => $lines,
+            'lines' => $paginatedLines,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
             'batchDifference' => abs($totalDebit - $totalCredit),
