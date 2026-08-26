@@ -88,14 +88,22 @@ class ProfitLoss extends Component
             }
         }
 
-        // 2. Hierarchical Rollup: Iterate level by level from max level down to 2
-        $maxLevel = collect($accountData)->max('level') ?: 4;
-        for ($lvl = $maxLevel; $lvl > 1; $lvl--) {
-            foreach ($accountData as $id => $item) {
-                if ($item['level'] == $lvl && $item['parent_id'] && isset($accountData[$item['parent_id']])) {
-                    $pId = $item['parent_id'];
-                    $accountData[$pId]['amount'] += $accountData[$id]['amount'];
-                }
+        // 2. Hierarchical Rollup: Walk up parent chain for each posting account
+        $leafAmounts = [];
+        foreach ($accountData as $id => $item) {
+            $leafAmounts[$id] = $item['amount'];
+        }
+
+        foreach ($leafAmounts as $id => $amt) {
+            if ($amt == 0.0) {
+                continue;
+            }
+            $currParentId = $accountData[$id]['parent_id'];
+            $visited = [$id];
+            while ($currParentId && isset($accountData[$currParentId]) && ! in_array($currParentId, $visited)) {
+                $accountData[$currParentId]['amount'] += $amt;
+                $visited[] = $currParentId;
+                $currParentId = $accountData[$currParentId]['parent_id'];
             }
         }
 

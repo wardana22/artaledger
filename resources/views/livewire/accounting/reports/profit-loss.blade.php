@@ -60,7 +60,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-200">
-                    @forelse ($rows as $row)
+                    @forelse ($rows as $index => $row)
                         @php
                             $acc = $row['account'];
                             $level = $row['level'];
@@ -75,6 +75,10 @@
                             $isLevel2 = $level === 2;
                             $isLevel3 = $level === 3;
                             $isHeader = $row['has_children'];
+
+                            $currPrefix = substr($acc->code, 0, 1);
+                            $nextRow = $rows[$index + 1] ?? null;
+                            $nextPrefix = $nextRow ? substr($nextRow['account']->code, 0, 1) : null;
                         @endphp
 
                         <tr class="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 
@@ -133,6 +137,84 @@
                                 @endif
                             </td>
                         </tr>
+
+                        {{-- TOTAL BANNER INLINE SETELAH AKUN 4 DAN ANAK-ANAKNYA --}}
+                        @if ($currPrefix === '4' && $nextPrefix !== '4')
+                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                                <td colspan="4" class="p-3">
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL PENDAPATAN USAHA</span>
+                                        <span class="text-base font-mono font-extrabold text-emerald-400">Rp {{ number_format($totalRevenue, 2, ',', '.') }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @elseif ($currPrefix === '5' && $nextPrefix !== '5')
+                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                                <td colspan="4" class="p-3 space-y-3">
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL BEBAN POKOK PENDAPATAN (HPP)</span>
+                                        <span class="text-base font-mono font-extrabold text-rose-400">Rp {{ number_format($totalHpp, 2, ',', '.') }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-indigo-950/80 border border-indigo-500/30 shadow-md">
+                                        <div>
+                                            <span class="text-xs font-black uppercase tracking-widest text-indigo-300 block">LABA / RUGI KOTOR (GROSS PROFIT)</span>
+                                            <span class="text-xs text-slate-400 block mt-0.5">Pendapatan Usaha dikurangi Beban Pokok Pendapatan (HPP)</span>
+                                        </div>
+                                        <span class="text-xl font-mono font-black {{ $grossProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                                            Rp {{ number_format($grossProfit, 2, ',', '.') }}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @elseif ($currPrefix === '6' && $nextPrefix !== '6')
+                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                                <td colspan="4" class="p-3 space-y-3">
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL BEBAN OPERASIONAL & ADMINISTRASI</span>
+                                        <span class="text-base font-mono font-extrabold text-rose-400">Rp {{ number_format($totalOperatingExpenses, 2, ',', '.') }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-blue-950/80 border border-blue-500/30 shadow-md">
+                                        <div>
+                                            <span class="text-xs font-black uppercase tracking-widest text-blue-300 block">LABA / RUGI OPERASIONAL (OPERATING PROFIT)</span>
+                                            <span class="text-xs text-slate-400 block mt-0.5">Laba Kotor dikurangi Total Beban Operasional</span>
+                                        </div>
+                                        <span class="text-xl font-mono font-black {{ $operatingProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                                            Rp {{ number_format($operatingProfit, 2, ',', '.') }}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @elseif (($currPrefix === '7' || $currPrefix === '8') && ($nextPrefix !== '7' && $nextPrefix !== '8'))
+                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                                <td colspan="4" class="p-3 space-y-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
+                                            <span class="font-semibold text-slate-400">Pendapatan Non-Operasional:</span>
+                                            <span class="font-mono font-bold text-emerald-400">Rp {{ number_format($otherRevenue, 2, ',', '.') }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
+                                            <span class="font-semibold text-slate-400">Beban Non-Operasional:</span>
+                                            <span class="font-mono font-bold text-rose-400">Rp {{ number_format($otherExpense, 2, ',', '.') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-800 border border-slate-700 shadow-md">
+                                        <span class="text-xs font-black uppercase tracking-widest text-slate-200">LABA / RUGI SEBELUM PAJAK (PROFIT BEFORE TAX)</span>
+                                        <span class="text-xl font-mono font-black {{ $profitBeforeTax >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                                            Rp {{ number_format($profitBeforeTax, 2, ',', '.') }}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @elseif ($currPrefix === '9' && $nextPrefix !== '9')
+                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                                <td colspan="4" class="p-3">
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">BEBAN PAJAK PENGHASILAN (INCOME TAX)</span>
+                                        <span class="text-base font-mono font-extrabold text-rose-400">Rp {{ number_format($taxExpense, 2, ',', '.') }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
                     @empty
                         <tr>
                             <td colspan="4" class="p-8 text-center text-slate-400 italic">
@@ -146,73 +228,7 @@
 
         <!-- FINANCIAL SUMMARY SECTION BANNERS -->
         <div class="bg-slate-900 border-t-2 border-slate-800 p-6 space-y-4 text-slate-100 font-mono">
-            <!-- 1. TOTAL PENDAPATAN USAHA -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL PENDAPATAN USAHA</span>
-                <span class="text-base font-extrabold text-emerald-400">Rp {{ number_format($totalRevenue, 2, ',', '.') }}</span>
-            </div>
-
-            <!-- 2. BEBAN POKOK PENDAPATAN (HPP) -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL BEBAN POKOK PENDAPATAN (HPP)</span>
-                <span class="text-base font-extrabold text-rose-400">Rp {{ number_format($totalHpp, 2, ',', '.') }}</span>
-            </div>
-
-            <!-- 3. LABA / RUGI KOTOR (GROSS PROFIT) BANNER -->
-            <div class="flex items-center justify-between p-4 rounded-2xl bg-indigo-950/80 border border-indigo-500/30 shadow-md">
-                <div>
-                    <span class="text-xs font-black uppercase tracking-widest text-indigo-300 block">LABA / RUGI KOTOR (GROSS PROFIT)</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">Pendapatan Usaha dikurangi Beban Pokok Pendapatan (HPP)</span>
-                </div>
-                <span class="text-xl font-black {{ $grossProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
-                    Rp {{ number_format($grossProfit, 2, ',', '.') }}
-                </span>
-            </div>
-
-            <!-- 4. TOTAL BEBAN OPERASIONAL -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL BEBAN OPERASIONAL & ADMINISTRASI</span>
-                <span class="text-base font-extrabold text-rose-400">Rp {{ number_format($totalOperatingExpenses, 2, ',', '.') }}</span>
-            </div>
-
-            <!-- 5. LABA / RUGI OPERASIONAL (OPERATING PROFIT) BANNER -->
-            <div class="flex items-center justify-between p-4 rounded-2xl bg-blue-950/80 border border-blue-500/30 shadow-md">
-                <div>
-                    <span class="text-xs font-black uppercase tracking-widest text-blue-300 block">LABA / RUGI OPERASIONAL (OPERATING PROFIT)</span>
-                    <span class="text-xs text-slate-400 block mt-0.5">Laba Kotor dikurangi Total Beban Operasional</span>
-                </div>
-                <span class="text-xl font-black {{ $operatingProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
-                    Rp {{ number_format($operatingProfit, 2, ',', '.') }}
-                </span>
-            </div>
-
-            <!-- 6. PENDAPATAN & BEBAN NON OPERASIONAL -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                    <span class="font-semibold text-slate-400">Pendapatan Non-Operasional:</span>
-                    <span class="font-bold text-emerald-400">Rp {{ number_format($otherRevenue, 2, ',', '.') }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                    <span class="font-semibold text-slate-400">Beban Non-Operasional:</span>
-                    <span class="font-bold text-rose-400">Rp {{ number_format($otherExpense, 2, ',', '.') }}</span>
-                </div>
-            </div>
-
-            <!-- 7. LABA SEBELUM PAJAK BANNER -->
-            <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-800 border border-slate-700 shadow-md">
-                <span class="text-xs font-black uppercase tracking-widest text-slate-200">LABA / RUGI SEBELUM PAJAK (PROFIT BEFORE TAX)</span>
-                <span class="text-xl font-black {{ $profitBeforeTax >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
-                    Rp {{ number_format($profitBeforeTax, 2, ',', '.') }}
-                </span>
-            </div>
-
-            <!-- 8. BEBAN PAJAK -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">BEBAN PAJAK PENGHASILAN (INCOME TAX)</span>
-                <span class="text-base font-extrabold text-rose-400">Rp {{ number_format($taxExpense, 2, ',', '.') }}</span>
-            </div>
-
-            <!-- 9. FINAL LABA BERSIH PERIODE BERJALAN (NET PROFIT) GLOWING CARD -->
+            <!-- FINAL LABA BERSIH PERIODE BERJALAN (NET PROFIT) GLOWING CARD -->
             <div class="p-6 rounded-3xl bg-gradient-to-r {{ $netProfit >= 0 ? 'from-emerald-950 via-slate-900 to-indigo-950 border-2 border-emerald-500/50 shadow-2xl shadow-emerald-500/10' : 'from-rose-950 via-slate-900 to-amber-950 border-2 border-rose-500/50 shadow-2xl shadow-rose-500/10' }} flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase {{ $netProfit >= 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30' }}">
