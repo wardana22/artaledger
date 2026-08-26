@@ -61,10 +61,31 @@
                 <table class="w-full text-xs text-slate-600 dark:text-slate-300">
                     <tbody>
                         @forelse ($assetRows as $row)
-                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                                <td class="py-2 font-mono font-bold w-28 text-slate-800 dark:text-slate-200">{{ $row['account']->code }}</td>
-                                <td class="py-2 font-medium text-slate-800 dark:text-slate-100">{{ $row['account']->name }}</td>
-                                <td class="py-2 text-right font-mono font-semibold text-indigo-600 dark:text-indigo-400 w-36">
+                            @php
+                                $acc = $row['account'];
+                                $level = $acc->level ?? 1;
+                                $rowClass = match ($level) {
+                                    1 => 'font-extrabold text-slate-900 dark:text-white bg-slate-100/90 dark:bg-slate-800/80',
+                                    2 => 'font-bold text-slate-800 dark:text-slate-100 bg-slate-50/70 dark:bg-slate-800/40',
+                                    3 => 'font-semibold text-slate-700 dark:text-slate-200',
+                                    default => 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                                };
+                            @endphp
+                            <tr class="{{ $rowClass }} border-b border-slate-100/60 dark:border-slate-800/60">
+                                <td class="py-2.5 font-mono font-bold w-28 text-slate-800 dark:text-slate-200 pl-2">{{ $acc->code }}</td>
+                                <td class="py-2.5 text-slate-800 dark:text-slate-100" style="padding-left: {{ ($level - 1) * 1.25 + 0.5 }}rem;">
+                                    @if ($row['has_children'])
+                                        <button wire:click="toggleAccount({{ $acc->id }})" class="inline-flex items-center gap-1.5 focus:outline-none group hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                            <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-transform duration-200 shrink-0 {{ $row['is_expanded'] ? 'rotate-90 text-indigo-500' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                            <span class="text-left">{{ $acc->name }}</span>
+                                        </button>
+                                    @else
+                                        <span class="inline-block pl-5 text-left">{{ $acc->name }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-2.5 text-right font-mono font-semibold text-indigo-600 dark:text-indigo-400 w-36 pr-2">
                                     Rp {{ number_format($row['amount'], 2, ',', '.') }}
                                 </td>
                             </tr>
@@ -97,10 +118,31 @@
                     <table class="w-full text-xs text-slate-600 dark:text-slate-300">
                         <tbody>
                             @forelse ($liabilityRows as $row)
-                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                                    <td class="py-2 font-mono font-bold w-28 text-slate-800 dark:text-slate-200">{{ $row['account']->code }}</td>
-                                    <td class="py-2 font-medium text-slate-800 dark:text-slate-100">{{ $row['account']->name }}</td>
-                                    <td class="py-2 text-right font-mono font-semibold text-amber-600 dark:text-amber-400 w-36">
+                                @php
+                                    $acc = $row['account'];
+                                    $level = $acc->level ?? 1;
+                                    $rowClass = match ($level) {
+                                        1 => 'font-extrabold text-slate-900 dark:text-white bg-amber-100/50 dark:bg-amber-900/20',
+                                        2 => 'font-bold text-slate-800 dark:text-slate-100 bg-amber-50/40 dark:bg-slate-800/40',
+                                        3 => 'font-semibold text-slate-700 dark:text-slate-200',
+                                        default => 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                                    };
+                                @endphp
+                                <tr class="{{ $rowClass }} border-b border-slate-100/60 dark:border-slate-800/60">
+                                    <td class="py-2.5 font-mono font-bold w-28 text-slate-800 dark:text-slate-200 pl-2">{{ $acc->code }}</td>
+                                    <td class="py-2.5 text-slate-800 dark:text-slate-100" style="padding-left: {{ ($level - 1) * 1.25 + 0.5 }}rem;">
+                                        @if ($row['has_children'])
+                                            <button wire:click="toggleAccount({{ $acc->id }})" class="inline-flex items-center gap-1.5 focus:outline-none group hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                                                <svg class="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-transform duration-200 shrink-0 {{ $row['is_expanded'] ? 'rotate-90 text-amber-500' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                </svg>
+                                                <span class="text-left">{{ $acc->name }}</span>
+                                            </button>
+                                        @else
+                                            <span class="inline-block pl-5 text-left">{{ $acc->name }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-2.5 text-right font-mono font-semibold text-amber-600 dark:text-amber-400 w-36 pr-2">
                                         Rp {{ number_format($row['amount'], 2, ',', '.') }}
                                     </td>
                                 </tr>
@@ -112,8 +154,8 @@
                         </tbody>
                         <tfoot>
                             <tr class="font-bold border-t border-slate-100 dark:border-slate-800">
-                                <td colspan="2" class="py-2 uppercase text-slate-600">Subtotal Kewajiban:</td>
-                                <td class="py-2 text-right font-mono text-amber-600">Rp {{ number_format($totalLiabilities, 2, ',', '.') }}</td>
+                                <td colspan="2" class="py-2 uppercase text-slate-600 pl-2">Subtotal Kewajiban:</td>
+                                <td class="py-2 text-right font-mono text-amber-600 pr-2">Rp {{ number_format($totalLiabilities, 2, ',', '.') }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -128,19 +170,40 @@
                     <table class="w-full text-xs text-slate-600 dark:text-slate-300">
                         <tbody>
                             @foreach ($equityRows as $row)
-                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                                    <td class="py-2 font-mono font-bold w-28 text-slate-800 dark:text-slate-200">{{ $row['account']->code }}</td>
-                                    <td class="py-2 font-medium text-slate-800 dark:text-slate-100">{{ $row['account']->name }}</td>
-                                    <td class="py-2 text-right font-mono font-semibold text-purple-600 dark:text-purple-400 w-36">
+                                @php
+                                    $acc = $row['account'];
+                                    $level = $acc->level ?? 1;
+                                    $rowClass = match ($level) {
+                                        1 => 'font-extrabold text-slate-900 dark:text-white bg-purple-100/50 dark:bg-purple-900/20',
+                                        2 => 'font-bold text-slate-800 dark:text-slate-100 bg-purple-50/40 dark:bg-slate-800/40',
+                                        3 => 'font-semibold text-slate-700 dark:text-slate-200',
+                                        default => 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                                    };
+                                @endphp
+                                <tr class="{{ $rowClass }} border-b border-slate-100/60 dark:border-slate-800/60">
+                                    <td class="py-2.5 font-mono font-bold w-28 text-slate-800 dark:text-slate-200 pl-2">{{ $acc->code }}</td>
+                                    <td class="py-2.5 text-slate-800 dark:text-slate-100" style="padding-left: {{ ($level - 1) * 1.25 + 0.5 }}rem;">
+                                        @if ($row['has_children'])
+                                            <button wire:click="toggleAccount({{ $acc->id }})" class="inline-flex items-center gap-1.5 focus:outline-none group hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                                <svg class="w-4 h-4 text-slate-400 group-hover:text-purple-500 transition-transform duration-200 shrink-0 {{ $row['is_expanded'] ? 'rotate-90 text-purple-500' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                </svg>
+                                                <span class="text-left">{{ $acc->name }}</span>
+                                            </button>
+                                        @else
+                                            <span class="inline-block pl-5 text-left">{{ $acc->name }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-2.5 text-right font-mono font-semibold text-purple-600 dark:text-purple-400 w-36 pr-2">
                                         Rp {{ number_format($row['amount'], 2, ',', '.') }}
                                     </td>
                                 </tr>
                             @endforeach
                             <!-- Current Period Net Profit Row -->
-                            <tr class="bg-purple-50/50 dark:bg-purple-900/10 font-bold">
-                                <td class="py-2 font-mono text-purple-600 dark:text-purple-400">-</td>
-                                <td class="py-2 text-purple-700 dark:text-purple-300">Laba / (Rugi) Periode Berjalan</td>
-                                <td class="py-2 text-right font-mono text-purple-600 dark:text-purple-400 w-36">
+                            <tr class="bg-purple-50/70 dark:bg-purple-900/20 font-bold border-b border-purple-100/60 dark:border-slate-800/60">
+                                <td class="py-2.5 font-mono text-purple-600 dark:text-purple-400 pl-2">-</td>
+                                <td class="py-2.5 text-purple-700 dark:text-purple-300 pl-5">Laba / (Rugi) Periode Berjalan</td>
+                                <td class="py-2.5 text-right font-mono text-purple-600 dark:text-purple-400 w-36 pr-2">
                                     Rp {{ number_format($currentNetProfit, 2, ',', '.') }}
                                 </td>
                             </tr>

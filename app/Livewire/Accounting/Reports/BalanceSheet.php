@@ -17,86 +17,158 @@ class BalanceSheet extends Component
 
     public string $unitFilter = 'all';
 
+    public array $expandedAccountIds = [];
+
     public function mount(): void
     {
         $this->asOfDate = date('Y-12-31');
     }
 
+    public function toggleAccount(int $accountId): void
+    {
+        if (in_array($accountId, $this->expandedAccountIds)) {
+            $this->expandedAccountIds = array_values(array_diff($this->expandedAccountIds, [$accountId]));
+        } else {
+            $this->expandedAccountIds[] = $accountId;
+        }
+    }
+
     public function render()
     {
-        // 1. Assets (code starts with 1)
-        $assetAccounts = Account::where('code', 'like', '1%')->posting()->active()->orderBy('code', 'asc')->get();
-        $assetRows = [];
+        $accounts = Account::where(function ($q) {
+            $q->where('code', 'like', '1%')
+                ->orWhere('code', 'like', '2%')
+                ->orWhere('code', 'like', '3%')
+                ->orWhere('report_type', 'neraca');
+        })
+            ->active()
+            ->orderBy('code', 'asc')
+            ->get();
+
+        $accountData = [];
+        $childCounts = [];
+
+        foreach ($accounts as $acc) {
+            $accountData[$acc->id] = [
+                'account' => $acc,
+                'id' => $acc->id,
+                'parent_id' => $acc->parent_id,
+                'level' => $acc->level ?? 1,
+                'amount' => 0.0,
+            ];
+
+            if ($acc->parent_id) {
+                $childCounts[$acc->parent_id] = ($childCounts[$acc->parent_id] ?? 0) + 1;
+            }
+        }
+
+        // 1. Fetch Mutations & Opening Balances up to asOfDate
+        $mutResults = JournalLine::whereHas('journalEntry', function ($q) {
+            $q->where('status', 'posted')
+                ->where('entry_date', '<=', $this->asOfDate);
+        })
+            ->when($this->unitFilter !== 'all', function ($q) {
+                $q->where('unit_id', $this->unitFilter);
+            })
+            ->select('account_id')
+            ->selectRaw('SUM(debit) as total_debit, SUM(credit) as total_credit')
+            ->groupBy('account_id')
+            ->get();
+
+        foreach ($mutResults as $res) {
+            if (isset($accountData[$res->account_id])) {
+                $acc = $accountData[$res->account_id]['account'];
+                $d = (float) $res->total_debit;
+                $c = (float) $res->total_credit;
+
+                if ($acc->normal_balance === 'debit') {
+                    $accountData[$res->account_id]['amount'] += ($d - $c);
+                } else {
+                    $accountData[$res->account_id]['amount'] += ($c - $d);
+                }
+            }
+        }
+
+        // Add opening balance from account table for accounts where opening balance isn't in journal_lines
+        foreach ($accountData as $id => &$item) {
+            $acc = $item['account'];
+            $opBal = (float) $acc->opening_balance;
+            if ($opBal != 0) {
+                $hasOpLine = JournalLine::where('account_id', $acc->id)
+                    ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_type', 'opening_balance'))
+                    ->exists();
+
+                if (! $hasOpLine) {
+                    $item['amount'] += $opBal;
+                }
+            }
+        }
+        unset($item);
+
+        // 2. Hierarchical Rollup: Iterate level by level from max level down to 2
+        $maxLevel = collect($accountData)->max('level') ?: 4;
+        for ($lvl = $maxLevel; $lvl > 1; $lvl--) {
+            foreach ($accountData as $id => $item) {
+                if ($item['level'] == $lvl && $item['parent_id'] && isset($accountData[$item['parent_id']])) {
+                    $pId = $item['parent_id'];
+                    $accountData[$pId]['amount'] += $accountData[$id]['amount'];
+                }
+            }
+        }
+
+        // 3. Accumulate Subtotals & Build Filtered Rows for Assets, Liabilities, Equity
         $totalAssets = 0.0;
-
-        foreach ($assetAccounts as $acc) {
-            $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) {
-                    $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate);
-                });
-
-            if ($this->unitFilter !== 'all') {
-                $mutQuery->where('unit_id', $this->unitFilter);
-            }
-
-            $mutations = $mutQuery->selectRaw('SUM(debit - credit) as amount')->value('amount') ?? 0;
-
-            $amount = (float) $mutations + (float) $acc->opening_balance;
-            if ($amount != 0) {
-                $totalAssets += $amount;
-                $assetRows[] = ['account' => $acc, 'amount' => $amount];
-            }
-        }
-
-        // 2. Liabilities (code starts with 2)
-        $liabilityAccounts = Account::where('code', 'like', '2%')->posting()->active()->orderBy('code', 'asc')->get();
-        $liabilityRows = [];
         $totalLiabilities = 0.0;
-
-        foreach ($liabilityAccounts as $acc) {
-            $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) {
-                    $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate);
-                });
-
-            if ($this->unitFilter !== 'all') {
-                $mutQuery->where('unit_id', $this->unitFilter);
-            }
-
-            $mutations = $mutQuery->selectRaw('SUM(credit - debit) as amount')->value('amount') ?? 0;
-
-            $amount = (float) $mutations + (float) $acc->opening_balance;
-            if ($amount != 0) {
-                $totalLiabilities += $amount;
-                $liabilityRows[] = ['account' => $acc, 'amount' => $amount];
-            }
-        }
-
-        // 3. Equity (code starts with 3)
-        $equityAccounts = Account::where('code', 'like', '3%')->posting()->active()->orderBy('code', 'asc')->get();
-        $equityRows = [];
         $totalEquity = 0.0;
 
-        foreach ($equityAccounts as $acc) {
-            $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) {
-                    $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate);
-                });
+        $assetRows = [];
+        $liabilityRows = [];
+        $equityRows = [];
 
-            if ($this->unitFilter !== 'all') {
-                $mutQuery->where('unit_id', $this->unitFilter);
+        foreach ($accountData as $id => $item) {
+            $acc = $item['account'];
+            $level = $item['level'];
+            $amount = $item['amount'];
+            $hasChildren = ($childCounts[$id] ?? 0) > 0;
+            $isExpanded = in_array($id, $this->expandedAccountIds);
+
+            // Accumulate totals from leaf posting accounts
+            if (! $hasChildren) {
+                if (str_starts_with($acc->code, '1')) {
+                    $totalAssets += $amount;
+                } elseif (str_starts_with($acc->code, '2')) {
+                    $totalLiabilities += $amount;
+                } elseif (str_starts_with($acc->code, '3')) {
+                    $totalEquity += $amount;
+                }
             }
 
-            $mutations = $mutQuery->selectRaw('SUM(credit - debit) as amount')->value('amount') ?? 0;
+            // Filter visibility: Level <= 3 or ancestor expanded
+            if ($level > 3 && ! $this->isAncestorExpanded($acc, $accountData)) {
+                continue;
+            }
 
-            $amount = (float) $mutations + (float) $acc->opening_balance;
-            if ($amount != 0) {
-                $totalEquity += $amount;
-                $equityRows[] = ['account' => $acc, 'amount' => $amount];
+            if ($amount == 0 && ! $hasChildren) {
+                continue;
+            }
+
+            $rowPayload = [
+                'account' => $acc,
+                'amount' => $amount,
+                'has_children' => $hasChildren,
+                'is_expanded' => $isExpanded,
+            ];
+
+            if (str_starts_with($acc->code, '1')) {
+                $assetRows[] = $rowPayload;
+            } elseif (str_starts_with($acc->code, '2')) {
+                $liabilityRows[] = $rowPayload;
+            } elseif (str_starts_with($acc->code, '3')) {
+                $equityRows[] = $rowPayload;
             }
         }
 
-        // Add Net Profit to Equity
+        // 4. Calculate Net Profit up to asOfDate
         $revQuery = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'credit'))
             ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate));
 
@@ -134,5 +206,27 @@ class BalanceSheet extends Component
             'isBalanced' => $isBalanced,
             'units' => $units,
         ]);
+    }
+
+    private function isAncestorExpanded(Account $account, array $accountData): bool
+    {
+        $currentParentId = $account->parent_id;
+
+        while ($currentParentId) {
+            if (! isset($accountData[$currentParentId])) {
+                break;
+            }
+
+            $parentItem = $accountData[$currentParentId];
+            if ($parentItem['level'] >= 3) {
+                if (! in_array($currentParentId, $this->expandedAccountIds)) {
+                    return false;
+                }
+            }
+
+            $currentParentId = $parentItem['parent_id'];
+        }
+
+        return true;
     }
 }
