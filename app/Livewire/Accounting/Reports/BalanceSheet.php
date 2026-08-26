@@ -89,22 +89,6 @@ class BalanceSheet extends Component
             }
         }
 
-        // Add opening balance from account table for accounts where opening balance isn't in journal_lines
-        foreach ($accountData as $id => &$item) {
-            $acc = $item['account'];
-            $opBal = (float) $acc->opening_balance;
-            if ($opBal != 0) {
-                $hasOpLine = JournalLine::where('account_id', $acc->id)
-                    ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_type', 'opening_balance'))
-                    ->exists();
-
-                if (! $hasOpLine) {
-                    $item['amount'] += $opBal;
-                }
-            }
-        }
-        unset($item);
-
         // 2. Hierarchical Rollup: Iterate level by level from max level down to 2
         $maxLevel = collect($accountData)->max('level') ?: 4;
         for ($lvl = $maxLevel; $lvl > 1; $lvl--) {
