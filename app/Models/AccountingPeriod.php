@@ -19,6 +19,12 @@ class AccountingPeriod extends Model
         'start_date',
         'end_date',
         'status',
+        'lock_key',
+        'closed_at',
+        'closed_by',
+        'opened_at',
+        'opened_by',
+        'reopen_reason',
     ];
 
     protected $casts = [
@@ -26,6 +32,8 @@ class AccountingPeriod extends Model
         'month' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
+        'closed_at' => 'datetime',
+        'opened_at' => 'datetime',
     ];
 
     public function getNameAttribute(): string
@@ -42,6 +50,16 @@ class AccountingPeriod extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function closedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function openedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'opened_by');
     }
 
     public function journalEntries(): HasMany

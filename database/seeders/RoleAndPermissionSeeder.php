@@ -38,6 +38,7 @@ class RoleAndPermissionSeeder extends Seeder
             'settings.view' => 'Melihat Pengaturan Sistem (Unit & Jenis Jurnal)',
             'settings.manage' => 'Kelola Master Unit & Jenis Jurnal',
             'settings.manage_roles' => 'Kelola Peran (Roles) & Hak Akses Dinamis',
+            'periods.manage_keys' => 'Kelola & Melihat Kunci Rahasia Penutupan Periode',
         ];
 
         foreach ($permissions as $name => $description) {
