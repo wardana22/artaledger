@@ -23,15 +23,31 @@ class GeneralLedger extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('reports.general_ledger') && ! auth()->user()->can('reports.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->startDate = date('Y-01-01');
         $this->endDate = date('Y-12-31');
 
         $firstHeaderAccount = Account::group()->active()->orderBy('code', 'asc')->first();
         $this->selectedAccountId = $firstHeaderAccount?->id;
+
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds)) {
+                $this->unitFilter = (string) $allowedIds[0];
+            }
+        }
     }
 
     public function render()
     {
+        $user = auth()->user();
+        $allowedUnits = $user ? $user->allowedUnits() : Unit::all();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
         // Only Header (Group) Accounts
         $accounts = Account::group()->active()->orderBy('code', 'asc')->get(['id', 'code', 'name']);
         $selectedAccount = Account::find($this->selectedAccountId);
@@ -57,6 +73,10 @@ class GeneralLedger extends Component
                         ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
                 });
 
+            if (! empty($allowedUnitIds)) {
+                $linesQuery->whereIn('unit_id', $allowedUnitIds);
+            }
+
             if ($this->unitFilter !== 'all') {
                 $linesQuery->where('unit_id', $this->unitFilter);
             }
@@ -64,15 +84,13 @@ class GeneralLedger extends Component
             $lines = $linesQuery->get()->sortBy('journalEntry.entry_date');
         }
 
-        $units = Unit::all();
-
         return view('livewire.accounting.reports.general-ledger', [
             'accounts' => $accounts,
             'selectedAccount' => $selectedAccount,
             'lines' => $lines,
             'openingBalance' => $openingBalance,
             'childAccountsCount' => $childAccountsCount,
-            'units' => $units,
+            'units' => $allowedUnits,
         ]);
     }
 }

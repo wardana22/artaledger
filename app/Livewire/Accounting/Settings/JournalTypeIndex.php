@@ -28,6 +28,13 @@ class JournalTypeIndex extends Component
 
     public string $description = '';
 
+    public function mount(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('settings.journal_types') && ! auth()->user()->can('settings.manage')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -61,6 +68,12 @@ class JournalTypeIndex extends Component
 
     public function save(): void
     {
+        if (auth()->check() && ! auth()->user()->can('settings.manage') && ! auth()->user()->can('settings.journal_types')) {
+            session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin [settings.journal_types] untuk mengedit Master Jenis Jurnal.');
+
+            return;
+        }
+
         $rules = [
             'code' => 'required|string|max:20|unique:journal_types,code,'.$this->editingId,
             'name' => 'required|string|max:255',
@@ -84,6 +97,12 @@ class JournalTypeIndex extends Component
 
     public function delete(int $id): void
     {
+        if (auth()->check() && ! auth()->user()->can('settings.manage') && ! auth()->user()->can('settings.journal_types')) {
+            session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin [settings.journal_types] untuk menghapus Master Jenis Jurnal.');
+
+            return;
+        }
+
         $type = JournalType::findOrFail($id);
 
         if ($type->journalEntries()->count() > 0) {

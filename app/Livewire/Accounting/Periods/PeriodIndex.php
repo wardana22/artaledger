@@ -35,6 +35,10 @@ class PeriodIndex extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('periods.view') && ! auth()->user()->can('periods.manage')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->selectedYear = (int) date('Y');
         $this->year = (int) date('Y');
         $this->month = (int) date('n');

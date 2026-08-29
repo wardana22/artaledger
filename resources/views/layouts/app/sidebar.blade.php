@@ -11,51 +11,113 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="space-y-2">
-                <flux:sidebar.group :heading="__('Manajemen Akuntansi')" class="grid">
-                <flux:sidebar.item icon="document-text" :href="route('accounting.journals.index')" :current="request()->routeIs('accounting.journals.*') || request()->routeIs('accounting.adjustments.*')" wire:navigate>
-                        {{ __('Jurnal Transaksi') }}
-                    </flux:sidebar.item>    
-                <flux:sidebar.item icon="arrow-down-tray" :href="route('accounting.import.index')" :current="request()->routeIs('accounting.import.*')" wire:navigate>
-                        {{ __('Import Jurnal Excel') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="calendar" :href="route('accounting.periods.index')" :current="request()->routeIs('accounting.periods.*')" wire:navigate>
-                        {{ __('Periode Akuntansi') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+                @if (auth()->user()?->can('journals.view') || auth()->user()?->can('journals.import') || auth()->user()?->can('periods.view') || auth()->user()?->can('periods.manage'))
+                    <flux:sidebar.group :heading="__('Manajemen Akuntansi')" class="grid">
+                        @if (auth()->user()?->can('journals.view'))
+                            <flux:sidebar.item icon="document-text" :href="route('accounting.journals.index')" :current="request()->routeIs('accounting.journals.*') || request()->routeIs('accounting.adjustments.*')" wire:navigate>
+                                {{ __('Jurnal Transaksi') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('journals.import'))
+                            <flux:sidebar.item icon="arrow-down-tray" :href="route('accounting.import.index')" :current="request()->routeIs('accounting.import.*')" wire:navigate>
+                                {{ __('Import Jurnal Excel') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('periods.view') || auth()->user()?->can('periods.manage'))
+                            <flux:sidebar.item icon="calendar" :href="route('accounting.periods.index')" :current="request()->routeIs('accounting.periods.*')" wire:navigate>
+                                {{ __('Periode Akuntansi') }}
+                            </flux:sidebar.item>
+                        @endif
+                    </flux:sidebar.group>
 
-                <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />
+                    <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />
+                @endif
 
-                <flux:sidebar.group :heading="__('Laporan Keuangan')" class="grid">
-                    <flux:sidebar.item icon="book-open" :href="route('accounting.reports.general-ledger')" :current="request()->routeIs('accounting.reports.general-ledger') || request()->routeIs('accounting.reports.subsidiary-ledger')" wire:navigate>
-                        {{ __('Buku Besar') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="scale" :href="route('accounting.reports.worksheet')" :current="request()->routeIs('accounting.reports.worksheet') || request()->routeIs('accounting.reports.trial-balance') || request()->routeIs('accounting.reports.balance-sheet')" wire:navigate>
-                        {{ __('Neraca') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="arrow-trending-up" :href="route('accounting.reports.profit-loss')" :current="request()->routeIs('accounting.reports.profit-loss')" wire:navigate>
-                        {{ __('Laba Rugi') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="currency-dollar" :href="route('accounting.reports.cash-flow')" :current="request()->routeIs('accounting.reports.cash-flow')" wire:navigate>
-                        {{ __('Arus Kas') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="calculator" :href="route('accounting.reports.opening-balance')" :current="request()->routeIs('accounting.reports.opening-balance')" wire:navigate>
-                        {{ __('Saldo Awal') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="document-chart-bar" :href="route('accounting.reports.changes-in-equity')" :current="request()->routeIs('accounting.reports.changes-in-equity')" wire:navigate>
-                        {{ __('Perubahan Ekuitas') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+                @if (auth()->user()?->can('reports.view') || auth()->user()?->can('reports.general_ledger') || auth()->user()?->can('reports.subsidiary_ledger') || auth()->user()?->can('reports.worksheet') || auth()->user()?->can('reports.trial_balance') || auth()->user()?->can('reports.balance_sheet') || auth()->user()?->can('reports.profit_loss') || auth()->user()?->can('reports.cash_flow') || auth()->user()?->can('reports.opening_balance') || auth()->user()?->can('reports.changes_in_equity'))
+                    @php
+                        $glRoute = route('accounting.reports.general-ledger');
+                        if (! auth()->user()?->can('reports.general_ledger') && ! auth()->user()?->can('reports.view') && auth()->user()?->can('reports.subsidiary_ledger')) {
+                            $glRoute = route('accounting.reports.subsidiary-ledger');
+                        }
 
-                <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />
+                        $neracaRoute = route('accounting.reports.worksheet');
+                        if (! auth()->user()?->can('reports.worksheet') && ! auth()->user()?->can('reports.view')) {
+                            if (auth()->user()?->can('reports.trial_balance')) {
+                                $neracaRoute = route('accounting.reports.trial-balance');
+                            } elseif (auth()->user()?->can('reports.balance_sheet')) {
+                                $neracaRoute = route('accounting.reports.balance-sheet');
+                            }
+                        }
+                    @endphp
+                    <flux:sidebar.group :heading="__('Laporan Keuangan')" class="grid">
+                        @if (auth()->user()?->can('reports.general_ledger') || auth()->user()?->can('reports.subsidiary_ledger') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="book-open" :href="$glRoute" :current="request()->routeIs('accounting.reports.general-ledger') || request()->routeIs('accounting.reports.subsidiary-ledger')" wire:navigate>
+                                {{ __('Buku Besar') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('reports.worksheet') || auth()->user()?->can('reports.trial_balance') || auth()->user()?->can('reports.balance_sheet') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="scale" :href="$neracaRoute" :current="request()->routeIs('accounting.reports.worksheet') || request()->routeIs('accounting.reports.trial-balance') || request()->routeIs('accounting.reports.balance-sheet')" wire:navigate>
+                                {{ __('Neraca') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('reports.profit_loss') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="arrow-trending-up" :href="route('accounting.reports.profit-loss')" :current="request()->routeIs('accounting.reports.profit-loss')" wire:navigate>
+                                {{ __('Laba Rugi') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('reports.cash_flow') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="currency-dollar" :href="route('accounting.reports.cash-flow')" :current="request()->routeIs('accounting.reports.cash-flow')" wire:navigate>
+                                {{ __('Arus Kas') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('reports.opening_balance') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="calculator" :href="route('accounting.reports.opening-balance')" :current="request()->routeIs('accounting.reports.opening-balance')" wire:navigate>
+                                {{ __('Saldo Awal') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('reports.changes_in_equity') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="document-chart-bar" :href="route('accounting.reports.changes-in-equity')" :current="request()->routeIs('accounting.reports.changes-in-equity')" wire:navigate>
+                                {{ __('Perubahan Ekuitas') }}
+                            </flux:sidebar.item>
+                        @endif
+                    </flux:sidebar.group>
 
-                <flux:sidebar.group :heading="__('Pengaturan')" class="grid">
-                    <flux:sidebar.item icon="cog-6-tooth" :href="route('accounting.accounts.index')" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*')" wire:navigate>
-                        {{ __('Master Akuntansi') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="user-group" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*')" wire:navigate>
-                        {{ __('Pengguna & Hak Akses') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+                    <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />
+                @endif
+
+                @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types') || auth()->user()?->can('settings.units') || auth()->user()?->can('admin.users') || auth()->user()?->can('admin.roles') || auth()->user()?->can('admin.audit_logs'))
+                    @php
+                        $masterRoute = route('accounting.accounts.index');
+                        if (! auth()->user()?->can('accounts.view')) {
+                            if (auth()->user()?->can('settings.journal_types')) {
+                                $masterRoute = route('accounting.journal-types.index');
+                            } elseif (auth()->user()?->can('settings.units')) {
+                                $masterRoute = route('accounting.units.index');
+                            }
+                        }
+
+                        $adminRoute = route('admin.users.index');
+                        if (! auth()->user()?->can('admin.users')) {
+                            if (auth()->user()?->can('admin.roles') || auth()->user()?->can('settings.manage_roles')) {
+                                $adminRoute = route('admin.roles.index');
+                            } elseif (auth()->user()?->can('admin.audit_logs')) {
+                                $adminRoute = route('admin.audit-logs.index');
+                            }
+                        }
+                    @endphp
+                    <flux:sidebar.group :heading="__('Pengaturan')" class="grid">
+                        @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types') || auth()->user()?->can('settings.units'))
+                            <flux:sidebar.item icon="cog-6-tooth" :href="$masterRoute" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*')" wire:navigate>
+                                {{ __('Master Akuntansi') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('admin.users') || auth()->user()?->can('admin.roles') || auth()->user()?->can('admin.audit_logs') || auth()->user()?->can('settings.manage_roles'))
+                            <flux:sidebar.item icon="user-group" :href="$adminRoute" :current="request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*') || request()->routeIs('admin.audit-logs.*')" wire:navigate>
+                                {{ __('Pengguna & Hak Akses') }}
+                            </flux:sidebar.item>
+                        @endif
+                    </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />

@@ -21,7 +21,19 @@ class BalanceSheet extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('reports.balance_sheet') && ! auth()->user()->can('reports.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->asOfDate = date('Y-12-31');
+
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds)) {
+                $this->unitFilter = (string) $allowedIds[0];
+            }
+        }
     }
 
     public function toggleAccount(int $accountId): void
@@ -35,6 +47,10 @@ class BalanceSheet extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $allowedUnits = $user ? $user->allowedUnits() : Unit::all();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
         $accounts = Account::where(function ($q) {
             $q->where('code', 'like', '1%')
                 ->orWhere('code', 'like', '2%')
@@ -67,6 +83,9 @@ class BalanceSheet extends Component
             $q->where('status', 'posted')
                 ->where('entry_date', '<=', $this->asOfDate);
         })
+            ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
+                $q->whereIn('unit_id', $allowedUnitIds);
+            })
             ->when($this->unitFilter !== 'all', function ($q) {
                 $q->where('unit_id', $this->unitFilter);
             })
@@ -154,7 +173,8 @@ class BalanceSheet extends Component
 
         // 4. Calculate Net Profit up to asOfDate
         $revQuery = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'credit'))
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate));
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate))
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
 
         if ($this->unitFilter !== 'all') {
             $revQuery->where('unit_id', $this->unitFilter);
@@ -163,7 +183,8 @@ class BalanceSheet extends Component
         $revenue = $revQuery->selectRaw('SUM(credit - debit) as total')->value('total') ?? 0;
 
         $expQuery = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'debit'))
-            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate));
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->where('entry_date', '<=', $this->asOfDate))
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
 
         if ($this->unitFilter !== 'all') {
             $expQuery->where('unit_id', $this->unitFilter);
@@ -176,7 +197,6 @@ class BalanceSheet extends Component
 
         $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity;
         $isBalanced = abs($totalAssets - $totalLiabilitiesAndEquity) < 0.01;
-        $units = Unit::all();
 
         return view('livewire.accounting.reports.balance-sheet', [
             'assetRows' => $assetRows,
@@ -188,7 +208,7 @@ class BalanceSheet extends Component
             'currentNetProfit' => $currentNetProfit,
             'totalLiabilitiesAndEquity' => $totalLiabilitiesAndEquity,
             'isBalanced' => $isBalanced,
-            'units' => $units,
+            'units' => $allowedUnits,
         ]);
     }
 

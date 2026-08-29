@@ -86,6 +86,7 @@ test('journal posting records audit log entry with entry number', function () {
 });
 
 test('audit log index livewire component displays records and filters correctly', function () {
+    $this->staffUser->givePermissionTo('admin.audit_logs');
     event(new Login('web', $this->staffUser, false));
 
     Livewire::actingAs($this->staffUser)

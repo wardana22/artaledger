@@ -222,15 +222,26 @@ class JournalPostingService
      */
     public function deleteJournalEntry(JournalEntry $journalEntry): void
     {
-        if ($journalEntry->status === 'posted') {
-            throw new Exception("Akses Ditolak! Jurnal '{$journalEntry->entry_number}' berstatus POSTED dan tidak dapat dihapus demi keamanan audit. Transaksi yang sudah terposting harus dibalikkan melalui Jurnal Pembalik (Reversal).");
+        $canDeletePosted = auth()->check() && (auth()->user()->can('journals.delete') || auth()->user()->hasRole('Super Admin'));
+
+        if ($journalEntry->status === 'posted' && ! $canDeletePosted) {
+            throw new Exception('Akses Ditolak! Anda tidak memiliki izin [journals.delete] untuk menghapus jurnal terposting.');
         }
 
-        if ($journalEntry->status === 'reversed') {
-            throw new Exception("Jurnal Reversal ({$journalEntry->entry_number}) berstatus terkunci dan tidak dapat dihapus.");
+        if ($journalEntry->status === 'reversed' && ! $canDeletePosted) {
+            throw new Exception("Jurnal Reversal ({$journalEntry->entry_number}) berstatus terkunci.");
         }
 
         DB::transaction(function () use ($journalEntry) {
+            AuditLogService::record(
+                'journal.deleted',
+                "Menghapus Jurnal ({$journalEntry->entry_number} - Status: {$journalEntry->status})",
+                $journalEntry,
+                $journalEntry->toArray(),
+                null,
+                auth()->id()
+            );
+
             $journalEntry->lines()->delete();
             $journalEntry->delete();
         });

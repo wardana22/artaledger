@@ -40,6 +40,14 @@ class JournalIndex extends Component
         if (request()->has('status') && ! empty(request()->get('status'))) {
             $this->statusFilter = request()->get('status');
         }
+
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds)) {
+                $this->unitFilter = (string) $allowedIds[0];
+            }
+        }
     }
 
     public function viewJournalDetail(int $id): void
@@ -127,6 +135,10 @@ class JournalIndex extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $allowedUnits = $user ? $user->allowedUnits() : Unit::all();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
         $query = JournalEntry::with(['lines.account', 'lines.unit', 'journalType', 'postedBy', 'period'])
             ->when($this->search !== '', fn ($q) => $q->where(fn ($sq) => $sq->where('entry_number', 'like', "%{$this->search}%")
                 ->orWhere('document_number', 'like', "%{$this->search}%")
@@ -135,17 +147,17 @@ class JournalIndex extends Component
             ->when($this->statusFilter === 'posted', fn ($q) => $q->where('status', 'posted'))
             ->when($this->statusFilter === 'reversed', fn ($q) => $q->where('status', 'reversed'))
             ->when($this->statusFilter === 'all', fn ($q) => $q->whereIn('status', ['posted', 'reversed']))
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->whereIn('unit_id', $allowedUnitIds)))
             ->when($this->unitFilter !== 'all', fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->where('unit_id', $this->unitFilter)))
             ->when(! empty($this->startDate), fn ($q) => $q->whereDate('entry_date', '>=', $this->startDate))
             ->when(! empty($this->endDate), fn ($q) => $q->whereDate('entry_date', '<=', $this->endDate))
             ->orderByDesc('id');
 
         $journals = $query->paginate($this->perPage);
-        $units = Unit::all();
 
         return view('livewire.accounting.journals.index', [
             'journals' => $journals,
-            'units' => $units,
+            'units' => $allowedUnits,
         ]);
     }
 }

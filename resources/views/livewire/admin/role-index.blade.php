@@ -126,4 +126,108 @@
             </table>
         </div>
     </div>
+
+    <!-- MODAL FORM PERAN & HAK AKSES -->
+    @if ($showRoleModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                <!-- Modal Header -->
+                <div class="px-6 py-4 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">
+                            {{ $editingRoleId ? 'Edit Hak Akses Peran: ' . $roleName : 'Tambah Peran Dinamis Baru' }}
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Atur nama peran dan tentukan akses fitur/modul yang diizinkan untuk peran ini.
+                        </p>
+                    </div>
+                    <button wire:click="$set('showRoleModal', false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body (Form) -->
+                <form wire:submit="saveRole" class="p-6 space-y-5 overflow-y-auto flex-1">
+                    <!-- Nama Peran -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                            Nama Peran (Role Name) *
+                        </label>
+                        <input 
+                            wire:model="roleName"
+                            type="text" 
+                            placeholder="Contoh: Manajer Keuangan / Kasir / Auditor Khusus" 
+                            class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            @if ($editingRoleId && $roleName === 'Super Admin') readonly @endif
+                        />
+                        @error('roleName') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Groups Permissions -->
+                    <div class="space-y-4">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                            Pilih Hak Akses Modul (Permissions)
+                        </label>
+
+                        @foreach ($groupedPermissions as $moduleName => $subModules)
+                            <div class="p-3.5 bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 rounded-xl space-y-3">
+                                <div class="border-b border-slate-200/60 dark:border-slate-700/60 pb-1">
+                                    <span class="text-xs font-extrabold tracking-wider text-indigo-600 dark:text-indigo-400 uppercase">
+                                        {{ $moduleName }}
+                                    </span>
+                                </div>
+                                <div class="space-y-3 pl-1">
+                                    @foreach ($subModules as $subModuleName => $perms)
+                                        @if ($perms->count() > 0)
+                                            <div class="space-y-1.5">
+                                                <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                                                    {{ $subModuleName }}
+                                                </span>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pl-2">
+                                                    @foreach ($perms as $perm)
+                                                        <label class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer transition-all">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                wire:model="selectedPermissions" 
+                                                                value="{{ $perm->name }}"
+                                                                class="rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-700"
+                                                            />
+                                                            <span class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                                                {{ $permissionLabels[$perm->name] ?? $perm->name }}
+                                                            </span>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                        @error('selectedPermissions') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Modal Actions Footer -->
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
+                        <button 
+                            type="button" 
+                            wire:click="$set('showRoleModal', false)"
+                            class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition-all">
+                            Batal
+                        </button>
+                        <button 
+                            type="submit" 
+                            class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Simpan Peran & Hak Akses
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>

@@ -104,7 +104,9 @@
                     wire:model.live="unitFilter" 
                     aria-label="Filter Unit Perusahaan"
                     class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="all">Semua Unit Perusahaan</option>
+                    @if (auth()->user()?->hasGlobalUnitAccess())
+                        <option value="all">Semua Unit Perusahaan</option>
+                    @endif
                     @foreach ($units as $u)
                         <option value="{{ $u->id }}">{{ $u->code }} - {{ $u->name }}</option>
                     @endforeach

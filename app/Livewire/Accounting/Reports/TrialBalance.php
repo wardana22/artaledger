@@ -23,8 +23,20 @@ class TrialBalance extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('reports.trial_balance') && ! auth()->user()->can('reports.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->startDate = date('Y-01-01');
         $this->endDate = date('Y-12-31');
+
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds)) {
+                $this->unitFilter = (string) $allowedIds[0];
+            }
+        }
     }
 
     public function toggleAccount(int $accountId): void
@@ -38,6 +50,10 @@ class TrialBalance extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $allowedUnits = $user ? $user->allowedUnits() : Unit::all();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
         $accounts = Account::orderBy('code', 'asc')->get();
 
         $accountData = [];
@@ -67,6 +83,9 @@ class TrialBalance extends Component
                         ->orWhere('entry_date', '<', $this->startDate);
                 });
         })
+            ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
+                $q->whereIn('unit_id', $allowedUnitIds);
+            })
             ->when($this->unitFilter !== 'all', function ($q) {
                 $q->where('unit_id', $this->unitFilter);
             })
@@ -93,7 +112,10 @@ class TrialBalance extends Component
             $q->where('status', 'posted')
                 ->where('entry_type', '!=', 'opening_balance')
                 ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
-        });
+        })
+            ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
+                $q->whereIn('unit_id', $allowedUnitIds);
+            });
 
         if ($this->unitFilter !== 'all') {
             $mutQuery->where('unit_id', $this->unitFilter);
@@ -180,14 +202,13 @@ class TrialBalance extends Component
         }
 
         $isBalanced = abs($totalDebit - $totalCredit) < 0.01;
-        $units = Unit::all();
 
         return view('livewire.accounting.reports.trial-balance', [
             'rows' => $rows,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
             'isBalanced' => $isBalanced,
-            'units' => $units,
+            'units' => $allowedUnits,
         ]);
     }
 

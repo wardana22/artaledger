@@ -14,23 +14,15 @@ use App\Livewire\Accounting\Reports\ProfitLoss;
 use App\Livewire\Accounting\Reports\SubsidiaryLedger;
 use App\Livewire\Accounting\Reports\TrialBalance;
 use App\Livewire\Accounting\Reports\Worksheet;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-// Auto-login & redirect to Master COA directly for easy development access
 Route::get('/', function () {
-    if (! Auth::check()) {
-        $user = User::where('email', 'admin@artaledger.com')->first()
-            ?? User::whereHas('roles', fn ($q) => $q->where('name', 'Super Admin'))->first()
-            ?? User::first();
-
-        if ($user) {
-            Auth::login($user);
-        }
+    if (Auth::check()) {
+        return redirect()->route('accounting.accounts.index');
     }
 
-    return redirect()->route('accounting.accounts.index');
+    return redirect()->route('login');
 })->name('home');
 
 use App\Livewire\Accounting\Import\JournalImportWizard;
@@ -73,7 +65,7 @@ Route::middleware(['web'])->group(function () {
     Route::get('/accounting/reports/cash-flow', CashFlow::class)->name('accounting.reports.cash-flow');
     Route::get('/accounting/reports/changes-in-equity', ChangesInEquity::class)->name('accounting.reports.changes-in-equity');
 
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', fn () => redirect()->route('accounting.journals.index'))->name('dashboard');
 });
 
 require __DIR__.'/settings.php';

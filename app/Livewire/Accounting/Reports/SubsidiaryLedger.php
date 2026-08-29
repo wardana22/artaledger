@@ -23,6 +23,10 @@ class SubsidiaryLedger extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('reports.subsidiary_ledger') && ! auth()->user()->can('reports.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->startDate = date('Y-01-01');
         $this->endDate = date('Y-12-31');
 

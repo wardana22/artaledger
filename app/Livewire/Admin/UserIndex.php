@@ -42,6 +42,13 @@ class UserIndex extends Component
 
     public array $selectedUnits = [];
 
+    public function mount(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('admin.users')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+    }
+
     // Reset password fields
     public ?int $resetUserId = null;
 

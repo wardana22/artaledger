@@ -59,9 +59,10 @@ class JournalForm extends Component
 
         if ($template->lines->count() > 0) {
             $this->lines = [];
+            $defaultUnitId = auth()->user()?->primaryUnit()?->id ?? '';
             foreach ($template->lines as $line) {
                 $this->lines[] = [
-                    'unit_id' => $line->unit_id ?? '',
+                    'unit_id' => $line->unit_id ?? $defaultUnitId,
                     'account_id' => $line->account_id,
                     'description' => $line->description ?? '',
                     'debit' => (float) $line->debit,
@@ -149,8 +150,10 @@ class JournalForm extends Component
 
     public function addLine(): void
     {
+        $defaultUnitId = auth()->user()?->primaryUnit()?->id ?? '';
+
         $this->lines[] = [
-            'unit_id' => '',
+            'unit_id' => $defaultUnitId,
             'account_id' => '',
             'description' => '',
             'debit' => 0,
@@ -285,7 +288,8 @@ class JournalForm extends Component
         // Only postable accounts (is_group = false)
         $accounts = Account::posting()->active()->orderBy('code', 'asc')->get();
         $journalTypes = JournalType::orderBy('code')->get();
-        $units = Unit::all();
+        $user = auth()->user();
+        $units = $user ? $user->allowedUnits() : Unit::all();
         $templates = JournalTemplate::where('is_active', true)->orderBy('name')->get();
 
         return view('livewire.accounting.journals.form', [

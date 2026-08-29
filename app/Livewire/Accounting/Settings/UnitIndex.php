@@ -28,6 +28,13 @@ class UnitIndex extends Component
 
     public string $keywords = '';
 
+    public function mount(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('settings.units') && ! auth()->user()->can('settings.manage')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+    }
+
     public function updatedSearch(): void
     {
         $this->resetPage();

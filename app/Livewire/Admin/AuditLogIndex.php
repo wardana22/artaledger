@@ -33,6 +33,13 @@ class AuditLogIndex extends Component
 
     public int $perPage = 25;
 
+    public function mount(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('admin.audit_logs')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+    }
+
     public bool $showDetailModal = false;
 
     public ?AuditLog $selectedAuditLog = null;

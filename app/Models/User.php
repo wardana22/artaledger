@@ -56,6 +56,50 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * Check if user has global unit access (SuperAdmin or unassigned user)
+     */
+    public function hasGlobalUnitAccess(): bool
+    {
+        if ($this->hasRole('Super Admin')) {
+            return true;
+        }
+
+        return $this->units()->count() === 0;
+    }
+
+    /**
+     * Get array of unit IDs user is allowed to access. Returns [] for global access.
+     */
+    public function allowedUnitIds(): array
+    {
+        if ($this->hasGlobalUnitAccess()) {
+            return [];
+        }
+
+        return array_map('intval', $this->allowedUnits()->pluck('id')->toArray());
+    }
+
+    /**
+     * Get Collection of units the user is allowed to see in dropdown selectors.
+     */
+    public function allowedUnits()
+    {
+        if ($this->hasGlobalUnitAccess()) {
+            return Unit::orderBy('code')->get();
+        }
+
+        return $this->units()->orderBy('code')->get();
+    }
+
+    /**
+     * Get primary assigned unit or default first unit.
+     */
+    public function primaryUnit(): ?Unit
+    {
+        return $this->units()->first() ?? Unit::first();
+    }
+
+    /**
      * Get the user's initials
      */
     public function initials(): string

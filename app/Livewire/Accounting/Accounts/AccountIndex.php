@@ -54,6 +54,10 @@ class AccountIndex extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('accounts.view') && ! auth()->user()->can('settings.manage')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         if (! Auth::check()) {
             $user = User::first() ?? User::create([
                 'name' => 'Dev Admin',

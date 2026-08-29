@@ -23,8 +23,20 @@ class ProfitLoss extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('reports.profit_loss') && ! auth()->user()->can('reports.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->startDate = date('Y-01-01');
         $this->endDate = date('Y-12-31');
+
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds)) {
+                $this->unitFilter = (string) $allowedIds[0];
+            }
+        }
     }
 
     public function toggleAccount(int $accountId): void
@@ -38,6 +50,10 @@ class ProfitLoss extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $allowedUnits = $user ? $user->allowedUnits() : Unit::all();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
         $accounts = Account::where('report_type', 'laba_rugi')
             ->active()
             ->orderBy('code', 'asc')
@@ -65,6 +81,9 @@ class ProfitLoss extends Component
             $q->where('status', 'posted')
                 ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
         })
+            ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
+                $q->whereIn('unit_id', $allowedUnitIds);
+            })
             ->when($this->unitFilter !== 'all', function ($q) {
                 $q->where('unit_id', $this->unitFilter);
             })
@@ -169,8 +188,6 @@ class ProfitLoss extends Component
             ];
         }
 
-        $units = Unit::all();
-
         return view('livewire.accounting.reports.profit-loss', [
             'rows' => $rows,
             'totalRevenue' => $totalRevenue,
@@ -183,7 +200,7 @@ class ProfitLoss extends Component
             'profitBeforeTax' => $profitBeforeTax,
             'taxExpense' => $taxExpense,
             'netProfit' => $netProfit,
-            'units' => $units,
+            'units' => $allowedUnits,
         ]);
     }
 

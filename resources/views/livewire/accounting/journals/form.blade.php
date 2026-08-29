@@ -132,7 +132,9 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <select wire:model="lines.{{ $index }}.unit_id" class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold dark:text-slate-100 focus:ring-2 focus:ring-indigo-500">
-                                        <option value="">-- Pilih Unit (Opsional) --</option>
+                                        @if (auth()->user()?->hasGlobalUnitAccess())
+                                            <option value="">-- Pilih Unit (Opsional) --</option>
+                                        @endif
                                         @foreach ($units as $unit)
                                             <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
                                         @endforeach

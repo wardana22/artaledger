@@ -48,12 +48,28 @@ class OpeningBalanceIndex extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('reports.opening_balance') && ! auth()->user()->can('reports.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $firstPeriod = AccountingPeriod::orderBy('start_date', 'asc')->first();
         $this->periodId = $firstPeriod?->id;
+
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds)) {
+                $this->unitFilter = (string) $allowedIds[0];
+            }
+        }
     }
 
     public function render()
     {
+        $user = auth()->user();
+        $allowedUnits = $user ? $user->allowedUnits() : Unit::all();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
         $periods = AccountingPeriod::orderBy('start_date', 'asc')->get();
         $selectedPeriod = $periods->firstWhere('id', $this->periodId) ?? $periods->first();
 
@@ -93,6 +109,9 @@ class OpeningBalanceIndex extends Component
                                     ->orWhere('entry_date', '<', $startDate);
                             }
                         });
+                })
+                ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
+                    $q->whereIn('unit_id', $allowedUnitIds);
                 });
 
             if ($this->unitFilter !== 'all') {
@@ -140,14 +159,12 @@ class OpeningBalanceIndex extends Component
             ['path' => LengthAwarePaginator::resolveCurrentPath()]
         );
 
-        $units = Unit::all();
-
         return view('livewire.accounting.opening-balance.opening-balance-index', [
             'lines' => $paginatedLines,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
             'batchDifference' => abs($totalDebit - $totalCredit),
-            'units' => $units,
+            'units' => $allowedUnits,
             'periods' => $periods,
             'selectedPeriod' => $selectedPeriod,
         ]);
