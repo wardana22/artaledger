@@ -60,8 +60,9 @@ test('user without accounts.create permission cannot save new account', function
 test('user with accounts.create permission can save new account', function () {
     $authorizedUser = User::factory()->create();
 
+    $permView = Permission::firstOrCreate(['name' => 'accounts.view']);
     $permCreate = Permission::firstOrCreate(['name' => 'accounts.create']);
-    $authorizedUser->givePermissionTo($permCreate);
+    $authorizedUser->givePermissionTo([$permView, $permCreate]);
 
     Livewire::actingAs($authorizedUser)
         ->test(AccountIndex::class)
