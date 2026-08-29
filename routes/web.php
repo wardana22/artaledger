@@ -37,6 +37,7 @@ use App\Livewire\Accounting\Journals\JournalTemplateIndex;
 use App\Livewire\Accounting\OpeningBalance\OpeningBalanceIndex;
 use App\Livewire\Accounting\Settings\JournalTypeIndex;
 use App\Livewire\Accounting\Settings\UnitIndex;
+use App\Livewire\Admin\AuditLogIndex;
 use App\Livewire\Admin\RoleIndex;
 use App\Livewire\Admin\UserIndex;
 
@@ -44,6 +45,7 @@ Route::middleware(['web'])->group(function () {
     // Admin & RBAC
     Route::get('/admin/roles', RoleIndex::class)->name('admin.roles.index');
     Route::get('/admin/users', UserIndex::class)->name('admin.users.index');
+    Route::get('/admin/audit-logs', AuditLogIndex::class)->name('admin.audit-logs.index');
 
     // Operations
     Route::get('/accounting/accounts', AccountIndex::class)->name('accounting.accounts.index');

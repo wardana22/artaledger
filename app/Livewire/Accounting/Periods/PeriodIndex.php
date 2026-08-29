@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Periods;
 
 use App\Models\AccountingPeriod;
 use App\Models\Company;
+use App\Services\AuditLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -84,6 +85,14 @@ class PeriodIndex extends Component
             'closed_by' => auth()->id(),
         ]);
 
+        AuditLogService::record(
+            'period.closed',
+            "Menutup Periode Akuntansi {$period->name} (Lock Key Di-generate)",
+            $period,
+            ['status' => 'open'],
+            ['status' => 'closed', 'lock_key' => $lockKey]
+        );
+
         session()->flash('message', "Periode {$period->name} berhasil ditutup. Kunci Keamanan Rahasia (Lock Key) telah dihasilkan secara otomatis.");
     }
 
@@ -98,6 +107,14 @@ class PeriodIndex extends Component
         $period->update([
             'status' => 'locked',
         ]);
+
+        AuditLogService::record(
+            'period.locked',
+            "Mengunci Total (LOCKED) Periode Akuntansi {$period->name}",
+            $period,
+            ['status' => 'closed'],
+            ['status' => 'locked']
+        );
 
         session()->flash('message', "Periode {$period->name} diubah menjadi Terkunci Total (LOCKED).");
     }
@@ -128,12 +145,21 @@ class PeriodIndex extends Component
             return;
         }
 
+        $oldStatus = $period->status;
         $period->update([
             'status' => 'open',
             'opened_at' => now(),
             'opened_by' => auth()->id(),
             'reopen_reason' => trim($this->reopenReason),
         ]);
+
+        AuditLogService::record(
+            'period.reopened',
+            "Membuka Kembali Periode Akuntansi {$period->name} dengan Lock Key Valid. Alasan: ".trim($this->reopenReason),
+            $period,
+            ['status' => $oldStatus],
+            ['status' => 'open', 'reopen_reason' => trim($this->reopenReason)]
+        );
 
         session()->flash('message', "Periode {$period->name} berhasil dibuka kembali. Jejak audit pembukaan telah dicatat.");
         $this->showReopenModal = false;

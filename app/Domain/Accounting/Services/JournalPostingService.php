@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\JournalType;
+use App\Services\AuditLogService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -122,6 +123,15 @@ class JournalPostingService
                     'credit' => (float) ($line['credit'] ?? 0),
                 ]);
             }
+
+            AuditLogService::record(
+                'journal.posted',
+                "Memposting Jurnal Baru ({$journalEntry->entry_number})",
+                $journalEntry,
+                null,
+                $journalEntry->toArray(),
+                $userId
+            );
 
             return $journalEntry;
         });
@@ -277,7 +287,7 @@ class JournalPostingService
             throw new Exception('Jurnal tidak seimbang (Unbalanced)! Total Debit ('.number_format($totalDebit, 2, ',', '.').') != Total Kredit ('.number_format($totalCredit, 2, ',', '.').').');
         }
 
-        return DB::transaction(function () use ($companyId, $period, $entryDate, $entryData, $linesData, $entryType) {
+        return DB::transaction(function () use ($companyId, $period, $entryDate, $entryData, $linesData, $entryType, $userId) {
             $entryNumber = $this->generateEntryNumber($companyId, $entryDate, $entryType);
             $journalTypeId = $entryData['journal_type_id'] ?? null;
             $documentNumber = $entryData['document_number'] ?? null;
@@ -315,6 +325,15 @@ class JournalPostingService
                 ]);
             }
 
+            AuditLogService::record(
+                'journal.created',
+                "Membuat Draft Jurnal Baru ({$journalEntry->entry_number})",
+                $journalEntry,
+                null,
+                $journalEntry->toArray(),
+                $userId
+            );
+
             return $journalEntry;
         });
     }
@@ -337,11 +356,21 @@ class JournalPostingService
             throw new Exception("Jurnal {$journalEntry->entry_number} tidak seimbang (Unbalanced).");
         }
 
+        $oldStatus = $journalEntry->status;
         $journalEntry->update([
             'status' => 'posted',
             'posted_by' => $userId,
             'posted_at' => now(),
         ]);
+
+        AuditLogService::record(
+            'journal.posted',
+            "Menyetujui & Memposting Draft Jurnal ({$journalEntry->entry_number}) ke Buku Besar",
+            $journalEntry,
+            ['status' => $oldStatus],
+            ['status' => 'posted', 'posted_by' => $userId],
+            $userId
+        );
 
         return $journalEntry;
     }

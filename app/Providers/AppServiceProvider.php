@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Services\AuditLogService;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +28,38 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Event::listen(
+            Login::class,
+            function ($event) {
+                if ($event->user) {
+                    AuditLogService::record(
+                        'auth.login',
+                        "Pengguna '{$event->user->name}' ({$event->user->email}) berhasil Login ke sistem.",
+                        $event->user,
+                        null,
+                        null,
+                        $event->user->id
+                    );
+                }
+            }
+        );
+
+        Event::listen(
+            Logout::class,
+            function ($event) {
+                if ($event->user) {
+                    AuditLogService::record(
+                        'auth.logout',
+                        "Pengguna '{$event->user->name}' ({$event->user->email}) telah Logout.",
+                        $event->user,
+                        null,
+                        null,
+                        $event->user->id
+                    );
+                }
+            }
+        );
     }
 
     /**

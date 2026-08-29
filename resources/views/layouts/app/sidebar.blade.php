@@ -12,14 +12,14 @@
 
             <flux:sidebar.nav class="space-y-2">
                 <flux:sidebar.group :heading="__('Manajemen Akuntansi')" class="grid">
-                    <flux:sidebar.item icon="calendar" :href="route('accounting.periods.index')" :current="request()->routeIs('accounting.periods.*')" wire:navigate>
-                        {{ __('Periode Akuntansi') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="arrow-down-tray" :href="route('accounting.import.index')" :current="request()->routeIs('accounting.import.*')" wire:navigate>
+                <flux:sidebar.item icon="document-text" :href="route('accounting.journals.index')" :current="request()->routeIs('accounting.journals.*') || request()->routeIs('accounting.adjustments.*')" wire:navigate>
+                        {{ __('Jurnal Transaksi') }}
+                    </flux:sidebar.item>    
+                <flux:sidebar.item icon="arrow-down-tray" :href="route('accounting.import.index')" :current="request()->routeIs('accounting.import.*')" wire:navigate>
                         {{ __('Import Jurnal Excel') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="document-text" :href="route('accounting.journals.index')" :current="request()->routeIs('accounting.journals.*') || request()->routeIs('accounting.adjustments.*')" wire:navigate>
-                        {{ __('Jurnal Transaksi') }}
+                    <flux:sidebar.item icon="calendar" :href="route('accounting.periods.index')" :current="request()->routeIs('accounting.periods.*')" wire:navigate>
+                        {{ __('Periode Akuntansi') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
