@@ -21,12 +21,13 @@ use Illuminate\Support\Facades\Route;
 // Auto-login & redirect to Master COA directly for easy development access
 Route::get('/', function () {
     if (! Auth::check()) {
-        $user = User::first() ?? User::create([
-            'name' => 'Dev Admin',
-            'email' => 'admin@artaledger.com',
-            'password' => bcrypt('password'),
-        ]);
-        Auth::login($user);
+        $user = User::where('email', 'admin@artaledger.com')->first()
+            ?? User::whereHas('roles', fn ($q) => $q->where('name', 'Super Admin'))->first()
+            ?? User::first();
+
+        if ($user) {
+            Auth::login($user);
+        }
     }
 
     return redirect()->route('accounting.accounts.index');
