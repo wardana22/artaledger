@@ -101,37 +101,43 @@
             <div class="flex items-center gap-1">
                 <!-- Add Child Account (If Group) -->
                 @if ($account->is_group)
-                    <button 
-                        wire:click="createChildAccount({{ $account->id }})"
-                        title="Tambah Sub-Akun di bawah {{ $account->name }}"
-                        class="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg transition-all shadow-xs flex items-center gap-1 text-[11px] font-semibold">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Sub</span>
-                    </button>
+                    @can('accounts.create')
+                        <button 
+                            wire:click="createChildAccount({{ $account->id }})"
+                            title="Tambah Sub-Akun di bawah {{ $account->name }}"
+                            class="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-lg transition-all shadow-xs flex items-center gap-1 text-[11px] font-semibold">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Sub</span>
+                        </button>
+                    @endcan
                 @endif
 
                 <!-- Edit Button -->
-                <button 
-                    wire:click="editAccount({{ $account->id }})"
-                    title="Edit {{ $account->name }}"
-                    class="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 rounded-lg transition-all shadow-xs">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                </button>
+                @can('accounts.edit')
+                    <button 
+                        wire:click="editAccount({{ $account->id }})"
+                        title="Edit {{ $account->name }}"
+                        class="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 rounded-lg transition-all shadow-xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </button>
+                @endcan
 
                 <!-- Delete Button -->
-                <button 
-                    wire:click="deleteAccount({{ $account->id }})"
-                    wire:confirm="Apakah Anda yakin ingin menghapus akun '{{ $account->name }}'?"
-                    title="Hapus {{ $account->name }}"
-                    class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg transition-all shadow-xs">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
+                @can('accounts.delete')
+                    <button 
+                        wire:click="deleteAccount({{ $account->id }})"
+                        wire:confirm="Apakah Anda yakin ingin menghapus akun '{{ $account->name }}'?"
+                        title="Hapus {{ $account->name }}"
+                        class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg transition-all shadow-xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                @endcan
             </div>
         </div>
     </div>

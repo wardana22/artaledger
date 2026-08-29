@@ -163,6 +163,13 @@ class AccountIndex extends Component
 
     public function saveAccount(): void
     {
+        $requiredPermission = $this->editingAccountId ? 'accounts.edit' : 'accounts.create';
+        if (auth()->check() && ! auth()->user()->hasPermissionTo($requiredPermission)) {
+            session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin ['.$requiredPermission.'] untuk menyimpan data akun.');
+
+            return;
+        }
+
         $company = Company::first();
 
         $rules = [
@@ -201,6 +208,12 @@ class AccountIndex extends Component
 
     public function deleteAccount(int $id): void
     {
+        if (auth()->check() && ! auth()->user()->hasPermissionTo('accounts.delete')) {
+            session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin [accounts.delete] untuk menghapus akun.');
+
+            return;
+        }
+
         $account = Account::withCount('children')->findOrFail($id);
 
         if ($account->children_count > 0) {

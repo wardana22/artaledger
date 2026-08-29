@@ -58,6 +58,9 @@
                     <flux:sidebar.item icon="building-office-2" :href="route('accounting.units.index')" :current="request()->routeIs('accounting.units.*')" wire:navigate>
                         {{ __('Unit Perusahaan') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="shield-check" :href="route('admin.roles.index')" :current="request()->routeIs('admin.roles.*')" wire:navigate>
+                        {{ __('Peran & Hak Akses') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

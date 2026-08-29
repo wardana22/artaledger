@@ -36,8 +36,12 @@ use App\Livewire\Accounting\Import\JournalImportWizard;
 use App\Livewire\Accounting\OpeningBalance\OpeningBalanceIndex;
 use App\Livewire\Accounting\Settings\JournalTypeIndex;
 use App\Livewire\Accounting\Settings\UnitIndex;
+use App\Livewire\Admin\RoleIndex;
 
 Route::middleware(['web'])->group(function () {
+    // Admin & RBAC
+    Route::get('/admin/roles', RoleIndex::class)->name('admin.roles.index');
+
     // Operations
     Route::get('/accounting/accounts', AccountIndex::class)->name('accounting.accounts.index');
     Route::get('/accounting/journal-types', JournalTypeIndex::class)->name('accounting.journal-types.index');
