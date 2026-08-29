@@ -27,13 +27,36 @@
     @endif
 
     <form wire:submit="saveJournal" class="space-y-6">
-        <!-- HEADER INFORMATION -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tanggal Transaksi *</label>
-                <input wire:model.live="entry_date" type="date" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-slate-100" />
-                @error('entry_date') <span class="text-xs text-rose-500">{{ $message }}</span> @enderror
-            </div>
+        <!-- HEADER INFORMATION & TEMPLATE SELECTOR -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+            @if (!$is_edit && count($templates) > 0)
+                <div class="p-3 bg-indigo-50/70 dark:bg-slate-800/80 border border-indigo-100 dark:border-slate-700 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
+                        <div>
+                            <span class="text-xs font-bold text-indigo-900 dark:text-indigo-200 block">Gunakan Template Jurnal Berulang</span>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Pilih template untuk mengisi racikan akun Debit & Kredit secara otomatis.</span>
+                        </div>
+                    </div>
+                    <div class="w-full sm:w-72">
+                        <select wire:model.live="selectedTemplateId" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-indigo-600 dark:text-indigo-400 focus:ring-2 focus:ring-indigo-500 shadow-2xs">
+                            <option value="">-- Pilih Template Jurnal --</option>
+                            @foreach ($templates as $tpl)
+                                <option value="{{ $tpl->id }}">{{ $tpl->template_code }} - {{ $tpl->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tanggal Transaksi *</label>
+                    <input wire:model.live="entry_date" type="date" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 dark:text-slate-100" />
+                    @error('entry_date') <span class="text-xs text-rose-500">{{ $message }}</span> @enderror
+                </div>
 
             <div>
                 <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Jenis Jurnal *</label>
@@ -168,12 +191,31 @@
                         <span class="text-purple-600 dark:text-purple-400 font-mono text-base">Rp {{ number_format($this->totalCredit, 2, ',', '.') }}</span>
                     </div>
 
-                    <button 
-                        type="submit" 
-                        @if (!$this->isBalanced) disabled @endif
-                        class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-500/25 transition-all">
-                        {{ $is_edit ? 'Simpan Perubahan' : 'Posting Jurnal' }}
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button 
+                            type="button" 
+                            wire:click="saveDraft"
+                            @if (!$this->isBalanced) disabled @endif
+                            class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                            </svg>
+                            {{ $is_edit ? 'Simpan Perubahan Draft' : 'Simpan sebagai Draft' }}
+                        </button>
+
+                        @can('journals.post')
+                            <button 
+                                type="button" 
+                                wire:click="saveAndPost"
+                                @if (!$this->isBalanced) disabled @endif
+                                class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                {{ $is_edit ? 'Posting Perubahan' : 'Setujui & Posting' }}
+                            </button>
+                        @endcan
+                    </div>
                 </div>
             </div>
         </div>

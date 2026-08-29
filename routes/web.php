@@ -33,6 +33,7 @@ Route::get('/', function () {
 })->name('home');
 
 use App\Livewire\Accounting\Import\JournalImportWizard;
+use App\Livewire\Accounting\Journals\JournalTemplateIndex;
 use App\Livewire\Accounting\OpeningBalance\OpeningBalanceIndex;
 use App\Livewire\Accounting\Settings\JournalTypeIndex;
 use App\Livewire\Accounting\Settings\UnitIndex;
@@ -51,6 +52,7 @@ Route::middleware(['web'])->group(function () {
     Route::get('/accounting/periods', PeriodIndex::class)->name('accounting.periods.index');
     Route::get('/accounting/opening-balance', OpeningBalanceIndex::class)->name('accounting.opening-balance.index');
     Route::get('/accounting/import', JournalImportWizard::class)->name('accounting.import.index');
+    Route::get('/accounting/journals/templates', JournalTemplateIndex::class)->name('accounting.journals.templates.index');
     Route::get('/accounting/journals', JournalIndex::class)->name('accounting.journals.index');
     Route::get('/accounting/journals/create', JournalForm::class)->name('accounting.journals.create');
     Route::get('/accounting/journals/{id}/edit', JournalForm::class)->name('accounting.journals.edit');

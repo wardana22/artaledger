@@ -5,6 +5,7 @@ namespace App\Livewire\Accounting\Journals;
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Models\Account;
 use App\Models\JournalEntry;
+use App\Models\JournalTemplate;
 use App\Models\JournalType;
 use App\Models\Unit;
 use Carbon\Carbon;
@@ -17,6 +18,8 @@ use Livewire\Component;
 class JournalForm extends Component
 {
     public string $entry_date = '';
+
+    public ?int $selectedTemplateId = null;
 
     public ?int $journal_type_id = null;
 
@@ -31,6 +34,42 @@ class JournalForm extends Component
     public ?int $journal_entry_id = null;
 
     public bool $is_edit = false;
+
+    public function updatedSelectedTemplateId($value): void
+    {
+        if (empty($value)) {
+            return;
+        }
+
+        $template = JournalTemplate::with('lines')->find($value);
+        if (! $template) {
+            return;
+        }
+
+        if ($template->journal_type_id) {
+            $this->journal_type_id = $template->journal_type_id;
+            if (! $this->is_edit) {
+                $this->generateAutoDocNumber();
+            }
+        }
+
+        if (! empty($template->description)) {
+            $this->description = $template->description;
+        }
+
+        if ($template->lines->count() > 0) {
+            $this->lines = [];
+            foreach ($template->lines as $line) {
+                $this->lines[] = [
+                    'unit_id' => $line->unit_id ?? '',
+                    'account_id' => $line->account_id,
+                    'description' => $line->description ?? '',
+                    'debit' => (float) $line->debit,
+                    'credit' => (float) $line->credit,
+                ];
+            }
+        }
+    }
 
     public function mount(?int $id = null): void
     {
@@ -147,7 +186,23 @@ class JournalForm extends Component
         return $this->difference < 0.01 && $this->totalDebit > 0;
     }
 
-    public function saveJournal(): void
+    public function saveDraft(): void
+    {
+        $this->saveJournal(isPostDirectly: false);
+    }
+
+    public function saveAndPost(): void
+    {
+        if (auth()->check() && ! auth()->user()->hasPermissionTo('journals.post')) {
+            session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin [journals.post] untuk langsung memposting jurnal.');
+
+            return;
+        }
+
+        $this->saveJournal(isPostDirectly: true);
+    }
+
+    public function saveJournal(bool $isPostDirectly = false): void
     {
         $this->validate([
             'entry_date' => 'required|date',
@@ -182,20 +237,41 @@ class JournalForm extends Component
                     $this->lines,
                     auth()->id()
                 );
-                session()->flash('message', "Jurnal {$journal->entry_number} berhasil diperbarui!");
+
+                if ($isPostDirectly && $journal->status === 'draft') {
+                    $service->postDraftEntry($journal, auth()->id());
+                    session()->flash('message', "Jurnal {$journal->entry_number} berhasil diperbarui dan diposting ke Buku Besar!");
+                } else {
+                    session()->flash('message', "Jurnal {$journal->entry_number} berhasil diperbarui!");
+                }
             } else {
-                $journal = $service->postManualEntry(
-                    [
-                        'entry_date' => $this->entry_date,
-                        'journal_type_id' => $this->journal_type_id,
-                        'document_number' => $this->document_number,
-                        'is_auto_document_number' => $this->is_auto_document_number,
-                        'description' => $this->description,
-                    ],
-                    $this->lines,
-                    auth()->id()
-                );
-                session()->flash('message', "Jurnal {$journal->entry_number} berhasil diposting ke General Ledger!");
+                if ($isPostDirectly) {
+                    $journal = $service->postManualEntry(
+                        [
+                            'entry_date' => $this->entry_date,
+                            'journal_type_id' => $this->journal_type_id,
+                            'document_number' => $this->document_number,
+                            'is_auto_document_number' => $this->is_auto_document_number,
+                            'description' => $this->description,
+                        ],
+                        $this->lines,
+                        auth()->id()
+                    );
+                    session()->flash('message', "Jurnal {$journal->entry_number} berhasil diposting ke Buku Besar!");
+                } else {
+                    $journal = $service->createDraftEntry(
+                        [
+                            'entry_date' => $this->entry_date,
+                            'journal_type_id' => $this->journal_type_id,
+                            'document_number' => $this->document_number,
+                            'is_auto_document_number' => $this->is_auto_document_number,
+                            'description' => $this->description,
+                        ],
+                        $this->lines,
+                        auth()->id()
+                    );
+                    session()->flash('message', "Jurnal {$journal->entry_number} berhasil disimpan sebagai Draft!");
+                }
             }
 
             $this->redirect(route('accounting.journals.index'), navigate: true);
@@ -210,11 +286,13 @@ class JournalForm extends Component
         $accounts = Account::posting()->active()->orderBy('code', 'asc')->get();
         $journalTypes = JournalType::orderBy('code')->get();
         $units = Unit::all();
+        $templates = JournalTemplate::where('is_active', true)->orderBy('name')->get();
 
         return view('livewire.accounting.journals.form', [
             'accounts' => $accounts,
             'journalTypes' => $journalTypes,
             'units' => $units,
+            'templates' => $templates,
         ]);
     }
 }

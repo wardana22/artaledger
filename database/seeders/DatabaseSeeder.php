@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             AccountingPeriodSeeder::class,
             SaldoAwalSeeder::class,
             UserAndUnitSeeder::class,
+            JournalTemplateSeeder::class,
         ]);
     }
 }
