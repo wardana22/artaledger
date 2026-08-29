@@ -8,10 +8,13 @@ use App\Models\AccountingPeriod;
 use App\Models\Company;
 use App\Models\Unit;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Super Admin');
     $this->company = Company::create(['name' => 'PT Perkebunan Nusantara V', 'code' => 'PTPNV']);
     $this->period = AccountingPeriod::create([
         'company_id' => $this->company->id,

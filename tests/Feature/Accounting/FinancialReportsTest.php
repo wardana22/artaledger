@@ -8,10 +8,13 @@ use App\Livewire\Accounting\Reports\ProfitLoss;
 use App\Livewire\Accounting\Reports\TrialBalance;
 use App\Livewire\Accounting\Reports\Worksheet;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Super Admin');
     (new AccountSeederService)->seedFromData();
 });
 

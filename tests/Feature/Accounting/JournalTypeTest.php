@@ -3,9 +3,12 @@
 use App\Livewire\Accounting\Settings\JournalTypeIndex;
 use App\Models\JournalType;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Super Admin');
     $this->actingAs($this->user);
 });
 

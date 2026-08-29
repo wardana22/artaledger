@@ -6,11 +6,14 @@ use App\Models\Company;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->company = Company::create(['name' => 'PT Test Indonesia', 'code' => 'PTTI']);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Super Admin');
     $this->actingAs($this->user);
 });
 

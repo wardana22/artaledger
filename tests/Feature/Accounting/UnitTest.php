@@ -3,9 +3,12 @@
 use App\Livewire\Accounting\Settings\UnitIndex;
 use App\Models\Unit;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Super Admin');
     $this->actingAs($this->user);
 });
 

@@ -6,12 +6,15 @@ use App\Models\User;
 use Database\Seeders\AccountingPeriodSeeder;
 use Database\Seeders\AccountSeeder;
 use Database\Seeders\JournalTypeSeeder;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Database\Seeders\SaldoAwalSeeder;
 use Database\Seeders\UnitSeeder;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Super Admin');
     $this->actingAs($this->user);
 
     $this->company = Company::firstOrCreate([
