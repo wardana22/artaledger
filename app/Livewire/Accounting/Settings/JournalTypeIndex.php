@@ -16,6 +16,8 @@ class JournalTypeIndex extends Component
 
     public string $search = '';
 
+    public int $perPage = 10;
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -27,6 +29,11 @@ class JournalTypeIndex extends Component
     public string $description = '';
 
     public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
     {
         $this->resetPage();
     }
@@ -98,7 +105,7 @@ class JournalTypeIndex extends Component
                     ->orWhere('description', 'like', "%{$this->search}%");
             })
             ->orderBy('code')
-            ->paginate(15);
+            ->paginate($this->perPage);
 
         return view('livewire.accounting.settings.journal-type-index', [
             'journalTypes' => $journalTypes,

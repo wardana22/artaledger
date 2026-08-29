@@ -1,49 +1,59 @@
-<div class="p-6 space-y-6">
+<div class="p-4 sm:p-5 space-y-3.5">
     <x-ledger-nav active="general-ledger" />
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <svg class="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
                 Buku Besar (General Ledger - Akun Header)
             </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Laporan konsolidasi mutasi & saldo berjalan (*running balance*) untuk <strong>Akun Header (Group)</strong> yang menghimpun seluruh sub-akun di bawahnya.
             </p>
         </div>
     </div>
 
     <!-- FILTER BAR -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Pilih Akun Header (Group) *</label>
-            <select wire:model.live="selectedAccountId" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 dark:text-slate-100">
-                @foreach ($accounts as $acc)
-                    <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
-                @endforeach
-            </select>
-        </div>
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+            <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Dari Tanggal
+                </label>
+                <input wire:model.live="startDate" type="date" aria-label="Dari Tanggal" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-medium dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 transition-all" />
+            </div>
 
-        <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Unit Perusahaan</label>
-            <select wire:model.live="unitFilter" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500 dark:text-slate-100">
-                <option value="all">🌐 Konsolidasi (Seluruh 11 Unit)</option>
-                @foreach ($units as $unit)
-                    <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
-                @endforeach
-            </select>
-        </div>
+            <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Sampai Tanggal
+                </label>
+                <input wire:model.live="endDate" type="date" aria-label="Sampai Tanggal" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-medium dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 transition-all" />
+            </div>
 
-        <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Dari Tanggal</label>
-            <input wire:model.live="startDate" type="date" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-slate-100" />
-        </div>
+            <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Unit Perusahaan
+                </label>
+                <select wire:model.live="unitFilter" aria-label="Unit Perusahaan" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-semibold focus:ring-2 focus:ring-indigo-500 dark:text-slate-100 transition-all">
+                    <option value="all">🌐 Konsolidasi (Seluruh 11 Unit)</option>
+                    @foreach ($units as $unit)
+                        <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-        <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Sampai Tanggal</label>
-            <input wire:model.live="endDate" type="date" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm dark:text-slate-100" />
+            <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Pilih Akun Header (Group) *
+                </label>
+                <select wire:model.live="selectedAccountId" aria-label="Pilih Akun Header" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-mono focus:ring-2 focus:ring-indigo-500 dark:text-slate-100 transition-all">
+                    @foreach ($accounts as $acc)
+                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
     </div>
 

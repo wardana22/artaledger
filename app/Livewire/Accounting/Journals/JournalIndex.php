@@ -23,6 +23,10 @@ class JournalIndex extends Component
 
     public string $unitFilter = 'all';
 
+    public string $startDate = '';
+
+    public string $endDate = '';
+
     public int $perPage = 25;
 
     public function updatingSearch(): void
@@ -36,6 +40,16 @@ class JournalIndex extends Component
     }
 
     public function updatingUnitFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStartDate(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingEndDate(): void
     {
         $this->resetPage();
     }
@@ -74,6 +88,8 @@ class JournalIndex extends Component
                 ->orWhere('description', 'like', "%{$this->search}%")))
             ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->unitFilter !== 'all', fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->where('unit_id', $this->unitFilter)))
+            ->when(! empty($this->startDate), fn ($q) => $q->whereDate('entry_date', '>=', $this->startDate))
+            ->when(! empty($this->endDate), fn ($q) => $q->whereDate('entry_date', '<=', $this->endDate))
             ->orderByDesc('id');
 
         $journals = $query->paginate($this->perPage);

@@ -25,7 +25,9 @@ class AccountIndex extends Component
 
     public string $groupFilter = 'all';
 
-    public string $viewMode = 'table'; // 'table' or 'tree'
+    public string $viewMode = 'tree'; // 'tree' by default or 'table'
+
+    public array $expandedAccountIds = [];
 
     public bool $showFormModal = false;
 
@@ -64,9 +66,47 @@ class AccountIndex extends Component
 
     protected $listeners = ['accountSaved' => '$refresh'];
 
-    public function updatingSearch(): void
+    public function updatedSearch(): void
     {
         $this->resetPage();
+
+        if (trim($this->search) !== '') {
+            $matching = Account::where('code', 'like', "%{$this->search}%")
+                ->orWhere('name', 'like', "%{$this->search}%")
+                ->get();
+
+            $idsToExpand = [];
+            foreach ($matching as $acc) {
+                if ($acc->is_group) {
+                    $idsToExpand[] = $acc->id;
+                }
+                $parent = $acc->parent;
+                while ($parent) {
+                    $idsToExpand[] = $parent->id;
+                    $parent = $parent->parent;
+                }
+            }
+            $this->expandedAccountIds = array_values(array_unique(array_merge($this->expandedAccountIds, $idsToExpand)));
+        }
+    }
+
+    public function toggleExpand(int $accountId): void
+    {
+        if (in_array($accountId, $this->expandedAccountIds)) {
+            $this->expandedAccountIds = array_values(array_diff($this->expandedAccountIds, [$accountId]));
+        } else {
+            $this->expandedAccountIds[] = $accountId;
+        }
+    }
+
+    public function expandAll(): void
+    {
+        $this->expandedAccountIds = Account::where('is_group', true)->pluck('id')->toArray();
+    }
+
+    public function collapseAll(): void
+    {
+        $this->expandedAccountIds = [];
     }
 
     public function updatingPerPage(): void
@@ -207,14 +247,11 @@ class AccountIndex extends Component
 
         $accounts = $query->paginate($this->perPage);
 
-        // For tree view: load level 1 root accounts with recursive children
-        $treeAccounts = [];
-        if ($this->viewMode === 'tree') {
-            $treeAccounts = Account::whereNull('parent_id')
-                ->with(['children.children.children.children'])
-                ->orderBy('code', 'asc')
-                ->get();
-        }
+        // Load level 1 root accounts with recursive children for accordion tree rendering in both modes
+        $treeAccounts = Account::whereNull('parent_id')
+            ->with(['children.children.children.children'])
+            ->orderBy('code', 'asc')
+            ->get();
 
         $allGroupAccounts = Account::group()->orderBy('code', 'asc')->get(['id', 'code', 'name']);
 

@@ -1,14 +1,14 @@
-<div class="p-6 space-y-6">
+<div class="p-4 sm:p-5 space-y-3.5">
     <!-- Header Title & Flash Messages -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <svg class="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
                 Master Chart of Accounts (COA)
             </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Kelola dan pantau hierarki seluruh akun pembukuan & laporan keuangan ArtaLedger.
             </p>
         </div>
@@ -16,7 +16,7 @@
         <div class="flex items-center gap-3">
             <button 
                 wire:click="createAccount"
-                class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/25 transition-all duration-200 gap-2">
+                class="inline-flex items-center px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-lg shadow-md shadow-indigo-500/20 transition-all duration-150 gap-1.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -136,93 +136,51 @@
 
     <!-- MAIN DISPLAY AREA -->
     @if ($viewMode === 'table')
-        <!-- TABLE VIEW -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <!-- EXPANDABLE TABLE VIEW WITH ACCORDION TREE -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+            <!-- Table Header Toolbar -->
+            <div class="p-3 bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                        Daftar Akun Hirarkis (Tabel Accordion)
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button 
+                        wire:click="expandAll" 
+                        type="button" 
+                        class="px-2.5 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg transition-all shadow-2xs">
+                        Expand All
+                    </button>
+                    <button 
+                        wire:click="collapseAll" 
+                        type="button" 
+                        class="px-2.5 py-1 text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg transition-all shadow-2xs">
+                        Collapse All
+                    </button>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                    <thead class="bg-slate-50 dark:bg-slate-800/80 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 tracking-wider">
+                <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                    <thead class="bg-slate-50/90 dark:bg-slate-800/90 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 tracking-wider border-b border-slate-200 dark:border-slate-800">
                         <tr>
-                            <th class="px-5 py-3.5 w-36 whitespace-nowrap">Kode Akun</th>
-                            <th class="px-5 py-3.5 min-w-[280px]">Nama Akun</th>
-                            <th class="px-5 py-3.5 w-48">Tipe / Kategori</th>
-                            <th class="px-5 py-3.5 w-40 text-center">Status</th>
-                            <th class="px-5 py-3.5 w-32 whitespace-nowrap">Saldo Normal</th>
-                            <th class="px-5 py-3.5 w-32 whitespace-nowrap">Laporan</th>
-                            <th class="px-5 py-3.5 w-24 text-right whitespace-nowrap">Aksi</th>
+                            <th class="px-4 py-2.5 w-36 whitespace-nowrap">Kode Akun</th>
+                            <th class="px-4 py-2.5 min-w-[280px]">Nama Akun</th>
+                            <th class="px-4 py-2.5 w-48">Tipe / Kategori</th>
+                            <th class="px-4 py-2.5 w-40 text-center">Status</th>
+                            <th class="px-4 py-2.5 w-32 whitespace-nowrap">Saldo Normal</th>
+                            <th class="px-4 py-2.5 w-32 whitespace-nowrap">Laporan</th>
+                            <th class="px-4 py-2.5 w-28 text-right whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-                        @forelse ($accounts as $acc)
-                            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                                <td class="px-5 py-3.5 font-mono font-bold text-slate-800 dark:text-slate-100 whitespace-nowrap">
-                                    {{ $acc->code }}
-                                </td>
-                                <td class="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-100">
-                                    <div class="flex items-center" style="padding-left: {{ ($acc->level - 1) * 16 }}px">
-                                        @if ($acc->level > 1)
-                                            <span class="text-slate-400 dark:text-slate-600 mr-1.5 font-mono text-xs">└─</span>
-                                        @endif
-                                        @if ($acc->is_group)
-                                            <span class="font-bold text-slate-900 dark:text-white tracking-wide">{{ $acc->name }}</span>
-                                        @else
-                                            <span class="text-slate-700 dark:text-slate-200">{{ $acc->name }}</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                    {{ $acc->type ?? '-' }}
-                                </td>
-                                <td class="px-5 py-3.5 text-center whitespace-nowrap">
-                                    @if ($acc->is_group)
-                                        <span class="inline-block px-3 py-1 text-[11px] font-extrabold tracking-wider rounded-full bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/25 shadow-sm whitespace-nowrap">
-                                            HEADER (GROUP)
-                                        </span>
-                                    @else
-                                        <span class="inline-block px-3 py-1 text-[11px] font-extrabold tracking-wider rounded-full bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/25 shadow-sm whitespace-nowrap">
-                                            POSTING
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-3.5 text-xs font-bold uppercase tracking-wider whitespace-nowrap">
-                                    <span class="{{ $acc->normal_balance === 'debit' ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400' }}">
-                                        {{ $acc->normal_balance }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3.5 text-xs capitalize font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                    {{ str_replace('_', ' ', $acc->report_type) }}
-                                </td>
-                                <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center justify-end gap-1">
-                                        @if ($acc->is_group)
-                                            <button 
-                                                wire:click="createChildAccount({{ $acc->id }})"
-                                                title="Tambah Sub-Akun (Child)"
-                                                class="p-1.5 rounded-lg text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400 transition-all">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                            </button>
-                                        @endif
-                                        <button 
-                                            wire:click="editAccount({{ $acc->id }})"
-                                            title="Edit Akun"
-                                            class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-all">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                            </svg>
-                                        </button>
-                                        <button 
-                                            wire:click="deleteAccount({{ $acc->id }})"
-                                            wire:confirm="Apakah Anda yakin ingin menghapus akun ini?"
-                                            title="Hapus Akun"
-                                            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition-all">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                        @forelse ($treeAccounts as $root)
+                            @include('livewire.accounting.accounts.partials.table-row-node', ['account' => $root, 'depth' => 0])
                         @empty
                             <tr>
                                 <td colspan="7" class="px-6 py-12 text-center text-slate-400">
@@ -233,67 +191,44 @@
                     </tbody>
                 </table>
             </div>
-
-            <x-custom-pagination :paginator="$accounts" />
         </div>
     @else
-        <!-- TREE VIEW -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
-                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                </svg>
-                Hierarki Cabang COA (Tree Structure)
-            </h3>
+        <!-- TREE VIEW (FILE EXPLORER ACCORDION STYLE) -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+            <div class="p-3.5 bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                        Pohon Hirarki Master COA (File Explorer View)
+                    </h3>
+                </div>
 
-            <div class="space-y-3">
-                @foreach ($treeAccounts as $root)
-                    <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-800/30">
-                        <div class="flex items-center justify-between font-bold text-slate-800 dark:text-slate-100">
-                            <div class="flex items-center gap-2">
-                                <span class="px-2 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono text-sm rounded">
-                                    {{ $root->code }}
-                                </span>
-                                <span>{{ $root->name }}</span>
-                            </div>
-                            <span class="text-xs text-amber-500 font-semibold uppercase">Header Level 1</span>
-                        </div>
+                <div class="flex items-center gap-2">
+                    <button 
+                        wire:click="expandAll" 
+                        type="button" 
+                        class="px-2.5 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg transition-all shadow-2xs">
+                        Expand All
+                    </button>
+                    <button 
+                        wire:click="collapseAll" 
+                        type="button" 
+                        class="px-2.5 py-1 text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg transition-all shadow-2xs">
+                        Collapse All
+                    </button>
+                </div>
+            </div>
 
-                        @if ($root->children->count() > 0)
-                            <div class="mt-3 ml-4 pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-2">
-                                @foreach ($root->children as $child)
-                                    <div class="text-sm">
-                                        <div class="flex items-center justify-between font-semibold text-slate-700 dark:text-slate-200">
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-mono text-xs text-slate-500">{{ $child->code }}</span>
-                                                <span>{{ $child->name }}</span>
-                                            </div>
-                                            <span class="text-xs text-slate-400 font-normal">
-                                                {{ $child->is_group ? 'Header Group' : 'Posting' }}
-                                            </span>
-                                        </div>
-
-                                        @if ($child->children->count() > 0)
-                                            <div class="mt-2 ml-4 pl-4 border-l-2 border-slate-100 dark:border-slate-800 space-y-1">
-                                                @foreach ($child->children as $subChild)
-                                                    <div class="flex items-center justify-between text-xs py-0.5 text-slate-600 dark:text-slate-300">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="font-mono font-medium text-slate-500">{{ $subChild->code }}</span>
-                                                            <span>{{ $subChild->name }}</span>
-                                                        </div>
-                                                        <span class="text-slate-400">
-                                                            {{ $subChild->is_group ? 'Header' : 'Posting' }}
-                                                        </span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
+            <div class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                @forelse ($treeAccounts as $root)
+                    @include('livewire.accounting.accounts.partials.tree-node', ['account' => $root, 'depth' => 0])
+                @empty
+                    <div class="p-8 text-center text-slate-400 text-xs">
+                        Tidak ada akun level 1 ditemukan.
                     </div>
-                @endforeach
+                @endforelse
             </div>
         </div>
     @endif

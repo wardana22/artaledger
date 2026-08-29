@@ -1,15 +1,15 @@
-<div class="p-6 space-y-6">
+<div class="p-4 sm:p-5 space-y-3.5">
     <x-journal-nav active="jurnal-umum" />
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <svg class="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Jurnal Umum (General Journal)
             </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Daftar transaksi Jurnal Umum berstatus Posted dan Reversal pada ArtaLedger.
             </p>
         </div>
@@ -18,8 +18,8 @@
             <a 
                 href="{{ route('accounting.journals.create') }}"
                 wire:navigate
-                class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/25 transition-all duration-200 gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="inline-flex items-center px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-lg shadow-md shadow-indigo-500/20 transition-all duration-150 gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 Buat Jurnal Manual
@@ -45,36 +45,75 @@
         </div>
     @endif
 
-    <!-- Search & Filter -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-3 w-full md:w-auto">
-            <div class="relative w-full sm:w-80">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </span>
-                <input 
-                    wire:model.live.debounce.300ms="search" 
-                    type="text" 
-                    placeholder="Cari nomor jurnal, no bukti, deskripsi..." 
-                    class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
-                />
+    <!-- Search & Filter Bar (Symmetrical Proportional 12-Column Grid) -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+            <!-- 1. Search Input (Col-Span 3) -->
+            <div class="lg:col-span-3">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Pencarian
+                </label>
+                <div class="relative w-full">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </span>
+                    <input 
+                        wire:model.live.debounce.300ms="search" 
+                        type="text" 
+                        placeholder="Cari no. jurnal, bukti, desc..." 
+                        class="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 transition-all"
+                    />
+                </div>
             </div>
 
-            <select wire:model.live="statusFilter" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200">
-                <option value="all">Semua Status</option>
-                <option value="posted">Posted</option>
-                <option value="draft">Draft</option>
-                <option value="reversed">Reversed</option>
-            </select>
+            <!-- 2. Status Filter (Col-Span 2) -->
+            <div class="lg:col-span-2">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Status Jurnal
+                </label>
+                <select wire:model.live="statusFilter" aria-label="Status Jurnal" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 transition-all">
+                    <option value="all">Semua Status</option>
+                    <option value="posted">Posted</option>
+                    <option value="draft">Draft</option>
+                    <option value="reversed">Reversed</option>
+                </select>
+            </div>
 
-            <select wire:model.live="unitFilter" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 font-medium">
-                <option value="all">🌐 Konsolidasi (Semua Unit)</option>
-                @foreach ($units as $unit)
-                    <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
-                @endforeach
-            </select>
+            <!-- 3. Unit Filter (Col-Span 3) -->
+            <div class="lg:col-span-3">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Unit Perusahaan
+                </label>
+                <select wire:model.live="unitFilter" aria-label="Unit Perusahaan" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 transition-all">
+                    <option value="all">🌐 Konsolidasi (Semua Unit)</option>
+                    @foreach ($units as $unit)
+                        <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- 4. Date Range Filter (Col-Span 4 - Roomy & Overflow-Free) -->
+            <div class="lg:col-span-4">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                    Periode Tanggal
+                </label>
+                <div class="grid grid-cols-2 gap-1.5 items-center">
+                    <input 
+                        wire:model.live="startDate" 
+                        type="date" 
+                        aria-label="Dari Tanggal"
+                        class="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-medium dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" 
+                    />
+                    <input 
+                        wire:model.live="endDate" 
+                        type="date" 
+                        aria-label="Sampai Tanggal"
+                        class="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-medium dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" 
+                    />
+                </div>
+            </div>
         </div>
     </div>
 

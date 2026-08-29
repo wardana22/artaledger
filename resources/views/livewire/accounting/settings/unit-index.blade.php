@@ -1,21 +1,21 @@
-<div class="p-6 space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="p-4 sm:p-5 space-y-3.5">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <svg class="w-7 h-7 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h1m-1-4h.01M9 16h.01M9 12h.01M13 12h.01M13 16h.01M17 12h.01M17 16h.01"></path>
                 </svg>
                 Master Unit Perusahaan / Departemen
             </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Kelola data unit kerja/kantor cabang dan kata kunci (keywords) untuk pemetaan impor jurnal otomatis.
             </p>
         </div>
 
         <button 
             wire:click="openCreateModal"
-            class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/25 transition-all duration-200 gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="inline-flex items-center px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-lg shadow-md shadow-indigo-500/20 transition-all duration-150 gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
             Tambah Unit Perusahaan
@@ -23,8 +23,8 @@
     </div>
 
     @if (session()->has('message'))
-        <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-medium flex items-center gap-2">
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-medium flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
             {{ session('message') }}
@@ -32,8 +32,8 @@
     @endif
 
     @if (session()->has('error'))
-        <div class="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 rounded-xl text-sm font-medium flex items-center gap-2">
-            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-medium flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
             {{ session('error') }}
@@ -41,7 +41,7 @@
     @endif
 
     <!-- Search Bar -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-xs">
         <div class="relative w-full sm:w-80">
             <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,54 +52,54 @@
                 wire:model.live.debounce.300ms="search" 
                 type="text" 
                 placeholder="Cari kode, nama, atau kata kunci unit..." 
-                class="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
+                class="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 transition-all"
             />
         </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+    <!-- Data Table Card with Integrated Custom Pagination -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
                 <thead class="bg-slate-50 dark:bg-slate-800/60 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                     <tr>
-                        <th class="px-5 py-3.5 w-12 text-center">#</th>
-                        <th class="px-5 py-3.5 w-28">Kode Unit</th>
-                        <th class="px-5 py-3.5 w-64">Nama Unit</th>
-                        <th class="px-5 py-3.5">Kata Kunci Mapping (Keywords)</th>
-                        <th class="px-5 py-3.5 text-center w-36">Penggunaan Line</th>
-                        <th class="px-5 py-3.5 text-center w-28">Aksi</th>
+                        <th class="px-4 py-2.5 w-12 text-center">#</th>
+                        <th class="px-4 py-2.5 w-28">Kode Unit</th>
+                        <th class="px-4 py-2.5 w-64">Nama Unit</th>
+                        <th class="px-4 py-2.5">Kata Kunci Mapping (Keywords)</th>
+                        <th class="px-4 py-2.5 text-center w-36">Penggunaan Line</th>
+                        <th class="px-4 py-2.5 text-center w-28">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     @forelse ($units as $index => $unit)
                         <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                            <td class="px-5 py-3.5 text-center text-slate-400">
+                            <td class="px-4 py-2.5 text-center text-slate-400">
                                 {{ $units->firstItem() + $index }}
                             </td>
-                            <td class="px-5 py-3.5 font-mono">
+                            <td class="px-4 py-2.5 font-mono">
                                 <span class="px-2 py-0.5 text-xs font-extrabold rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                                     {{ $unit->code }}
                                 </span>
                             </td>
-                            <td class="px-5 py-3.5 font-bold text-slate-800 dark:text-slate-100">
+                            <td class="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-100">
                                 {{ $unit->name }}
                             </td>
-                            <td class="px-5 py-3.5 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                            <td class="px-4 py-2.5 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                                 {{ $unit->keywords ?: '-' }}
                             </td>
-                            <td class="px-5 py-3.5 text-center font-mono">
+                            <td class="px-4 py-2.5 text-center font-mono">
                                 <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                     {{ $unit->journal_lines_count }} Baris
                                 </span>
                             </td>
-                            <td class="px-5 py-3.5 text-center whitespace-nowrap">
+                            <td class="px-4 py-2.5 text-center whitespace-nowrap">
                                 <div class="flex items-center justify-center gap-1.5">
                                     <button 
                                         wire:click="openEditModal({{ $unit->id }})"
                                         title="Edit Unit Perusahaan {{ $unit->name }}"
                                         class="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 rounded-lg transition-all shadow-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                         </svg>
                                     </button>
@@ -108,7 +108,7 @@
                                         wire:confirm="Apakah Anda yakin ingin menghapus unit '{{ $unit->name }}'?"
                                         title="Hapus Unit Perusahaan {{ $unit->name }}"
                                         class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg transition-all shadow-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                         </svg>
                                     </button>
@@ -117,7 +117,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-8 text-center text-slate-400">
+                            <td colspan="6" class="p-6 text-center text-slate-400">
                                 Tidak ada data unit perusahaan ditemukan.
                             </td>
                         </tr>
@@ -125,9 +125,9 @@
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <x-custom-pagination :paginator="$units" />
+        <x-custom-pagination :paginator="$units" />
+    </div>
 
     <!-- MODAL FORM DIALOG -->
     @if ($showModal)

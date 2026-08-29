@@ -16,6 +16,8 @@ class UnitIndex extends Component
 
     public string $search = '';
 
+    public int $perPage = 10;
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -27,6 +29,11 @@ class UnitIndex extends Component
     public string $keywords = '';
 
     public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
     {
         $this->resetPage();
     }
@@ -98,7 +105,7 @@ class UnitIndex extends Component
                     ->orWhere('keywords', 'like', "%{$this->search}%");
             })
             ->orderBy('code')
-            ->paginate(15);
+            ->paginate($this->perPage);
 
         return view('livewire.accounting.settings.unit-index', [
             'units' => $units,

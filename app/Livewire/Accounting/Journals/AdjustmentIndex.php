@@ -18,12 +18,26 @@ class AdjustmentIndex extends Component
 
     public string $statusFilter = 'all';
 
+    public string $startDate = '';
+
+    public string $endDate = '';
+
     public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
     public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStartDate(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate(): void
     {
         $this->resetPage();
     }
@@ -70,6 +84,8 @@ class AdjustmentIndex extends Component
             ->when($this->statusFilter !== 'all', function ($query) {
                 $query->where('status', $this->statusFilter);
             })
+            ->when(! empty($this->startDate), fn ($q) => $q->whereDate('entry_date', '>=', $this->startDate))
+            ->when(! empty($this->endDate), fn ($q) => $q->whereDate('entry_date', '<=', $this->endDate))
             ->orderByDesc('entry_date')
             ->orderByDesc('id')
             ->paginate(10);

@@ -5,7 +5,7 @@
     $isAjpActive = $active === 'ajp' || ($active === null && (request()->routeIs('accounting.adjustments.*') || request()->is('accounting/adjustments*')));
 @endphp
 
-<div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6 overflow-x-auto">
+<div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-3.5 overflow-x-auto">
     <a 
         href="{{ route('accounting.journals.index') }}" 
         wire:navigate
