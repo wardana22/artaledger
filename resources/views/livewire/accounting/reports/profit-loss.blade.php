@@ -52,12 +52,12 @@
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
-                <!-- DARK NAVY AUDITED EXCEL HEADER -->
-                <thead class="bg-slate-900 text-slate-100 font-extrabold uppercase tracking-wider text-xs border-b-2 border-slate-800">
+                <!-- AUDITED EXCEL ADAPTIVE HEADER -->
+                <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-wider text-xs border-b-2 border-slate-200 dark:border-slate-800">
                     <tr>
-                        <th class="px-5 py-4 w-36 font-mono border-r border-slate-800">KODE AKUN</th>
-                        <th class="px-5 py-4 border-r border-slate-800">NAMA AKUN</th>
-                        <th class="px-5 py-4 text-right w-48 border-r border-slate-800">RINCIAN (Rp)</th>
+                        <th class="px-5 py-4 w-36 font-mono border-r border-slate-200 dark:border-slate-800">KODE AKUN</th>
+                        <th class="px-5 py-4 border-r border-slate-200 dark:border-slate-800">NAMA AKUN</th>
+                        <th class="px-5 py-4 text-right w-48 border-r border-slate-200 dark:border-slate-800">RINCIAN (Rp)</th>
                         <th class="px-5 py-4 text-right w-52">TOTAL (Rp)</th>
                     </tr>
                 </thead>
@@ -84,14 +84,14 @@
                         @endphp
 
                         <tr class="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 
-                            {{ $isLevel1 ? 'bg-slate-900/90 dark:bg-slate-900 text-white font-extrabold text-sm' : '' }}
-                            {{ $isLevel2 ? 'bg-slate-100/70 dark:bg-slate-800/50 font-bold text-slate-900 dark:text-slate-100' : '' }}
+                            {{ $isLevel1 ? 'bg-indigo-50/80 dark:bg-slate-800/90 text-indigo-950 dark:text-indigo-200 font-extrabold text-sm border-y border-indigo-200/80 dark:border-indigo-800/50' : '' }}
+                            {{ $isLevel2 ? 'bg-slate-100/80 dark:bg-slate-800/50 font-bold text-slate-900 dark:text-slate-100' : '' }}
                             {{ $isLevel3 ? 'font-semibold text-slate-800 dark:text-slate-200' : '' }}">
                             
                             <!-- KODE AKUN -->
                             <td class="px-5 py-3 font-mono border-r border-slate-200 dark:border-slate-800/60">
                                 <span class="px-2 py-0.5 text-xs font-mono font-bold rounded-md 
-                                    {{ $isLevel1 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20' }}">
+                                    {{ $isLevel1 ? 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20' }}">
                                     {{ $acc->code }}
                                 </span>
                             </td>
@@ -131,7 +131,7 @@
                             <!-- TOTAL (Rp) - GROUP HEADERS & LEVEL 1/2/3 TOTALS -->
                             <td class="px-5 py-3 text-right font-mono font-bold">
                                 @if ($row['has_children'] && $row['total'] !== null)
-                                    <span class="{{ $isLevel1 ? 'text-indigo-300 font-extrabold' : '' }}">
+                                    <span class="{{ $isLevel1 ? 'text-indigo-600 dark:text-indigo-300 font-extrabold' : '' }}">
                                         {{ number_format($row['total'], 2, ',', '.') }}
                                     </span>
                                 @else
@@ -142,77 +142,77 @@
 
                         {{-- TOTAL BANNER INLINE SETELAH AKUN 4 DAN ANAK-ANAKNYA --}}
                         @if ($currPrefix === '4' && $nextPrefix !== '4')
-                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                            <tr class="bg-emerald-500/5 dark:bg-slate-950/80 border-y border-emerald-500/20 dark:border-slate-800">
                                 <td colspan="4" class="p-3">
-                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL PENDAPATAN USAHA</span>
-                                        <span class="text-base font-mono font-extrabold text-emerald-400">Rp {{ number_format($totalRevenue, 2, ',', '.') }}</span>
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50/80 dark:bg-slate-800/60 border border-emerald-200 dark:border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-900 dark:text-slate-300">TOTAL PENDAPATAN USAHA</span>
+                                        <span class="text-base font-mono font-extrabold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalRevenue, 2, ',', '.') }}</span>
                                     </div>
                                 </td>
                             </tr>
                         @elseif ($currPrefix === '5' && $nextPrefix !== '5')
-                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                            <tr class="bg-rose-500/5 dark:bg-slate-950/80 border-y border-rose-500/20 dark:border-slate-800">
                                 <td colspan="4" class="p-3 space-y-3">
-                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL BEBAN POKOK PENDAPATAN (HPP)</span>
-                                        <span class="text-base font-mono font-extrabold text-rose-400">Rp {{ number_format($totalHpp, 2, ',', '.') }}</span>
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-rose-50/80 dark:bg-slate-800/60 border border-rose-200 dark:border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-rose-900 dark:text-slate-300">TOTAL BEBAN POKOK PENDAPATAN (HPP)</span>
+                                        <span class="text-base font-mono font-extrabold text-rose-600 dark:text-rose-400">Rp {{ number_format($totalHpp, 2, ',', '.') }}</span>
                                     </div>
-                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-indigo-950/80 border border-indigo-500/30 shadow-md">
+                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-500/30 shadow-md">
                                         <div>
-                                            <span class="text-xs font-black uppercase tracking-widest text-indigo-300 block">LABA / RUGI KOTOR (GROSS PROFIT)</span>
-                                            <span class="text-xs text-slate-400 block mt-0.5">Pendapatan Usaha dikurangi Beban Pokok Pendapatan (HPP)</span>
+                                            <span class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-300 block">LABA / RUGI KOTOR (GROSS PROFIT)</span>
+                                            <span class="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">Pendapatan Usaha dikurangi Beban Pokok Pendapatan (HPP)</span>
                                         </div>
-                                        <span class="text-xl font-mono font-black {{ $grossProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                                        <span class="text-xl font-mono font-black {{ $grossProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
                                             Rp {{ number_format($grossProfit, 2, ',', '.') }}
                                         </span>
                                     </div>
                                 </td>
                             </tr>
                         @elseif ($currPrefix === '6' && $nextPrefix !== '6')
-                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                            <tr class="bg-rose-500/5 dark:bg-slate-950/80 border-y border-rose-500/20 dark:border-slate-800">
                                 <td colspan="4" class="p-3 space-y-3">
-                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">TOTAL BEBAN OPERASIONAL & ADMINISTRASI</span>
-                                        <span class="text-base font-mono font-extrabold text-rose-400">Rp {{ number_format($totalOperatingExpenses, 2, ',', '.') }}</span>
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-rose-50/80 dark:bg-slate-800/60 border border-rose-200 dark:border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-rose-900 dark:text-slate-300">TOTAL BEBAN OPERASIONAL & ADMINISTRASI</span>
+                                        <span class="text-base font-mono font-extrabold text-rose-600 dark:text-rose-400">Rp {{ number_format($totalOperatingExpenses, 2, ',', '.') }}</span>
                                     </div>
-                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-blue-950/80 border border-blue-500/30 shadow-md">
+                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-500/30 shadow-md">
                                         <div>
-                                            <span class="text-xs font-black uppercase tracking-widest text-blue-300 block">LABA / RUGI OPERASIONAL (OPERATING PROFIT)</span>
-                                            <span class="text-xs text-slate-400 block mt-0.5">Laba Kotor dikurangi Total Beban Operasional</span>
+                                            <span class="text-xs font-black uppercase tracking-widest text-blue-900 dark:text-blue-300 block">LABA / RUGI OPERASIONAL (OPERATING PROFIT)</span>
+                                            <span class="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">Laba Kotor dikurangi Total Beban Operasional</span>
                                         </div>
-                                        <span class="text-xl font-mono font-black {{ $operatingProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                                        <span class="text-xl font-mono font-black {{ $operatingProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
                                             Rp {{ number_format($operatingProfit, 2, ',', '.') }}
                                         </span>
                                     </div>
                                 </td>
                             </tr>
                         @elseif (($currPrefix === '7' || $currPrefix === '8') && ($nextPrefix !== '7' && $nextPrefix !== '8'))
-                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                            <tr class="bg-slate-100/50 dark:bg-slate-950/80 border-y border-slate-200 dark:border-slate-800">
                                 <td colspan="4" class="p-3 space-y-3">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                                            <span class="font-semibold text-slate-400">Pendapatan Non-Operasional:</span>
-                                            <span class="font-mono font-bold text-emerald-400">Rp {{ number_format($otherRevenue, 2, ',', '.') }}</span>
+                                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-100/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/40">
+                                            <span class="font-semibold text-slate-600 dark:text-slate-400">Pendapatan Non-Operasional:</span>
+                                            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($otherRevenue, 2, ',', '.') }}</span>
                                         </div>
-                                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                                            <span class="font-semibold text-slate-400">Beban Non-Operasional:</span>
-                                            <span class="font-mono font-bold text-rose-400">Rp {{ number_format($otherExpense, 2, ',', '.') }}</span>
+                                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-100/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/40">
+                                            <span class="font-semibold text-slate-600 dark:text-slate-400">Beban Non-Operasional:</span>
+                                            <span class="font-mono font-bold text-rose-600 dark:text-rose-400">Rp {{ number_format($otherExpense, 2, ',', '.') }}</span>
                                         </div>
                                     </div>
-                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-800 border border-slate-700 shadow-md">
-                                        <span class="text-xs font-black uppercase tracking-widest text-slate-200">LABA / RUGI SEBELUM PAJAK (PROFIT BEFORE TAX)</span>
-                                        <span class="text-xl font-mono font-black {{ $profitBeforeTax >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+                                        <span class="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">LABA / RUGI SEBELUM PAJAK (PROFIT BEFORE TAX)</span>
+                                        <span class="text-xl font-mono font-black {{ $profitBeforeTax >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
                                             Rp {{ number_format($profitBeforeTax, 2, ',', '.') }}
                                         </span>
                                     </div>
                                 </td>
                             </tr>
                         @elseif ($currPrefix === '9' && $nextPrefix !== '9')
-                            <tr class="bg-slate-950/80 border-y border-slate-800/80">
+                            <tr class="bg-rose-500/5 dark:bg-slate-950/80 border-y border-rose-500/20 dark:border-slate-800">
                                 <td colspan="4" class="p-3">
-                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                                        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-300">BEBAN PAJAK PENGHASILAN (INCOME TAX)</span>
-                                        <span class="text-base font-mono font-extrabold text-rose-400">Rp {{ number_format($taxExpense, 2, ',', '.') }}</span>
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-rose-50/80 dark:bg-slate-800/60 border border-rose-200 dark:border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-rose-900 dark:text-slate-300">BEBAN PAJAK PENGHASILAN (INCOME TAX)</span>
+                                        <span class="text-base font-mono font-extrabold text-rose-600 dark:text-rose-400">Rp {{ number_format($taxExpense, 2, ',', '.') }}</span>
                                     </div>
                                 </td>
                             </tr>
@@ -229,25 +229,26 @@
         </div>
 
         <!-- FINANCIAL SUMMARY SECTION BANNERS -->
-        <div class="bg-slate-900 border-t-2 border-slate-800 p-6 space-y-4 text-slate-100 font-mono">
+        <div class="bg-slate-50 dark:bg-slate-900 border-t-2 border-slate-200 dark:border-slate-800 p-6 space-y-4 text-slate-800 dark:text-slate-100 font-mono">
             <!-- FINAL LABA BERSIH PERIODE BERJALAN (NET PROFIT) GLOWING CARD -->
-            <div class="p-6 rounded-3xl bg-gradient-to-r {{ $netProfit >= 0 ? 'from-emerald-950 via-slate-900 to-indigo-950 border-2 border-emerald-500/50 shadow-2xl shadow-emerald-500/10' : 'from-rose-950 via-slate-900 to-amber-950 border-2 border-rose-500/50 shadow-2xl shadow-rose-500/10' }} flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="p-6 rounded-3xl bg-gradient-to-r {{ $netProfit >= 0 ? 'from-emerald-500/10 via-emerald-500/5 to-indigo-500/10 dark:from-emerald-950 dark:via-slate-900 dark:to-indigo-950 border-2 border-emerald-500/40 dark:border-emerald-500/50 shadow-2xl shadow-emerald-500/10' : 'from-rose-500/10 via-rose-500/5 to-amber-500/10 dark:from-rose-950 dark:via-slate-900 dark:to-amber-950 border-2 border-rose-500/40 dark:border-rose-500/50 shadow-2xl shadow-rose-500/10' }} flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase {{ $netProfit >= 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30' }}">
+                    <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase {{ $netProfit >= 0 ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30' }}">
                         {{ $netProfit >= 0 ? '🟢 LABA BERSIH (NET PROFIT)' : '🔴 RUGI BERSIH (NET LOSS)' }}
                     </span>
-                    <h3 class="text-lg font-black text-white mt-2">
+                    <h3 class="text-lg font-black text-slate-900 dark:text-white mt-2">
                         LABA (RUGI) BERSIH PERIODE BERJALAN
                     </h3>
-                    <p class="text-xs text-slate-400 mt-0.5">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Hasil akhir akumulasi Laporan Laba Rugi Audited per tanggal {{ $startDate }} s/d {{ $endDate }}
                     </p>
                 </div>
 
-                <div class="text-right font-mono text-3xl font-black tracking-tight {{ $netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400' }}">
+                <div class="text-right font-mono text-3xl font-black tracking-tight {{ $netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
                     Rp {{ number_format($netProfit, 2, ',', '.') }}
                 </div>
             </div>
         </div>
     </div>
+
 </div>
