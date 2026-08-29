@@ -1,4 +1,7 @@
 <div class="p-4 sm:p-5 space-y-3.5">
+    <!-- TOP NAV TABS -->
+    <x-settings-nav active="coa" />
+
     <!-- Header Title & Flash Messages -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>

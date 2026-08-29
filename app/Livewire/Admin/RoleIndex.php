@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\User;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -20,17 +19,28 @@ class RoleIndex extends Component
 
     public bool $showRoleModal = false;
 
-    public bool $showUserRoleModal = false;
-
     public ?int $editingRoleId = null;
-
-    public ?int $selectedUserId = null;
 
     public string $roleName = '';
 
     public array $selectedPermissions = [];
 
-    public array $selectedUserRoles = [];
+    public array $permissionLabels = [
+        'accounts.view' => 'Lihat Master COA',
+        'accounts.create' => 'Tambah Akun Baru',
+        'accounts.edit' => 'Edit Akun',
+        'accounts.delete' => 'Hapus Akun',
+        'journals.view' => 'Lihat Jurnal Transaksi',
+        'journals.create' => 'Buat Jurnal Baru',
+        'journals.edit' => 'Edit Draft Jurnal',
+        'journals.post' => 'Setujui & Posting Jurnal',
+        'journals.delete' => 'Hapus Jurnal Transaksi',
+        'reports.view' => 'Lihat Laporan Keuangan',
+        'reports.export' => 'Ekspor Laporan (Excel/PDF)',
+        'settings.view' => 'Lihat Pengaturan System',
+        'settings.manage' => 'Kelola Unit & Jenis Jurnal',
+        'settings.manage_roles' => 'Kelola Peran & Hak Akses',
+    ];
 
     public function openCreateRoleModal(): void
     {
@@ -81,23 +91,6 @@ class RoleIndex extends Component
         session()->flash('message', "Peran '{$role->name}' berhasil dihapus.");
     }
 
-    public function openUserRoleModal(int $userId): void
-    {
-        $user = User::findOrFail($userId);
-        $this->selectedUserId = $user->id;
-        $this->selectedUserRoles = $user->roles->pluck('name')->toArray();
-        $this->showUserRoleModal = true;
-    }
-
-    public function saveUserRoles(): void
-    {
-        $user = User::findOrFail($this->selectedUserId);
-        $user->syncRoles($this->selectedUserRoles);
-
-        session()->flash('message', "Peran untuk pengguna '{$user->name}' berhasil diperbarui.");
-        $this->showUserRoleModal = false;
-    }
-
     public function resetRoleForm(): void
     {
         $this->editingRoleId = null;
@@ -122,12 +115,10 @@ class RoleIndex extends Component
             'Pengaturan System' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'settings.')),
         ];
 
-        $users = User::with('roles')->get();
-
         return view('livewire.admin.role-index', [
             'roles' => $roles,
             'groupedPermissions' => $groupedPermissions,
-            'users' => $users,
+            'permissionLabels' => $this->permissionLabels,
         ]);
     }
 }

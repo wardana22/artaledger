@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             AccountingPeriodSeeder::class,
             SaldoAwalSeeder::class,
+            UserAndUnitSeeder::class,
         ]);
     }
 }

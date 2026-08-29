@@ -1,4 +1,7 @@
 <div class="p-4 sm:p-5 space-y-3.5">
+    <!-- TOP NAV TABS -->
+    <x-settings-nav active="journal-types" />
+
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">

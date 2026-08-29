@@ -49,17 +49,11 @@
                 <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />
 
                 <flux:sidebar.group :heading="__('Pengaturan')" class="grid">
-                    <flux:sidebar.item icon="cog-6-tooth" :href="route('accounting.accounts.index')" :current="request()->routeIs('accounting.accounts.*')" wire:navigate>
-                        {{ __('Master COA') }}
+                    <flux:sidebar.item icon="cog-6-tooth" :href="route('accounting.accounts.index')" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*')" wire:navigate>
+                        {{ __('Master Akuntansi') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="tag" :href="route('accounting.journal-types.index')" :current="request()->routeIs('accounting.journal-types.*')" wire:navigate>
-                        {{ __('Jenis Jurnal') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="building-office-2" :href="route('accounting.units.index')" :current="request()->routeIs('accounting.units.*')" wire:navigate>
-                        {{ __('Unit Perusahaan') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="shield-check" :href="route('admin.roles.index')" :current="request()->routeIs('admin.roles.*')" wire:navigate>
-                        {{ __('Peran & Hak Akses') }}
+                    <flux:sidebar.item icon="user-group" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*')" wire:navigate>
+                        {{ __('Pengguna & Hak Akses') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>

@@ -5,10 +5,17 @@ use App\Livewire\Accounting\Accounts\AccountIndex;
 use App\Models\Account;
 use App\Models\Company;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $adminRole = Role::where('name', 'Super Admin')->first();
+    if ($adminRole) {
+        $this->user->assignRole($adminRole);
+    }
 });
 
 test('accounts can be seeded from scratch JSON files', function () {

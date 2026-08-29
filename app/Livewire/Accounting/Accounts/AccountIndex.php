@@ -25,7 +25,7 @@ class AccountIndex extends Component
 
     public string $groupFilter = 'all';
 
-    public string $viewMode = 'tree'; // 'tree' by default or 'table'
+    public string $viewMode = 'table'; // 'table' by default or 'tree'
 
     public array $expandedAccountIds = [];
 
