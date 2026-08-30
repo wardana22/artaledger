@@ -279,6 +279,11 @@ class DashboardSettingsIndex extends Component
         session()->flash('message', 'Kartu KPI berhasil dihapus.');
     }
 
+    public function appendFormulaToken(string $token): void
+    {
+        $this->kpi_formula_expression = trim($this->kpi_formula_expression.' '.$token);
+    }
+
     private function resetKpiForm(): void
     {
         $this->editingKpiId = null;

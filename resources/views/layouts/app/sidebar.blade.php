@@ -125,8 +125,13 @@
                                 {{ __('Pengaturan Dashboard') }}
                             </flux:sidebar.item>
                         @endif
+                        @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.manage') || auth()->user()?->hasRole('Super Admin'))
+                            <flux:sidebar.item icon="rectangle-stack" :href="route('accounting.account-groups.index')" :current="request()->routeIs('accounting.account-groups.*')" wire:navigate>
+                                {{ __('Grup Akun COA') }}
+                            </flux:sidebar.item>
+                        @endif
                         @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types') || auth()->user()?->can('settings.units'))
-                            <flux:sidebar.item icon="cog-6-tooth" :href="$masterRoute" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.account-groups.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*') || request()->routeIs('accounting.settings.company.*')" wire:navigate>
+                            <flux:sidebar.item icon="cog-6-tooth" :href="$masterRoute" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*') || request()->routeIs('accounting.settings.company.*')" wire:navigate>
                                 {{ __('Master Akuntansi') }}
                             </flux:sidebar.item>
                         @endif
