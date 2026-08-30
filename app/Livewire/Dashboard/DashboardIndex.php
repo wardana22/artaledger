@@ -24,6 +24,8 @@ class DashboardIndex extends Component
 
     public ?int $selectedUnitId = null;
 
+    public int $selectedMonth = 0;
+
     public int $selectedYear = 2026;
 
     public function mount(): void
@@ -73,7 +75,7 @@ class DashboardIndex extends Component
                 ->get();
 
             foreach ($kpis as $kpi) {
-                $value = $kpi->calculateValue($this->selectedUnitId);
+                $value = $kpi->calculateValue($this->selectedUnitId, $this->selectedMonth, $this->selectedYear);
                 $kpiCards[] = [
                     'title' => $kpi->title,
                     'value' => $value,

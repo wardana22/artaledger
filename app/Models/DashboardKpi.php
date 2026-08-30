@@ -42,7 +42,7 @@ class DashboardKpi extends Model
     /**
      * Calculate live financial value for this KPI card.
      */
-    public function calculateValue(?int $unitId = null): float
+    public function calculateValue(?int $unitId = null, int $month = 0, int $year = 0): float
     {
         $query = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
@@ -54,13 +54,29 @@ class DashboardKpi extends Model
         }
 
         if ($unitId) {
-            $query->where('journal_entries.unit_id', $unitId);
+            $query->where('journal_lines.unit_id', $unitId);
         }
 
         if ($this->source_type === 'account' && $this->account_id) {
             $query->where('journal_lines.account_id', $this->account_id);
         } elseif ($this->source_type === 'account_type' && $this->account_type) {
             $query->where('accounts.type', $this->account_type);
+        }
+
+        if ($year > 0) {
+            if ($this->calculation_type === 'ending_balance') {
+                if ($month > 0) {
+                    $endDate = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $year, $month)));
+                    $query->whereDate('journal_entries.entry_date', '<=', $endDate);
+                } else {
+                    $query->whereDate('journal_entries.entry_date', '<=', "{$year}-12-31");
+                }
+            } else {
+                $query->whereYear('journal_entries.entry_date', $year);
+                if ($month > 0) {
+                    $query->whereMonth('journal_entries.entry_date', $month);
+                }
+            }
         }
 
         $totalDebit = (float) (clone $query)->sum('journal_lines.debit');
