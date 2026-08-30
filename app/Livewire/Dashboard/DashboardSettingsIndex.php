@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboard;
 
 use App\Models\Account;
+use App\Models\AccountGroup;
 use App\Models\Company;
 use App\Models\DashboardKpi;
 use App\Models\DashboardSetting;
@@ -47,9 +48,17 @@ class DashboardSettingsIndex extends Component
 
     public ?int $kpi_account_id = null;
 
+    public ?int $kpi_account_group_id = null;
+
     public string $kpi_account_type = 'asset';
 
     public string $kpi_calculation_type = 'ending_balance';
+
+    public string $kpi_formula_expression = '';
+
+    public string $kpi_display_format = 'currency';
+
+    public int $kpi_decimal_places = 0;
 
     public string $kpi_color_theme = 'indigo';
 
@@ -183,8 +192,12 @@ class DashboardSettingsIndex extends Component
         $this->kpi_title = $kpi->title;
         $this->kpi_source_type = $kpi->source_type;
         $this->kpi_account_id = $kpi->account_id;
+        $this->kpi_account_group_id = $kpi->account_group_id;
         $this->kpi_account_type = $kpi->account_type ?? 'asset';
         $this->kpi_calculation_type = $kpi->calculation_type;
+        $this->kpi_formula_expression = $kpi->formula_expression ?? '';
+        $this->kpi_display_format = $kpi->display_format ?? 'currency';
+        $this->kpi_decimal_places = $kpi->decimal_places ?? 0;
         $this->kpi_color_theme = $kpi->color_theme;
         $this->kpi_icon = $kpi->icon;
         $this->kpi_order_index = $kpi->order_index;
@@ -201,10 +214,14 @@ class DashboardSettingsIndex extends Component
 
         $this->validate([
             'kpi_title' => 'required|string|max:100',
-            'kpi_source_type' => 'required|in:account,account_type',
+            'kpi_source_type' => 'required|in:account,account_type,account_group,formula',
             'kpi_account_id' => 'nullable|required_if:kpi_source_type,account|exists:accounts,id',
+            'kpi_account_group_id' => 'nullable|required_if:kpi_source_type,account_group|exists:account_groups,id',
             'kpi_account_type' => 'nullable|required_if:kpi_source_type,account_type|string',
+            'kpi_formula_expression' => 'nullable|required_if:kpi_source_type,formula|string',
             'kpi_calculation_type' => 'required|in:ending_balance,period_mutation,debit_sum,credit_sum',
+            'kpi_display_format' => 'required|in:currency,percentage,days,number,times',
+            'kpi_decimal_places' => 'required|integer|min:0|max:4',
             'kpi_color_theme' => 'required|in:indigo,emerald,rose,amber,sky,violet',
             'kpi_icon' => 'required|string',
             'kpi_order_index' => 'required|integer|min:0',
@@ -217,8 +234,12 @@ class DashboardSettingsIndex extends Component
                 'title' => $this->kpi_title,
                 'source_type' => $this->kpi_source_type,
                 'account_id' => $this->kpi_source_type === 'account' ? $this->kpi_account_id : null,
+                'account_group_id' => $this->kpi_source_type === 'account_group' ? $this->kpi_account_group_id : null,
                 'account_type' => $this->kpi_source_type === 'account_type' ? $this->kpi_account_type : null,
+                'formula_expression' => $this->kpi_source_type === 'formula' ? $this->kpi_formula_expression : null,
                 'calculation_type' => $this->kpi_calculation_type,
+                'display_format' => $this->kpi_display_format,
+                'decimal_places' => $this->kpi_decimal_places,
                 'color_theme' => $this->kpi_color_theme,
                 'icon' => $this->kpi_icon,
                 'order_index' => $this->kpi_order_index,
@@ -264,8 +285,12 @@ class DashboardSettingsIndex extends Component
         $this->kpi_title = '';
         $this->kpi_source_type = 'account';
         $this->kpi_account_id = null;
+        $this->kpi_account_group_id = null;
         $this->kpi_account_type = 'asset';
         $this->kpi_calculation_type = 'ending_balance';
+        $this->kpi_formula_expression = '';
+        $this->kpi_display_format = 'currency';
+        $this->kpi_decimal_places = 0;
         $this->kpi_color_theme = 'indigo';
         $this->kpi_icon = 'wallet';
         $this->kpi_order_index = 0;
@@ -275,6 +300,7 @@ class DashboardSettingsIndex extends Component
     public function render()
     {
         $kpis = DashboardKpi::where('company_id', $this->company->id)
+            ->with(['account', 'accountGroup'])
             ->orderBy('order_index')
             ->orderBy('id')
             ->get();
@@ -283,9 +309,14 @@ class DashboardSettingsIndex extends Component
             ->orderBy('code')
             ->get();
 
+        $accountGroups = AccountGroup::where('company_id', $this->company->id)
+            ->orderBy('name')
+            ->get();
+
         return view('livewire.dashboard.dashboard-settings-index', [
             'kpis' => $kpis,
             'accounts' => $accounts,
+            'accountGroups' => $accountGroups,
         ]);
     }
 }

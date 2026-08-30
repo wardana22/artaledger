@@ -79,6 +79,7 @@ class DashboardIndex extends Component
                 $kpiCards[] = [
                     'title' => $kpi->title,
                     'value' => $value,
+                    'formatted_value' => $kpi->formatDisplayValue($value),
                     'color_theme' => $kpi->color_theme,
                     'icon' => $kpi->icon,
                     'calculation_type' => $kpi->calculation_type,

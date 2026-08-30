@@ -16,9 +16,13 @@ class DashboardKpi extends Model
         'title',
         'source_type',
         'account_id',
+        'account_group_id',
         'account_type',
         'calculation_type',
+        'formula_expression',
         'color_theme',
+        'display_format',
+        'decimal_places',
         'icon',
         'order_index',
         'is_active',
@@ -27,6 +31,7 @@ class DashboardKpi extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'order_index' => 'integer',
+        'decimal_places' => 'integer',
     ];
 
     public function company(): BelongsTo
@@ -39,11 +44,24 @@ class DashboardKpi extends Model
         return $this->belongsTo(Account::class);
     }
 
+    public function accountGroup(): BelongsTo
+    {
+        return $this->belongsTo(AccountGroup::class, 'account_group_id');
+    }
+
     /**
      * Calculate live financial value for this KPI card.
      */
     public function calculateValue(?int $unitId = null, int $month = 0, int $year = 0): float
     {
+        if ($this->source_type === 'formula') {
+            return $this->evaluateFormula($unitId, $month, $year);
+        }
+
+        if ($this->source_type === 'account_group' && $this->account_group_id) {
+            return $this->accountGroup?->calculateTotalBalance($unitId, $month, $year) ?? 0.0;
+        }
+
         $query = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
@@ -121,6 +139,83 @@ class DashboardKpi extends Model
             default => ($this->account_type === 'asset' || $this->account_type === 'expense' || ($this->account?->normal_balance === 'debit'))
                 ? ($totalDebit - $totalCredit)
                 : ($totalCredit - $totalDebit),
+        };
+    }
+
+    /**
+     * Safely evaluate mathematical formula expression (+, -, *, /).
+     */
+    public function evaluateFormula(?int $unitId = null, int $month = 0, int $year = 0): float
+    {
+        if (empty($this->formula_expression)) {
+            return 0.0;
+        }
+
+        $expr = $this->formula_expression;
+
+        // Replace Account Group or Account variables [VAR]
+        $expr = preg_replace_callback('/\[([A-Z0-9_\.-]+)\]/i', function ($matches) use ($unitId, $month, $year) {
+            $key = $matches[1];
+
+            // Check Account Group
+            $group = AccountGroup::where('company_id', $this->company_id)
+                ->where('code', $key)
+                ->first();
+
+            if ($group) {
+                return (string) $group->calculateTotalBalance($unitId, $month, $year);
+            }
+
+            // Check Account Code
+            $account = Account::where('company_id', $this->company_id)
+                ->where('code', $key)
+                ->first();
+
+            if ($account) {
+                $tempKpi = new self([
+                    'company_id' => $this->company_id,
+                    'source_type' => 'account',
+                    'account_id' => $account->id,
+                    'calculation_type' => 'ending_balance',
+                ]);
+
+                return (string) $tempKpi->calculateValue($unitId, $month, $year);
+            }
+
+            return '0';
+        }, $expr);
+
+        // Sanitize formula
+        $cleanedExpr = preg_replace('/[^0-9\+\-\*\/\(\)\.\s]/', '', $expr);
+
+        if (empty(trim($cleanedExpr))) {
+            return 0.0;
+        }
+
+        try {
+            $result = 0.0;
+            eval('$result = ('.$cleanedExpr.');');
+
+            return is_numeric($result) && ! is_nan($result) && ! is_infinite($result) ? (float) $result : 0.0;
+        } catch (\Throwable $e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Format output string based on display_format setting.
+     */
+    public function formatDisplayValue(float $value): string
+    {
+        $decimals = $this->decimal_places ?? 0;
+        $formattedNum = number_format($value, $decimals, ',', '.');
+
+        return match ($this->display_format) {
+            'percentage' => $formattedNum.'%',
+            'days' => $formattedNum.' Hari',
+            'times' => $formattedNum.'x',
+            'number' => $formattedNum,
+            default => 'Rp '.$formattedNum,
         };
     }
 }

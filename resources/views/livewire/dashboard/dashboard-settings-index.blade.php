@@ -210,10 +210,12 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="kpi_source_type" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Sumber Akun *</label>
+                            <label for="kpi_source_type" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Sumber Akun / Formula *</label>
                             <select id="kpi_source_type" wire:model.live="kpi_source_type" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
                                 <option value="account">Spesifik Akun COA</option>
+                                <option value="account_group">Grup Akun COA Kustom</option>
                                 <option value="account_type">Kategori Tipe Akun</option>
+                                <option value="formula">Formula Matematika (+ - * /)</option>
                             </select>
                         </div>
 
@@ -228,7 +230,18 @@
                                 </select>
                                 @error('kpi_account_id') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                             </div>
-                        @else
+                        @elseif ($kpi_source_type === 'account_group')
+                            <div>
+                                <label for="kpi_account_group_id" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Pilih Grup Akun COA *</label>
+                                <select id="kpi_account_group_id" wire:model="kpi_account_group_id" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all">
+                                    <option value="">-- Pilih Grup Akun --</option>
+                                    @foreach ($accountGroups as $grp)
+                                        <option value="{{ $grp->id }}">[{{ $grp->code }}] {{ $grp->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('kpi_account_group_id') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        @elseif ($kpi_source_type === 'account_type')
                             <div>
                                 <label for="kpi_account_type" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Tipe Akun *</label>
                                 <select id="kpi_account_type" wire:model="kpi_account_type" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all">
@@ -239,7 +252,37 @@
                                     <option value="equity">Ekuitas (Equity)</option>
                                 </select>
                             </div>
+                        @else
+                            <div>
+                                <label for="kpi_formula_expression" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Ekspresi Rumus Formula *</label>
+                                <input type="text" id="kpi_formula_expression" wire:model="kpi_formula_expression" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold font-mono focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Contoh: ([COGS] / [REVENUE]) * 100" />
+                                <p class="text-[10px] text-slate-400 mt-1">Gunakan kode variabel grup akun seperti [COGS], [REVENUE], [OPEX]</p>
+                                @error('kpi_formula_expression') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                            </div>
                         @endif
+                    </div>
+
+                    <!-- Display Format Settings -->
+                    <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
+                        <div>
+                            <label for="kpi_display_format" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Format Tampilan Result *</label>
+                            <select id="kpi_display_format" wire:model="kpi_display_format" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
+                                <option value="currency">Mata Uang (Rp)</option>
+                                <option value="percentage">Persentase (%)</option>
+                                <option value="days">Jumlah Hari (Hari)</option>
+                                <option value="number">Angka Biasa / Desimal</option>
+                                <option value="times">Frekuensi / Perputaran (x)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="kpi_decimal_places" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Jumlah Desimal *</label>
+                            <select id="kpi_decimal_places" wire:model="kpi_decimal_places" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
+                                <option value="0">0 Desimal (Tanpa Komma)</option>
+                                <option value="1">1 Desimal (0,0)</option>
+                                <option value="2">2 Desimal (0,00)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">

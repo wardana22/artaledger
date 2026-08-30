@@ -85,7 +85,7 @@
 
                     <div class="mt-4">
                         <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                            Rp {{ number_format($card['value'], 0, ',', '.') }}
+                            {{ $card['formatted_value'] }}
                         </h3>
                         <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
                             Kalkulasi: {{ str_replace('_', ' ', ucfirst($card['calculation_type'])) }}
