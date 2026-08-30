@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\OpeningBalance;
 
 use App\Models\Account;
 use App\Models\AccountingPeriod;
+use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Unit;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -52,7 +53,19 @@ class OpeningBalanceIndex extends Component
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
         }
 
-        $firstPeriod = AccountingPeriod::orderBy('start_date', 'asc')->first();
+        $firstJournalDate = JournalEntry::min('entry_date');
+        $firstPeriod = null;
+
+        if ($firstJournalDate) {
+            $firstPeriod = AccountingPeriod::where('start_date', '<=', $firstJournalDate)
+                ->where('end_date', '>=', $firstJournalDate)
+                ->first();
+        }
+
+        if (! $firstPeriod) {
+            $firstPeriod = AccountingPeriod::orderBy('start_date', 'asc')->first();
+        }
+
         $this->periodId = $firstPeriod?->id;
 
         $user = auth()->user();
