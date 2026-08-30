@@ -108,19 +108,21 @@ class OpeningBalanceIndex extends Component
 
         foreach ($accounts as $acc) {
             $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) use ($startDate, $isFirstPeriod) {
+                ->whereHas('journalEntry', function ($q) use ($selectedPeriod) {
                     $q->where('status', 'posted')
-                        ->where(function ($subQ) use ($startDate, $isFirstPeriod) {
-                            if ($isFirstPeriod) {
-                                $subQ->where('entry_number', 'like', 'SA-%')
-                                    ->orWhere('entry_type', 'opening_balance')
-                                    ->orWhere('source_type', 'opening_balance')
-                                    ->orWhere('entry_date', '<=', $startDate);
-                            } else {
-                                $subQ->where('entry_type', 'opening_balance')
-                                    ->orWhere('source_type', 'opening_balance')
-                                    ->orWhere('entry_date', '<', $startDate);
-                            }
+                        ->where(function ($subQ) use ($selectedPeriod) {
+                            $subQ->where(function ($obQ) use ($selectedPeriod) {
+                                $obQ->where(function ($types) {
+                                    $types->where('entry_number', 'like', 'SA-%')
+                                        ->orWhere('entry_type', 'opening_balance')
+                                        ->orWhere('source_type', 'opening_balance');
+                                })->where('entry_date', '<=', $selectedPeriod->end_date);
+                            })->orWhere(function ($regQ) use ($selectedPeriod) {
+                                $regQ->where('entry_number', 'not like', 'SA-%')
+                                    ->where('entry_type', '!=', 'opening_balance')
+                                    ->where('source_type', '!=', 'opening_balance')
+                                    ->where('entry_date', '<', $selectedPeriod->start_date);
+                            });
                         });
                 })
                 ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
