@@ -1,7 +1,4 @@
-<div>
-    <x-settings-nav active="dashboard" />
-
-    <div class="space-y-6">
+<div class="space-y-6">
     @if (session()->has('message'))
         <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-semibold animate-fade-in">
             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,5 +292,4 @@
             </div>
         </div>
     @endif
-    </div>
 </div>
