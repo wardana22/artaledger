@@ -19,6 +19,12 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="space-y-2">
+                @if (auth()->user()?->can('dashboard.view') || auth()->user()?->can('reports.view') || auth()->user()?->hasRole('Super Admin'))
+                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard*')" wire:navigate>
+                        {{ __('Dashboard') }}
+                    </flux:sidebar.item>
+                    <flux:separator class="my-2 border-zinc-200/80 dark:border-zinc-800/80" />
+                @endif
                 @if (auth()->user()?->can('journals.view') || auth()->user()?->can('journals.import') || auth()->user()?->can('periods.view') || auth()->user()?->can('periods.manage'))
                     <flux:sidebar.group :heading="__('Manajemen Akuntansi')" class="grid">
                         @if (auth()->user()?->can('journals.view'))

@@ -17,6 +17,11 @@ class RoleAndPermissionSeeder extends Seeder
 
         // Standard System Permissions per Module
         $permissions = [
+            // Dashboard & Analytics Modul
+            'dashboard.view' => 'Lihat Halaman Dashboard',
+            'dashboard.settings' => 'Kelola Pengaturan Dashboard',
+            'dashboard.kpis.manage' => 'Kelola (CRUD) Kartu KPI Finansial',
+
             // Master COA Modul
             'accounts.view' => 'Lihat Master COA',
             'accounts.create' => 'Tambah Akun Baru',
@@ -77,6 +82,7 @@ class RoleAndPermissionSeeder extends Seeder
 
         $accountant = Role::firstOrCreate(['name' => 'Akuntan / Finance Manager']);
         $accountant->givePermissionTo([
+            'dashboard.view', 'dashboard.settings', 'dashboard.kpis.manage',
             'accounts.view', 'accounts.create', 'accounts.edit', 'accounts.delete',
             'journals.view', 'journals.create', 'journals.edit', 'journals.post', 'journals.delete', 'journals.import',
             'periods.view', 'periods.manage',

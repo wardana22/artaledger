@@ -1,11 +1,13 @@
 <?php
 
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 
-test('dashboard route redirects to journals index', function () {
+test('authenticated superadmin can visit the dashboard page', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $user = User::factory()->create();
-    $this->actingAs($user);
+    $user->assignRole('Super Admin');
 
-    $response = $this->get(route('dashboard'));
-    $response->assertRedirect(route('accounting.journals.index'));
+    $response = $this->actingAs($user)->get(route('dashboard'));
+    $response->assertStatus(200);
 });

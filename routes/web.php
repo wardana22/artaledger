@@ -34,8 +34,14 @@ use App\Livewire\Accounting\Settings\UnitIndex;
 use App\Livewire\Admin\AuditLogIndex;
 use App\Livewire\Admin\RoleIndex;
 use App\Livewire\Admin\UserIndex;
+use App\Livewire\Dashboard\DashboardIndex;
+use App\Livewire\Dashboard\DashboardSettingsIndex;
 
 Route::middleware(['web'])->group(function () {
+    // Dashboard & Settings
+    Route::get('/dashboard', DashboardIndex::class)->name('dashboard');
+    Route::get('/dashboard/settings', DashboardSettingsIndex::class)->name('dashboard.settings.index');
+
     // Admin & RBAC
     Route::get('/admin/roles', RoleIndex::class)->name('admin.roles.index');
     Route::get('/admin/users', UserIndex::class)->name('admin.users.index');
@@ -66,8 +72,6 @@ Route::middleware(['web'])->group(function () {
     Route::get('/accounting/reports/balance-sheet', BalanceSheet::class)->name('accounting.reports.balance-sheet');
     Route::get('/accounting/reports/cash-flow', CashFlow::class)->name('accounting.reports.cash-flow');
     Route::get('/accounting/reports/changes-in-equity', ChangesInEquity::class)->name('accounting.reports.changes-in-equity');
-
-    Route::get('/dashboard', fn () => redirect()->route('accounting.journals.index'))->name('dashboard');
 });
 
 require __DIR__.'/settings.php';

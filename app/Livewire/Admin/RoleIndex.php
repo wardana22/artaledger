@@ -26,6 +26,11 @@ class RoleIndex extends Component
     public array $selectedPermissions = [];
 
     public array $permissionLabels = [
+        // Dashboard & Analytics Modul
+        'dashboard.view' => 'Lihat Halaman Dashboard',
+        'dashboard.settings' => 'Kelola Pengaturan Dashboard',
+        'dashboard.kpis.manage' => 'Kelola (CRUD) Kartu KPI Finansial',
+
         // Master COA Modul
         'accounts.view' => 'Lihat Master COA',
         'accounts.create' => 'Tambah Akun Baru',
