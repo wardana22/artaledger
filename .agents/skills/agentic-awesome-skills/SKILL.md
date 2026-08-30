@@ -13,3 +13,4 @@ Skill ini menyediakan pedoman eksekusi agen terpusat untuk proyek **ArtaLedger**
 2. **Atomic Mutations**: Lakukan editan kode yang presisi dan bertahap.
 3. **Pemberitahuan & Verifikasi**: Selalu jalankan uji coba setelah mengubah kode PHP atau skema database.
 4. **AgentShield**: Proteksi kredensial dan integritas sistem.
+5. **Project Skill Mandatory Check**: Wajib membaca dan menerapkan instruksi dari folder `.agents/skills/` (seperti `ui-ux-pro-max`, `code-quality-and-testing`, `ecc-agent-toolkit`) sebelum mengimplementasikan fitur.

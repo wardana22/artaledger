@@ -28,3 +28,6 @@ Dokumen ini mendefinisikan aturan dan alur kerja utama bagi AI Agen yang beroper
 5. **AgentShield Security Guard**
    - Jangan pernah menyimpan rahasia, API Key, atau password dalam repositori. Gunakan `.env`.
    - Pastikan perlindungan CSRF, otorisasi Gate/Policy Laravel, dan validasi input selalu aktif pada setiap Form Request.
+
+6. **Mandatory Project Skill Execution (Penggunaan Skill Proyek Wajib)**
+   - Setiap kali memproses permintaan pengguna, agen WAJIB menginspeksi dan mematuhi pedoman skill terkait di folder `.agents/skills/` (seperti `ui-ux-pro-max`, `code-quality-and-testing`, `database-schema-management`, `ecc-agent-toolkit`, `seo-optimization`) sebelum merancang dan menulis kode.
