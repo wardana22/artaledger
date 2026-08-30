@@ -146,7 +146,7 @@
                                         wire:click="deleteBatch({{ $batchItem->id }})"
                                         wire:confirm="Apakah Anda yakin ingin menghapus seluruh data transaksi jurnal yang diposting dari batch file ini?"
                                         aria-label="Hapus Batch Impor {{ $batchItem->batch_code }}"
-                                        class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl text-xs font-semibold transition-all inline-flex items-center gap-1">
+                                        class="px-3 py-1.5 rounded-xl bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 shadow-2xs hover:shadow-md hover:shadow-rose-500/20 text-xs font-semibold transition-all duration-200 inline-flex items-center gap-1">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                         </svg>
