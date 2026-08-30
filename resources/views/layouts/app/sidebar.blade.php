@@ -20,7 +20,7 @@
 
             <flux:sidebar.nav class="space-y-2">
                 @if (auth()->user()?->can('dashboard.view') || auth()->user()?->can('reports.view') || auth()->user()?->hasRole('Super Admin'))
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard*')" wire:navigate>
+                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
                     <flux:separator class="my-2 border-zinc-200/80 dark:border-zinc-800/80" />
