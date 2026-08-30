@@ -85,7 +85,7 @@
 
                     <div class="mt-4">
                         <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                            Rp {{ number_format($card['value'], 2, ',', '.') }}
+                            Rp {{ number_format($card['value'], 0, ',', '.') }}
                         </h3>
                         <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
                             Kalkulasi: {{ str_replace('_', ' ', ucfirst($card['calculation_type'])) }}
@@ -183,7 +183,7 @@
                                     <span class="text-[10px] text-slate-400">{{ $cb['code'] }}</span>
                                 </div>
                                 <span class="font-bold {{ $cb['balance'] >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-500' }}">
-                                    Rp {{ number_format($cb['balance'], 2, ',', '.') }}
+                                    Rp {{ number_format($cb['balance'], 0, ',', '.') }}
                                 </span>
                             </div>
                         @endforeach
@@ -269,7 +269,7 @@
                                 <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $rj->journalType?->name ?? '-' }}</td>
                                 <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $rj->lines->first()?->unit?->code ?? 'Konsolidasi' }}</td>
                                 <td class="py-2.5 px-3 text-slate-900 dark:text-white max-w-xs truncate">{{ $rj->description }}</td>
-                                <td class="py-2.5 px-3 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">Rp {{ number_format($rj->total_debit, 2, ',', '.') }}</td>
+                                <td class="py-2.5 px-3 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">Rp {{ number_format($rj->total_debit, 0, ',', '.') }}</td>
                                 <td class="py-2.5 px-3 text-center whitespace-nowrap">
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold
                                         {{ $rj->status === 'posted' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : '' }}
