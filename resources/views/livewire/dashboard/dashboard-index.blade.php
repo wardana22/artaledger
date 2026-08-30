@@ -259,7 +259,7 @@
                                 <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400 whitespace-nowrap">{{ $rj->entry_date->format('d/m/Y') }}</td>
                                 <td class="py-2.5 px-3 font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">{{ $rj->entry_number }}</td>
                                 <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $rj->journalType?->name ?? '-' }}</td>
-                                <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $rj->unit?->code ?? 'Konsolidasi' }}</td>
+                                <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ $rj->lines->first()?->unit?->code ?? 'Konsolidasi' }}</td>
                                 <td class="py-2.5 px-3 text-slate-900 dark:text-white max-w-xs truncate">{{ $rj->description }}</td>
                                 <td class="py-2.5 px-3 text-right font-bold text-slate-900 dark:text-white whitespace-nowrap">Rp {{ number_format($rj->total_debit, 2, ',', '.') }}</td>
                                 <td class="py-2.5 px-3 text-center whitespace-nowrap">

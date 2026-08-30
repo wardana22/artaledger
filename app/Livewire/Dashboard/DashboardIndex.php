@@ -140,7 +140,7 @@ class DashboardIndex extends Component
                     ->where('accounts.type', 'revenue')
                     ->where('journal_entries.status', 'posted')
                     ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_entries.unit_id', $this->selectedUnitId))
+                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
                     ->sum(DB::raw('journal_lines.credit - journal_lines.debit'));
 
                 $expense = (float) DB::table('journal_lines')
@@ -150,7 +150,7 @@ class DashboardIndex extends Component
                     ->where('accounts.type', 'expense')
                     ->where('journal_entries.status', 'posted')
                     ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_entries.unit_id', $this->selectedUnitId))
+                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
                     ->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
 
                 $chartMonths[] = [
@@ -165,12 +165,12 @@ class DashboardIndex extends Component
         // Recent Journal Entries
         $recentJournals = [];
         if ($this->setting->show_recent_journals) {
-            $query = JournalEntry::with(['journalType', 'unit'])
+            $query = JournalEntry::with(['journalType', 'lines.unit'])
                 ->latest('entry_date')
                 ->latest('id');
 
             if ($this->selectedUnitId) {
-                $query->where('unit_id', $this->selectedUnitId);
+                $query->whereHas('lines', fn ($q) => $q->where('unit_id', $this->selectedUnitId));
             }
 
             $recentJournals = $query->take($this->setting->recent_journals_count)->get();
