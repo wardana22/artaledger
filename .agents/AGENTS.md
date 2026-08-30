@@ -34,4 +34,4 @@ Dokumen ini mendefinisikan aturan dan alur kerja utama bagi AI Agen yang beroper
 
 7. **Isolated Topic Branching & Controlled Push Strategy (Manajemen Branch & Push Terkontrol)**
    - **Pembuatan Branch Baru**: Setiap kali mengerjakan topik/fitur baru di luar konteks branch saat ini, agen WAJIB membuat Git branch baru yang spesifik (contoh: `feature/update-dashboard`, `fix/journal-validation`, `feature/accounting-report`).
-   - **Komit & Push Terkontrol**: Kerjakan perubahan dan komit lokal pada branch fitur tersebut. **JANGAN MERGE ke branch `main` atau melakukan PUSH ke GitHub sebelum seluruh pembaruan pada fitur tersebut selesai dikerjakan dan diverifikasi 100%**.
+   - **HANYA PUSH & MERGE ATAS PERINTAH PENGGUNA**: Agen diperbolehkan melakukan komit lokal pada branch fitur tersebut, namun **SEKALI-KALI DILARANG MELEKUKAN `git push` ATAU `git merge` KE BRANCH `main` SEBELUM ADA PERINTAH/INSTRUKSI EKSPLISIT DARI PENGGUNA**.
