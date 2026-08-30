@@ -507,7 +507,7 @@
                     <div>
                         <label for="group_name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Nama Grup Akun *</label>
                         <input type="text" id="group_name" wire:model="group_name" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Contoh: Beban Pokok Pendapatan (COGS)" />
-                        @error('group_name') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @error
+                        @error('group_name') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
