@@ -300,17 +300,13 @@ class DashboardSettingsIndex extends Component
         }
 
         $group = AccountGroup::findOrFail($id);
-        if ($group->is_system) {
-            session()->flash('error', 'Grup Akun bawaan sistem tidak dapat dihapus.');
-
-            return;
-        }
-
         $name = $group->name;
         $group->delete();
 
         AuditLogService::record('account_group.deleted', 'Menghapus Grup Akun ('.$name.')');
-        session()->flash('message', 'Grup Akun berhasil dihapus.');
+        session()->flash('message', 'Grup Akun "'.$name.'" berhasil dihapus.');
+        $this->showGroupModal = false;
+        $this->resetGroupForm();
     }
 
     private function resetGroupForm(): void
