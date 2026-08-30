@@ -55,7 +55,7 @@ class CompanySettingsIndex extends Component
         $this->tax_number = $this->company->tax_number ?? '';
     }
 
-    public function save(): void
+    public function save()
     {
         if (auth()->check() && ! auth()->user()->can('settings.company') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
@@ -102,9 +102,11 @@ class CompanySettingsIndex extends Component
         );
 
         session()->flash('message', 'Pengaturan Branding & Perusahaan berhasil diperbarui.');
+
+        return redirect()->route('accounting.settings.company.index');
     }
 
-    public function removeLogo(): void
+    public function removeLogo()
     {
         if (auth()->check() && ! auth()->user()->can('settings.company') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
@@ -124,6 +126,8 @@ class CompanySettingsIndex extends Component
         );
 
         session()->flash('message', 'Logo perusahaan berhasil dihapus.');
+
+        return redirect()->route('accounting.settings.company.index');
     }
 
     public function render()
