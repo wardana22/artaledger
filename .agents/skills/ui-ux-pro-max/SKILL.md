@@ -14,10 +14,10 @@ Skill ini digunakan untuk merancang antarmuka pengguna ArtaLedger yang elegan, m
 - **Micro-Animations**: Transisi halus pada tombol, hover card, dan chart widget.
 - **Dynamic Action Icons Rule (Wajib)**:
   - **Kondisi Normal / Diam (Default)**: Seluruh tombol ikon aksi (Edit, Delete, View, Post, Reverse) HARUS berwarna netral selaras tema terang/gelap (`text-slate-400 dark:text-slate-400`) dengan kontainer netral yang lembut (`bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 shadow-2xs`).
-  - **Kondisi Disorot Kursor (Hover)**: Bertransisi halus (`transition-all duration-200`) menyala ke warna semantik ber-latar transparan:
-    - Edit: `hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500/30`
-    - Hapus / Delete: `hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-500/30`
-    - Reverse: `hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-500/30`
-    - Post / Approve: `hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30`
-    - View / Detail: `hover:bg-sky-500/10 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-500/30`
+  - **Kondisi Disorot Kursor (Solid Fill Hover State)**: Bertransisi halus (`transition-all duration-200`) menjadi warna solid dengan teks putih dan bayangan berpijar (*vivid shadow*):
+    - Edit: `hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-2xs hover:shadow-md hover:shadow-indigo-500/20`
+    - Hapus / Delete: `hover:bg-rose-600 hover:text-white hover:border-rose-600 shadow-2xs hover:shadow-md hover:shadow-rose-500/20`
+    - Reverse: `hover:bg-amber-500 hover:text-white hover:border-amber-500 shadow-2xs hover:shadow-md hover:shadow-amber-500/20`
+    - Post / Approve: `hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-2xs hover:shadow-md hover:shadow-emerald-500/20`
+    - View / Detail: `hover:bg-sky-600 hover:text-white hover:border-sky-600 shadow-2xs hover:shadow-md hover:shadow-sky-500/20`
 - **Aksesibilitas (a11y)**: Atribut ARIA, kontras warna tinggi, dan navigasi keyboard.
