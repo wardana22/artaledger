@@ -20,7 +20,7 @@ beforeEach(function () {
         'app_name' => 'ArtaLedger',
     ]);
 
-    $this->user = User::factory()->create(['company_id' => $this->company->id]);
+    $this->user = User::factory()->create();
     $role = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
     $this->user->assignRole($role);
     $this->actingAs($this->user);
