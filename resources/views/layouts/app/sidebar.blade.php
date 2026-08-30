@@ -120,8 +120,13 @@
                         }
                     @endphp
                     <flux:sidebar.group :heading="__('Pengaturan')" class="grid">
+                        @if (auth()->user()?->can('dashboard.settings') || auth()->user()?->can('settings.manage') || auth()->user()?->hasRole('Super Admin'))
+                            <flux:sidebar.item icon="adjustments-horizontal" :href="route('dashboard.settings.index')" :current="request()->routeIs('dashboard.settings.*')" wire:navigate>
+                                {{ __('Pengaturan Dashboard') }}
+                            </flux:sidebar.item>
+                        @endif
                         @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types') || auth()->user()?->can('settings.units'))
-                            <flux:sidebar.item icon="cog-6-tooth" :href="$masterRoute" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*')" wire:navigate>
+                            <flux:sidebar.item icon="cog-6-tooth" :href="$masterRoute" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*') || request()->routeIs('accounting.settings.company.*')" wire:navigate>
                                 {{ __('Master Akuntansi') }}
                             </flux:sidebar.item>
                         @endif
