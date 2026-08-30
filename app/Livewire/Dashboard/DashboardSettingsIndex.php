@@ -10,6 +10,7 @@ use App\Models\DashboardSetting;
 use App\Services\AuditLogService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -17,6 +18,9 @@ use Livewire\Component;
 class DashboardSettingsIndex extends Component
 {
     public ?Company $company = null;
+
+    #[Url]
+    public string $activeTab = 'general'; // 'general', 'account_groups'
 
     public ?DashboardSetting $setting = null;
 
@@ -68,6 +72,27 @@ class DashboardSettingsIndex extends Component
 
     public bool $kpi_is_active = true;
 
+    // Account Group CRUD Modal State
+    public bool $showGroupModal = false;
+
+    public ?int $editingGroupId = null;
+
+    public string $group_code = '';
+
+    public string $group_name = '';
+
+    public string $group_description = '';
+
+    public string $group_color_theme = 'indigo';
+
+    public string $group_member_mode = 'prefix';
+
+    public string $group_account_prefix = '4';
+
+    public string $group_account_type = 'PENDAPATAN';
+
+    public array $group_selected_account_ids = [];
+
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('dashboard.settings') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
@@ -96,6 +121,7 @@ class DashboardSettingsIndex extends Component
 
         $this->loadSettingState();
         $this->ensureDefaultKpisExist();
+        $this->ensureSystemGroupsExist();
     }
 
     private function loadSettingState(): void
@@ -149,6 +175,155 @@ class DashboardSettingsIndex extends Component
                 'is_active' => true,
             ]);
         }
+    }
+
+    private function ensureSystemGroupsExist(): void
+    {
+        if (AccountGroup::where('company_id', $this->company->id)->count() === 0) {
+            $g1 = AccountGroup::create([
+                'company_id' => $this->company->id,
+                'code' => 'REVENUE',
+                'name' => 'Pendapatan Usaha (Sales / Revenue)',
+                'description' => 'Seluruh akun pendapatan usaha (Kepala 4)',
+                'color_theme' => 'emerald',
+                'is_system' => true,
+            ]);
+            $g1->members()->create(['account_prefix' => '4']);
+
+            $g2 = AccountGroup::create([
+                'company_id' => $this->company->id,
+                'code' => 'COGS',
+                'name' => 'Beban Pokok Pendapatan (HPP / COGS)',
+                'description' => 'Seluruh akun beban pokok penjualan (Kepala 5)',
+                'color_theme' => 'rose',
+                'is_system' => true,
+            ]);
+            $g2->members()->create(['account_prefix' => '5']);
+
+            $g3 = AccountGroup::create([
+                'company_id' => $this->company->id,
+                'code' => 'OPEX',
+                'name' => 'Beban Operasional & Umum',
+                'description' => 'Seluruh beban operasional (Kepala 6 & 7)',
+                'color_theme' => 'amber',
+                'is_system' => true,
+            ]);
+            $g3->members()->create(['account_prefix' => '6']);
+            $g3->members()->create(['account_prefix' => '7']);
+        }
+    }
+
+    public function openCreateGroupModal(): void
+    {
+        $this->resetGroupForm();
+        $this->showGroupModal = true;
+    }
+
+    public function openEditGroupModal(int $id): void
+    {
+        $group = AccountGroup::with('members')->findOrFail($id);
+        $this->editingGroupId = $group->id;
+        $this->group_code = $group->code;
+        $this->group_name = $group->name;
+        $this->group_description = $group->description ?? '';
+        $this->group_color_theme = $group->color_theme;
+
+        $firstMember = $group->members->first();
+        if ($firstMember) {
+            if ($firstMember->account_prefix) {
+                $this->group_member_mode = 'prefix';
+                $this->group_account_prefix = $firstMember->account_prefix;
+            } elseif ($firstMember->account_type) {
+                $this->group_member_mode = 'type';
+                $this->group_account_type = $firstMember->account_type;
+            } else {
+                $this->group_member_mode = 'specific';
+                $this->group_selected_account_ids = $group->members->pluck('account_id')->filter()->toArray();
+            }
+        }
+
+        $this->showGroupModal = true;
+    }
+
+    public function saveGroup(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('accounts.edit') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
+        $this->validate([
+            'group_code' => 'required|string|max:30|alpha_dash',
+            'group_name' => 'required|string|max:150',
+            'group_description' => 'nullable|string|max:500',
+            'group_color_theme' => 'required|in:indigo,emerald,rose,amber,sky,violet',
+            'group_member_mode' => 'required|in:prefix,type,specific',
+        ]);
+
+        $group = AccountGroup::updateOrCreate(
+            ['id' => $this->editingGroupId],
+            [
+                'company_id' => $this->company->id,
+                'code' => strtoupper(trim($this->group_code)),
+                'name' => $this->group_name,
+                'description' => $this->group_description,
+                'color_theme' => $this->group_color_theme,
+            ]
+        );
+
+        $group->members()->delete();
+
+        if ($this->group_member_mode === 'prefix') {
+            $group->members()->create(['account_prefix' => $this->group_account_prefix]);
+        } elseif ($this->group_member_mode === 'type') {
+            $group->members()->create(['account_type' => $this->group_account_type]);
+        } else {
+            foreach ($this->group_selected_account_ids as $accId) {
+                $group->members()->create(['account_id' => $accId]);
+            }
+        }
+
+        AuditLogService::record(
+            $this->editingGroupId ? 'account_group.updated' : 'account_group.created',
+            ($this->editingGroupId ? 'Memperbarui' : 'Membuat').' Grup Akun COA ('.$this->group_name.')',
+            $group
+        );
+
+        session()->flash('message', $this->editingGroupId ? 'Grup Akun berhasil diperbarui.' : 'Grup Akun baru berhasil ditambahkan.');
+        $this->showGroupModal = false;
+        $this->resetGroupForm();
+    }
+
+    public function deleteGroup(int $id): void
+    {
+        if (auth()->check() && ! auth()->user()->can('accounts.delete') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
+        $group = AccountGroup::findOrFail($id);
+        if ($group->is_system) {
+            session()->flash('error', 'Grup Akun bawaan sistem tidak dapat dihapus.');
+
+            return;
+        }
+
+        $name = $group->name;
+        $group->delete();
+
+        AuditLogService::record('account_group.deleted', 'Menghapus Grup Akun ('.$name.')');
+        session()->flash('message', 'Grup Akun berhasil dihapus.');
+    }
+
+    private function resetGroupForm(): void
+    {
+        $this->editingGroupId = null;
+        $this->group_code = '';
+        $this->group_name = '';
+        $this->group_description = '';
+        $this->group_color_theme = 'indigo';
+        $this->group_member_mode = 'prefix';
+        $this->group_account_prefix = '4';
+        $this->group_account_type = 'PENDAPATAN';
+        $this->group_selected_account_ids = [];
     }
 
     public function saveSettings()
@@ -318,10 +493,16 @@ class DashboardSettingsIndex extends Component
             ->orderBy('name')
             ->get();
 
+        $groups = AccountGroup::where('company_id', $this->company->id)
+            ->with(['members.account'])
+            ->orderBy('id')
+            ->get();
+
         return view('livewire.dashboard.dashboard-settings-index', [
             'kpis' => $kpis,
             'accounts' => $accounts,
             'accountGroups' => $accountGroups,
+            'groups' => $groups,
         ]);
     }
 }
