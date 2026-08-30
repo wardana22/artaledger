@@ -86,18 +86,23 @@ class DashboardIndex extends Component
             }
         }
 
-        // Active Accounting Period
-        $activePeriod = AccountingPeriod::where('company_id', $this->company->id)
-            ->where('status', 'open')
-            ->first();
+        // Active Accounting Period matching filter
+        $activePeriodQuery = AccountingPeriod::where('company_id', $this->company->id)
+            ->where('year', $this->selectedYear);
+
+        if ($this->selectedMonth > 0) {
+            $activePeriodQuery->where('month', $this->selectedMonth);
+        }
+
+        $activePeriod = $activePeriodQuery->first() ?? AccountingPeriod::where('company_id', $this->company->id)->where('status', 'open')->latest('start_date')->first();
 
         // Cash & Bank Accounts
         $cashBankAccounts = [];
         if ($this->setting->show_cash_bank_summary) {
             $cashAccounts = Account::where('company_id', $this->company->id)
-                ->where('type', 'asset')
                 ->where(function ($q) {
-                    $q->where('code', 'like', '11%')
+                    $q->whereIn('type', ['KAS', 'BANK'])
+                        ->orWhere('code', 'like', '11%')
                         ->orWhere('name', 'like', '%kas%')
                         ->orWhere('name', 'like', '%bank%');
                 })
@@ -109,14 +114,14 @@ class DashboardIndex extends Component
                     ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
                     ->where('journal_lines.account_id', $acc->id)
                     ->where('journal_entries.status', 'posted')
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_entries.unit_id', $this->selectedUnitId))
+                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
                     ->sum('journal_lines.debit');
 
                 $totalCredit = (float) DB::table('journal_lines')
                     ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
                     ->where('journal_lines.account_id', $acc->id)
                     ->where('journal_entries.status', 'posted')
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_entries.unit_id', $this->selectedUnitId))
+                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
                     ->sum('journal_lines.credit');
 
                 $cashBankAccounts[] = [
@@ -139,7 +144,10 @@ class DashboardIndex extends Component
                     ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
                     ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
                     ->where('accounts.company_id', $this->company->id)
-                    ->where('accounts.type', 'revenue')
+                    ->where(function ($q) {
+                        $q->whereIn('accounts.type', ['PENDAPATAN', 'PENDAPATAN LAINNYA', 'revenue'])
+                            ->orWhere('accounts.code', 'like', '4%');
+                    })
                     ->where('journal_entries.status', 'posted')
                     ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
                     ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
@@ -149,7 +157,14 @@ class DashboardIndex extends Component
                     ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
                     ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
                     ->where('accounts.company_id', $this->company->id)
-                    ->where('accounts.type', 'expense')
+                    ->where(function ($q) {
+                        $q->whereIn('accounts.type', ['BEBAN', 'BEBAN LAIN-LAIN', 'HPP', 'expense'])
+                            ->orWhere('accounts.code', 'like', '5%')
+                            ->orWhere('accounts.code', 'like', '6%')
+                            ->orWhere('accounts.code', 'like', '7%')
+                            ->orWhere('accounts.code', 'like', '8%')
+                            ->orWhere('accounts.code', 'like', '9%');
+                    })
                     ->where('journal_entries.status', 'posted')
                     ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
                     ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
@@ -170,6 +185,13 @@ class DashboardIndex extends Component
             $query = JournalEntry::with(['journalType', 'lines.unit'])
                 ->latest('entry_date')
                 ->latest('id');
+
+            if ($this->selectedYear > 0) {
+                $query->whereYear('entry_date', $this->selectedYear);
+            }
+            if ($this->selectedMonth > 0) {
+                $query->whereMonth('entry_date', $this->selectedMonth);
+            }
 
             if ($this->selectedUnitId) {
                 $query->whereHas('lines', fn ($q) => $q->where('unit_id', $this->selectedUnitId));

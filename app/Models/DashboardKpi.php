@@ -60,7 +60,39 @@ class DashboardKpi extends Model
         if ($this->source_type === 'account' && $this->account_id) {
             $query->where('journal_lines.account_id', $this->account_id);
         } elseif ($this->source_type === 'account_type' && $this->account_type) {
-            $query->where('accounts.type', $this->account_type);
+            $typeKey = strtolower($this->account_type);
+            if ($typeKey === 'revenue' || $typeKey === 'pendapatan') {
+                $query->where(function ($q) {
+                    $q->whereIn('accounts.type', ['PENDAPATAN', 'PENDAPATAN LAINNYA', 'revenue'])
+                        ->orWhere('accounts.code', 'like', '4%');
+                });
+            } elseif ($typeKey === 'expense' || $typeKey === 'beban') {
+                $query->where(function ($q) {
+                    $q->whereIn('accounts.type', ['BEBAN', 'BEBAN LAIN-LAIN', 'HPP', 'expense'])
+                        ->orWhere('accounts.code', 'like', '5%')
+                        ->orWhere('accounts.code', 'like', '6%')
+                        ->orWhere('accounts.code', 'like', '7%')
+                        ->orWhere('accounts.code', 'like', '8%')
+                        ->orWhere('accounts.code', 'like', '9%');
+                });
+            } elseif ($typeKey === 'asset' || $typeKey === 'aktiva' || $typeKey === 'aset') {
+                $query->where(function ($q) {
+                    $q->whereIn('accounts.type', ['KAS', 'BANK', 'AKTIVA LANCAR LAINNYA', 'PIUTANG', 'PERSEDIAAN', 'AKTIVA TETAP', 'asset'])
+                        ->orWhere('accounts.code', 'like', '1%');
+                });
+            } elseif ($typeKey === 'liability' || $typeKey === 'kewajiban' || $typeKey === 'hutang') {
+                $query->where(function ($q) {
+                    $q->whereIn('accounts.type', ['HUTANG LANCAR', 'HUTANG JANGKA PANJANG', 'LIABILITY', 'liability'])
+                        ->orWhere('accounts.code', 'like', '2%');
+                });
+            } elseif ($typeKey === 'equity' || $typeKey === 'ekuitas' || $typeKey === 'modal') {
+                $query->where(function ($q) {
+                    $q->whereIn('accounts.type', ['MODAL', 'equity'])
+                        ->orWhere('accounts.code', 'like', '3%');
+                });
+            } else {
+                $query->where('accounts.type', $this->account_type);
+            }
         }
 
         if ($year > 0) {
