@@ -1,8 +1,7 @@
 @props(['active' => null])
 
 @php
-    $isCoaActive = $active === 'coa' && request()->routeIs('accounting.accounts.index');
-    $isAccountGroupsActive = $active === 'account-groups' || request()->routeIs('accounting.account-groups.*');
+    $isCoaActive = $active === 'coa' || ($active === null && request()->routeIs('accounting.accounts.*'));
     $isJournalTypeActive = $active === 'journal-types' || ($active === null && request()->routeIs('accounting.journal-types.*'));
     $isUnitsActive = $active === 'units' || ($active === null && request()->routeIs('accounting.units.*'));
     $isCompanyActive = $active === 'company' || ($active === null && request()->routeIs('accounting.settings.company.*'));
@@ -18,15 +17,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6M3 7l9-6 9 6"></path>
             </svg>
             Master COA
-        </a>
-        <a 
-            href="{{ route('accounting.account-groups.index') }}" 
-            wire:navigate
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $isAccountGroupsActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-            </svg>
-            Grup Akun COA
         </a>
     @endif
 
