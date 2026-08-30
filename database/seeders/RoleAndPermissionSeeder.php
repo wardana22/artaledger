@@ -51,6 +51,7 @@ class RoleAndPermissionSeeder extends Seeder
 
             // Master Pengaturan Modul
             'settings.view' => 'Lihat Pengaturan System',
+            'settings.company' => 'Kelola Branding & Pengaturan Perusahaan',
             'settings.units' => 'Kelola Unit Perusahaan',
             'settings.journal_types' => 'Kelola Jenis Jurnal',
             'settings.templates' => 'Kelola Template Jurnal',

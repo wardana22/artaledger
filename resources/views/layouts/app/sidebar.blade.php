@@ -5,9 +5,17 @@
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
         <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-            <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
-                <flux:sidebar.collapse class="lg:hidden" />
+            @php
+                $company = \App\Models\Company::first();
+                $appName = $company?->app_name ?? config('app.name', 'ArtaLedger');
+            @endphp
+            <flux:sidebar.header class="flex items-center gap-2.5 px-3 py-2">
+                <x-app-logo href="{{ route('accounting.accounts.index') }}" wire:navigate />
+                <a href="{{ route('accounting.accounts.index') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight">
+                    <span class="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ $appName }}</span>
+                    <span class="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ $company?->name ?? 'PT Arta Ledger' }}</span>
+                </a>
+                <flux:sidebar.collapse class="lg:hidden ms-auto" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="space-y-2">
