@@ -180,6 +180,19 @@ class BankReconciliationDetail extends Component
         session()->flash('success', 'Pencocokan transaksi telah dibatalkan.');
     }
 
+    public function markAsOpeningOutstanding(int $lineId, BankReconciliationService $service): void
+    {
+        abort_unless(auth()->user()?->can('reconciliation.manage'), 403, 'Akses Ditolak.');
+
+        try {
+            $service->markAsOpeningOutstanding($lineId, null, auth()->user());
+            $this->statement->refresh();
+            session()->flash('success', 'Transaksi berhasil ditandai sebagai Cek Beredar Saldo Awal (Desember 2024). Tidak ada jurnal baru yang dibuat di tahun berjalan.');
+        } catch (Exception $e) {
+            session()->flash('error', 'Gagal menandai transaksi: '.$e->getMessage());
+        }
+    }
+
     public function openAdjustmentModal(int $lineId): void
     {
         $this->adjustmentLineId = $lineId;
@@ -253,7 +266,7 @@ class BankReconciliationDetail extends Component
         if ($this->bankFilter === 'unmatched') {
             $bankLinesQuery->where('match_status', 'unmatched');
         } elseif ($this->bankFilter === 'matched') {
-            $bankLinesQuery->whereIn('match_status', ['matched', 'manual_matched', 'adjusted']);
+            $bankLinesQuery->whereIn('match_status', ['matched', 'manual_matched', 'adjusted', 'opening_reconciled']);
         }
 
         if (! empty($this->search)) {
@@ -279,11 +292,18 @@ class BankReconciliationDetail extends Component
         $minDate = Carbon::parse($this->statement->period_start)->subDays(7)->format('Y-m-d');
         $maxDate = Carbon::parse($this->statement->period_end)->addDays(7)->format('Y-m-d');
 
+        // Kueri Buku Besar Lintas Periode: Muat transaksi periode ini ATAU transaksi lampau yang belum cocok (carryover)
         $bookLinesQuery = JournalLine::with(['journalEntry', 'unit'])
             ->where('account_id', $this->statement->account_id)
-            ->whereHas('journalEntry', function ($q) use ($minDate, $maxDate) {
+            ->whereHas('journalEntry', function ($q) use ($maxDate) {
                 $q->where('status', 'posted')
-                    ->whereBetween('entry_date', [$minDate, $maxDate]);
+                    ->where('entry_date', '<=', $maxDate);
+            })
+            ->where(function ($q) use ($minDate, $maxDate, $matchedIds) {
+                $q->whereHas('journalEntry', function ($sub) use ($minDate, $maxDate) {
+                    $sub->whereBetween('entry_date', [$minDate, $maxDate]);
+                })
+                    ->orWhereNotIn('id', $matchedIds);
             });
 
         if ($this->bookFilter === 'unmatched') {

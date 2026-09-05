@@ -195,7 +195,7 @@ class BankReconciliationService
 
         // Update status bank statement
         $totalCount = $statement->lines()->count();
-        $matchedTotal = $statement->lines()->whereIn('match_status', ['matched', 'manual_matched', 'adjusted'])->count();
+        $matchedTotal = $statement->lines()->whereIn('match_status', ['matched', 'manual_matched', 'adjusted', 'opening_reconciled'])->count();
 
         $newStatus = 'in_progress';
         if ($matchedTotal === $totalCount && $totalCount > 0) {
@@ -335,6 +335,25 @@ class BankReconciliationService
         });
 
         $this->refreshStatementStatus($statement);
+    }
+
+    /**
+     * Tandai baris rekening koran sebagai pencairan cek beredar / pos saldo awal (Desember 2024 sebelum Go-Live).
+     * Transaksi ini tidak membuat jurnal baru di tahun 2025 sehingga tidak mempengaruhi Laba/Rugi maupun Neraca.
+     */
+    public function markAsOpeningOutstanding(int $statementLineId, ?string $notes = null, ?User $user = null): void
+    {
+        $stLine = BankStatementLine::findOrFail($statementLineId);
+        $user = $user ?? auth()->user();
+
+        $stLine->update([
+            'match_status' => 'opening_reconciled',
+            'matched_at' => now(),
+            'matched_by' => $user?->id,
+            'notes' => $notes ?: 'Cek Beredar / Transaksi Saldo Awal (Desember 2024)',
+        ]);
+
+        $this->refreshStatementStatus($stLine->bankStatement);
     }
 
     /**
@@ -506,7 +525,7 @@ class BankReconciliationService
         $difference = abs($adjustedBookBalance - $adjustedBankBalance);
 
         $totalLines = $statement->lines()->count();
-        $matchedCount = $statement->lines()->whereIn('match_status', ['matched', 'manual_matched', 'adjusted'])->count();
+        $matchedCount = $statement->lines()->whereIn('match_status', ['matched', 'manual_matched', 'adjusted', 'opening_reconciled'])->count();
 
         return [
             'book_balance' => $bookBalance,
@@ -527,7 +546,7 @@ class BankReconciliationService
     protected function refreshStatementStatus(BankStatement $statement): void
     {
         $totalCount = $statement->lines()->count();
-        $matchedTotal = $statement->lines()->whereIn('match_status', ['matched', 'manual_matched', 'adjusted'])->count();
+        $matchedTotal = $statement->lines()->whereIn('match_status', ['matched', 'manual_matched', 'adjusted', 'opening_reconciled'])->count();
 
         $status = 'pending';
         if ($matchedTotal === $totalCount && $totalCount > 0) {

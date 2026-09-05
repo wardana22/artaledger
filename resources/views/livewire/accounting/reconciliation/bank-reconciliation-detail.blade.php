@@ -151,7 +151,7 @@
                 @forelse($bankLines as $line)
                     @php
                         $isSelected = in_array($line->id, $selectedBankLineIds);
-                        $isMatched = in_array($line->match_status, ['matched', 'manual_matched', 'adjusted']);
+                        $isMatched = in_array($line->match_status, ['matched', 'manual_matched', 'adjusted', 'opening_reconciled']);
                     @endphp
                     <div 
                         wire:click="selectBankLine({{ $line->id }})" 
@@ -175,6 +175,8 @@
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60">✓ Manual</span>
                                 @elseif($line->match_status === 'adjusted')
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60">✓ Penyesuaian</span>
+                                @elseif($line->match_status === 'opening_reconciled')
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 border border-sky-200 dark:border-sky-800/60" title="{{ $line->notes }}">✓ Saldo Awal</span>
                                 @else
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">Belum Cocok</span>
                                 @endif
@@ -216,12 +218,21 @@
                                     Batalkan Cocok (Unmatch)
                                 </button>
                             @else
-                                <button 
-                                    wire:click="openAdjustmentModal({{ $line->id }})" 
-                                    type="button" 
-                                    class="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold transition-all cursor-pointer">
-                                    + Jurnal Penyesuaian
-                                </button>
+                                <div class="flex items-center gap-1.5">
+                                    <button 
+                                        wire:click="markAsOpeningOutstanding({{ $line->id }})" 
+                                        type="button" 
+                                        title="Tandai sebagai pencairan cek beredar / pos saldo awal (Desember 2024 sebelum Go-Live). Tidak membuat jurnal baru di tahun berjalan."
+                                        class="px-2 py-1 rounded bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 text-[10px] font-bold transition-all cursor-pointer">
+                                        + Saldo Awal Lalu
+                                    </button>
+                                    <button 
+                                        wire:click="openAdjustmentModal({{ $line->id }})" 
+                                        type="button" 
+                                        class="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold transition-all cursor-pointer">
+                                        + Jurnal Penyesuaian
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -288,6 +299,9 @@
                                 @endif
                                 <span class="font-mono text-[11px] font-bold text-slate-500">{{ \Carbon\Carbon::parse($jEntry?->entry_date)->format('d/m/Y') }}</span>
                                 <span class="font-mono text-[10px] text-slate-600 dark:text-slate-300 font-bold">{{ $jEntry?->entry_number }}</span>
+                                @if($jEntry && $jEntry->entry_date < $statement->period_start)
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60" title="Transaksi dari periode sebelumnya yang belum kliring">Periode Lalu</span>
+                                @endif
                                 @if($isReconciled)
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">✓ Klop</span>
                                 @endif
