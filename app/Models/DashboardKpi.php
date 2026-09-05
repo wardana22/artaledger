@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
+use NXP\MathExecutor;
 
 class DashboardKpi extends Model
 {
@@ -144,6 +145,10 @@ class DashboardKpi extends Model
 
     /**
      * Safely evaluate mathematical formula expression (+, -, *, /).
+     *
+     * Uses NXP\MathExecutor as a secure formula parser instead of eval().
+     * Variables in brackets [CODE] are resolved to their live financial values
+     * before being passed to the math engine.
      */
     public function evaluateFormula(?int $unitId = null, int $month = 0, int $year = 0): float
     {
@@ -153,7 +158,7 @@ class DashboardKpi extends Model
 
         $expr = $this->formula_expression;
 
-        // Replace Account Group or Account variables [VAR]
+        // Replace Account Group or Account variables [VAR] with their live numeric values
         $expr = preg_replace_callback('/\[([A-Z0-9_\.-]+)\]/i', function ($matches) use ($unitId, $month, $year) {
             $key = $matches[1];
 
@@ -185,7 +190,7 @@ class DashboardKpi extends Model
             return '0';
         }, $expr);
 
-        // Sanitize formula
+        // Sanitize: only allow numeric characters and basic math operators
         $cleanedExpr = preg_replace('/[^0-9\+\-\*\/\(\)\.\s]/', '', $expr);
 
         if (empty(trim($cleanedExpr))) {
@@ -193,10 +198,11 @@ class DashboardKpi extends Model
         }
 
         try {
-            $result = 0.0;
-            eval('$result = ('.$cleanedExpr.');');
+            // Use MathExecutor as a safe alternative to eval() — no code injection risk
+            $executor = new MathExecutor;
+            $result = $executor->execute($cleanedExpr);
 
-            return is_numeric($result) && ! is_nan($result) && ! is_infinite($result) ? (float) $result : 0.0;
+            return is_numeric($result) && is_finite((float) $result) ? (float) $result : 0.0;
         } catch (\Throwable $e) {
             return 0.0;
         }
