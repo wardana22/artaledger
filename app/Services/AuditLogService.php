@@ -16,10 +16,10 @@ class AuditLogService
         mixed $auditable = null,
         ?array $oldValues = null,
         ?array $newValues = null,
-        ?int $userId = null
+        int|string|null $userId = null
     ): AuditLog {
         $user = auth()->user();
-        $actualUserId = $userId ?? $user?->id;
+        $actualUserId = $userId !== null ? (int) $userId : ($user?->id !== null ? (int) $user->id : null);
         $companyId = Company::first()?->id;
 
         return AuditLog::create([
