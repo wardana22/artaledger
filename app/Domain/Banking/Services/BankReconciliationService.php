@@ -3,6 +3,7 @@
 namespace App\Domain\Banking\Services;
 
 use App\Models\Account;
+use App\Models\BankReconciliationMatchGroup;
 use App\Models\BankStatement;
 use App\Models\BankStatementLine;
 use App\Models\Company;
@@ -12,6 +13,7 @@ use App\Models\Unit;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class BankReconciliationService
 {
@@ -207,22 +209,91 @@ class BankReconciliationService
     }
 
     /**
+     * Cocokkan transaksi secara fleksibel (1-ke-1, 1-ke-N, N-ke-1, atau N-ke-M).
+     * Memvalidasi bahwa total nominal bank harus persis sama dengan total nominal buku (Selisih = 0).
+     *
+     * @param  array<int>  $statementLineIds
+     * @param  array<int>  $journalLineIds
+     */
+    public function multiMatch(array $statementLineIds, array $journalLineIds, ?User $user = null): BankReconciliationMatchGroup
+    {
+        if (empty($statementLineIds) || empty($journalLineIds)) {
+            throw new \InvalidArgumentException('Pilih minimal 1 baris mutasi bank dan 1 baris buku kas/bank.');
+        }
+
+        $user = $user ?? auth()->user();
+
+        $stLines = BankStatementLine::whereIn('id', $statementLineIds)->get();
+        $jLines = JournalLine::whereIn('id', $journalLineIds)->get();
+
+        if ($stLines->count() !== count($statementLineIds) || $jLines->count() !== count($journalLineIds)) {
+            throw new \InvalidArgumentException('Satu atau lebih data transaksi tidak ditemukan.');
+        }
+
+        $firstStLine = $stLines->first();
+        if (! $firstStLine) {
+            throw new \InvalidArgumentException('Data mutasi bank tidak valid.');
+        }
+        $statement = $firstStLine->bankStatement;
+
+        // Hitung total nominal bank
+        $totalBank = (float) $stLines->sum(function (BankStatementLine $line) {
+            return (float) $line->debit > 0 ? (float) $line->debit : (float) $line->credit;
+        });
+
+        // Hitung total nominal buku kas/bank
+        $totalBook = (float) $jLines->sum(function (JournalLine $jLine) {
+            return (float) $jLine->debit > 0 ? (float) $jLine->debit : (float) $jLine->credit;
+        });
+
+        $diff = abs($totalBank - $totalBook);
+
+        // Validasi ketat: Selisih wajib 0
+        if ($diff >= 0.01) {
+            $formattedDiff = number_format($diff, 2, ',', '.');
+            throw new \InvalidArgumentException("Pencocokan gagal: Terdapat selisih sebesar Rp {$formattedDiff}. Nominal transaksi bank dan buku besar harus seimbang sempurna.");
+        }
+
+        return DB::transaction(function () use ($statement, $stLines, $statementLineIds, $journalLineIds, $totalBank, $totalBook, $user) {
+            $matchType = (count($statementLineIds) > 1 || count($journalLineIds) > 1) ? 'manual_multi' : 'manual_single';
+
+            /** @var BankReconciliationMatchGroup $group */
+            $group = BankReconciliationMatchGroup::create([
+                'bank_statement_id' => $statement->id,
+                'match_code' => 'GRP-'.Str::upper(Str::random(8)),
+                'match_type' => $matchType,
+                'total_bank_amount' => $totalBank,
+                'total_book_amount' => $totalBook,
+                'difference' => 0.00,
+                'matched_by' => $user?->id,
+                'matched_at' => now(),
+            ]);
+
+            $group->statementLines()->sync($statementLineIds);
+            $group->journalLines()->sync($journalLineIds);
+
+            // Update status masing-masing statement line
+            foreach ($stLines as $stLine) {
+                $stLine->update([
+                    'match_status' => 'manual_matched',
+                    'matched_journal_line_id' => count($journalLineIds) === 1 ? $journalLineIds[0] : null,
+                    'matched_at' => now(),
+                    'matched_by' => $user?->id,
+                ]);
+            }
+
+            $this->refreshStatementStatus($statement);
+
+            return $group;
+        });
+    }
+
+    /**
      * Cocokkan baris secara manual antara rekening koran dan baris jurnal.
      */
     public function manualMatch(int $statementLineId, int $journalLineId, ?User $user = null): void
     {
-        $stLine = BankStatementLine::findOrFail($statementLineId);
-        $jLine = JournalLine::findOrFail($journalLineId);
-        $user = $user ?? auth()->user();
-
-        $stLine->update([
-            'match_status' => 'manual_matched',
-            'matched_journal_line_id' => $jLine->id,
-            'matched_at' => now(),
-            'matched_by' => $user?->id,
-        ]);
-
-        $this->refreshStatementStatus($stLine->bankStatement);
+        $this->multiMatch([$statementLineId], [$journalLineId], $user);
     }
 
     /**
@@ -231,14 +302,37 @@ class BankReconciliationService
     public function unmatch(int $statementLineId): void
     {
         $stLine = BankStatementLine::findOrFail($statementLineId);
-        $stLine->update([
-            'match_status' => 'unmatched',
-            'matched_journal_line_id' => null,
-            'matched_at' => null,
-            'matched_by' => null,
-        ]);
+        $statement = $stLine->bankStatement;
 
-        $this->refreshStatementStatus($stLine->bankStatement);
+        DB::transaction(function () use ($stLine) {
+            // Cari grup pencocokan yang terhubung
+            $matchGroups = $stLine->matchGroups()->get();
+
+            if ($matchGroups->isNotEmpty()) {
+                foreach ($matchGroups as $group) {
+                    // Reset status semua statement line di grup ini
+                    foreach ($group->statementLines as $linkedStLine) {
+                        $linkedStLine->update([
+                            'match_status' => 'unmatched',
+                            'matched_journal_line_id' => null,
+                            'matched_at' => null,
+                            'matched_by' => null,
+                        ]);
+                    }
+                    // Hapus grup (pivot otomatis terhapus cascade)
+                    $group->delete();
+                }
+            } else {
+                $stLine->update([
+                    'match_status' => 'unmatched',
+                    'matched_journal_line_id' => null,
+                    'matched_at' => null,
+                    'matched_by' => null,
+                ]);
+            }
+        });
+
+        $this->refreshStatementStatus($statement);
     }
 
     /**

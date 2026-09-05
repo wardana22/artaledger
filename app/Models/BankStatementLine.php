@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class BankStatementLine extends Model
 {
@@ -63,5 +64,18 @@ class BankStatementLine extends Model
     public function matchedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'matched_by');
+    }
+
+    /**
+     * @return BelongsToMany<BankReconciliationMatchGroup, $this>
+     */
+    public function matchGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            BankReconciliationMatchGroup::class,
+            'bank_statement_line_matches',
+            'bank_statement_line_id',
+            'match_group_id'
+        )->withTimestamps();
     }
 }

@@ -10,8 +10,15 @@ use App\Models\JournalLine;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
+/**
+ * @property-read float $selectedBankTotal
+ * @property-read float $selectedBookTotal
+ * @property-read float $difference
+ * @property-read bool $isMatchValid
+ */
 class BankReconciliationDetail extends Component
 {
     public BankStatement $statement;
@@ -26,10 +33,12 @@ class BankReconciliationDetail extends Component
 
     public string $bookSearch = '';
 
-    // Selection untuk manual match
-    public ?int $selectedBankLineId = null;
+    // Selection untuk manual multi-match (N:M)
+    /** @var array<int> */
+    public array $selectedBankLineIds = [];
 
-    public ?int $selectedBookLineId = null;
+    /** @var array<int> */
+    public array $selectedBookLineIds = [];
 
     // Quick adjustment modal
     public bool $showAdjustmentModal = false;
@@ -58,39 +67,103 @@ class BankReconciliationDetail extends Component
         session()->flash('success', "Auto-Match selesai! Berhasil mencocokkan {$result['matched_count']} transaksi. Sisa belum cocok: {$result['remaining_unmatched']} transaksi.");
     }
 
+    public function toggleBankLine(int $lineId): void
+    {
+        if (in_array($lineId, $this->selectedBankLineIds)) {
+            $this->selectedBankLineIds = array_values(array_diff($this->selectedBankLineIds, [$lineId]));
+        } else {
+            $this->selectedBankLineIds[] = $lineId;
+        }
+    }
+
+    public function toggleBookLine(int $lineId): void
+    {
+        if (in_array($lineId, $this->selectedBookLineIds)) {
+            $this->selectedBookLineIds = array_values(array_diff($this->selectedBookLineIds, [$lineId]));
+        } else {
+            $this->selectedBookLineIds[] = $lineId;
+        }
+    }
+
     public function selectBankLine(int $lineId): void
     {
-        if ($this->selectedBankLineId === $lineId) {
-            $this->selectedBankLineId = null;
-        } else {
-            $this->selectedBankLineId = $lineId;
-        }
+        $this->toggleBankLine($lineId);
     }
 
     public function selectBookLine(int $lineId): void
     {
-        if ($this->selectedBookLineId === $lineId) {
-            $this->selectedBookLineId = null;
-        } else {
-            $this->selectedBookLineId = $lineId;
+        $this->toggleBookLine($lineId);
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selectedBankLineIds = [];
+        $this->selectedBookLineIds = [];
+    }
+
+    public function getSelectedBankTotalProperty(): float
+    {
+        if (empty($this->selectedBankLineIds)) {
+            return 0.0;
         }
+
+        return (float) BankStatementLine::whereIn('id', $this->selectedBankLineIds)
+            ->get()
+            ->sum(function (BankStatementLine $l) {
+                return (float) $l->debit > 0 ? (float) $l->debit : (float) $l->credit;
+            });
+    }
+
+    public function getSelectedBookTotalProperty(): float
+    {
+        if (empty($this->selectedBookLineIds)) {
+            return 0.0;
+        }
+
+        return (float) JournalLine::whereIn('id', $this->selectedBookLineIds)
+            ->get()
+            ->sum(function (JournalLine $l) {
+                return (float) $l->debit > 0 ? (float) $l->debit : (float) $l->credit;
+            });
+    }
+
+    public function getDifferenceProperty(): float
+    {
+        return abs($this->getSelectedBankTotalProperty() - $this->getSelectedBookTotalProperty());
+    }
+
+    public function getIsMatchValidProperty(): bool
+    {
+        return count($this->selectedBankLineIds) > 0
+            && count($this->selectedBookLineIds) > 0
+            && $this->getDifferenceProperty() < 0.01;
     }
 
     public function executeManualMatch(BankReconciliationService $service): void
     {
         abort_unless(auth()->user()?->can('reconciliation.manage'), 403, 'Akses Ditolak.');
 
-        if (! $this->selectedBankLineId || ! $this->selectedBookLineId) {
-            session()->flash('error', 'Pilih 1 baris mutasi bank dan 1 baris buku kas/bank untuk dicocokkan.');
+        if (empty($this->selectedBankLineIds) || empty($this->selectedBookLineIds)) {
+            session()->flash('error', 'Pilih minimal 1 baris mutasi bank dan 1 baris buku kas/bank untuk dicocokkan.');
+
+            return;
+        }
+
+        $isMatchValid = $this->getIsMatchValidProperty();
+        $diff = $this->getDifferenceProperty();
+
+        if (! $isMatchValid) {
+            $diffFormatted = number_format($diff, 2, ',', '.');
+            session()->flash('error', "Pencocokan ditolak: Masih terdapat selisih sebesar Rp {$diffFormatted}. Transaksi harus seimbang (Rp 0,00) sebelum dicocokkan.");
 
             return;
         }
 
         try {
-            $service->manualMatch($this->selectedBankLineId, $this->selectedBookLineId, auth()->user());
-            $this->reset(['selectedBankLineId', 'selectedBookLineId']);
+            $service->multiMatch($this->selectedBankLineIds, $this->selectedBookLineIds, auth()->user());
+            $this->clearSelection();
             $this->statement->refresh();
-            session()->flash('success', 'Transaksi berhasil dicocokkan secara manual.');
+            session()->flash('success', 'Transaksi berhasil dicocokkan secara sempurna (Selisih Rp 0,00).');
         } catch (Exception $e) {
             session()->flash('error', 'Gagal mencocokkan: '.$e->getMessage());
         }
@@ -196,7 +269,11 @@ class BankReconciliationDetail extends Component
             ->get();
 
         // 2. Query Baris Buku Kas / Bank (General Ledger Lines)
-        $matchedIds = BankStatementLine::whereNotNull('matched_journal_line_id')->pluck('matched_journal_line_id')->toArray();
+        $matchedIds = DB::table('bank_journal_line_matches')->pluck('journal_line_id')
+            ->merge(BankStatementLine::whereNotNull('matched_journal_line_id')->pluck('matched_journal_line_id'))
+            ->unique()
+            ->values()
+            ->toArray();
         $minDate = Carbon::parse($this->statement->period_start)->subDays(7)->format('Y-m-d');
         $maxDate = Carbon::parse($this->statement->period_end)->addDays(7)->format('Y-m-d');
 

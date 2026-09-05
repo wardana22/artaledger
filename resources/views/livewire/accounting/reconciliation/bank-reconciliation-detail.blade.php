@@ -150,7 +150,7 @@
             <div class="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                 @forelse($bankLines as $line)
                     @php
-                        $isSelected = $selectedBankLineId === $line->id;
+                        $isSelected = in_array($line->id, $selectedBankLineIds);
                         $isMatched = in_array($line->match_status, ['matched', 'manual_matched', 'adjusted']);
                     @endphp
                     <div 
@@ -158,6 +158,13 @@
                         class="p-3 transition-all cursor-pointer select-none {{ $isSelected ? 'bg-indigo-50/90 dark:bg-indigo-950/60 border-l-4 border-indigo-600' : ($isMatched ? 'bg-slate-50/40 dark:bg-slate-900/40 hover:bg-slate-100/60' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60') }}">
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex items-center gap-2">
+                                @if(! $isMatched)
+                                    <input 
+                                        type="checkbox" 
+                                        wire:click.stop="toggleBankLine({{ $line->id }})" 
+                                        {{ $isSelected ? 'checked' : '' }} 
+                                        class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5 cursor-pointer">
+                                @endif
                                 <span class="font-mono text-[11px] font-bold text-slate-500">{{ \Carbon\Carbon::parse($line->transaction_date)->format('d/m/Y') }}</span>
                                 @if($line->transaction_time)
                                     <span class="text-[10px] text-slate-400 font-mono">{{ $line->transaction_time }}</span>
@@ -262,7 +269,7 @@
             <div class="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                 @forelse($bookLines as $jLine)
                     @php
-                        $isSelected = $selectedBookLineId === $jLine->id;
+                        $isSelected = in_array($jLine->id, $selectedBookLineIds);
                         $jEntry = $jLine->journalEntry;
                         $isDebit = (float)$jLine->debit > 0;
                         $isReconciled = in_array($jLine->id, $matchedIds);
@@ -272,6 +279,13 @@
                         class="p-3 transition-all cursor-pointer select-none {{ $isSelected ? 'bg-emerald-50/90 dark:bg-emerald-950/60 border-l-4 border-emerald-600' : ($isReconciled ? 'bg-slate-50/40 dark:bg-slate-900/40 hover:bg-slate-100/60' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60') }}">
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex items-center gap-2">
+                                @if(! $isReconciled)
+                                    <input 
+                                        type="checkbox" 
+                                        wire:click.stop="toggleBookLine({{ $jLine->id }})" 
+                                        {{ $isSelected ? 'checked' : '' }} 
+                                        class="rounded border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer">
+                                @endif
                                 <span class="font-mono text-[11px] font-bold text-slate-500">{{ \Carbon\Carbon::parse($jEntry?->entry_date)->format('d/m/Y') }}</span>
                                 <span class="font-mono text-[10px] text-slate-600 dark:text-slate-300 font-bold">{{ $jEntry?->entry_number }}</span>
                                 @if($isReconciled)
@@ -312,30 +326,73 @@
         </div>
     </div>
 
-    <!-- FLOATING MANUAL MATCH TOOLBAR -->
-    @if ($selectedBankLineId && $selectedBookLineId)
+    <!-- FLOATING MANUAL MATCH TOOLBAR & DIFFERENCE CALCULATOR -->
+    @if (count($selectedBankLineIds) > 0 || count($selectedBookLineIds) > 0)
         <div class="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4">
-            <div class="bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700 p-4 max-w-2xl w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-bounce-short">
-                <div class="text-xs">
-                    <span class="font-bold text-amber-400 uppercase tracking-wider block">Pencocokan Manual Aktif</span>
-                    <span class="text-slate-300 text-[11px]">1 baris bank & 1 baris jurnal terpilih. Klik eksekusi untuk menautkan.</span>
+            <div class="bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-700/80 p-4 max-w-4xl w-full flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-bottom-4 duration-200">
+                <!-- COMPARISON SUMMARY & REAL-TIME DIFFERENCE -->
+                <div class="flex flex-wrap items-center gap-3 text-xs">
+                    <!-- Bank Selected Total -->
+                    <div class="bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700/60">
+                        <span class="text-[10px] text-slate-400 block font-medium">Bank Terpilih ({{ count($selectedBankLineIds) }} baris)</span>
+                        <span class="font-mono font-bold text-blue-400 text-sm">
+                            Rp {{ number_format($this->selectedBankTotal, 2, ',', '.') }}
+                        </span>
+                    </div>
+
+                    <span class="text-slate-500 font-bold text-sm hidden sm:inline">vs</span>
+
+                    <!-- Book Selected Total -->
+                    <div class="bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700/60">
+                        <span class="text-[10px] text-slate-400 block font-medium">Buku Besar Terpilih ({{ count($selectedBookLineIds) }} baris)</span>
+                        <span class="font-mono font-bold text-emerald-400 text-sm">
+                            Rp {{ number_format($this->selectedBookTotal, 2, ',', '.') }}
+                        </span>
+                    </div>
+
+                    <!-- DIFFERENCE BADGE (USER REQUIREMENT: TAMPILKAN ANGKA SELISIH) -->
+                    <div class="px-3.5 py-1.5 rounded-xl border {{ $this->isMatchValid ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300' : 'bg-rose-950/70 border-rose-500/60 text-rose-300' }}">
+                        <span class="text-[10px] uppercase tracking-wider block font-bold {{ $this->isMatchValid ? 'text-emerald-400' : 'text-rose-400' }}">
+                            {{ $this->isMatchValid ? '✓ Seimbang (Klop)' : '⚠ Selisih Belum Nol' }}
+                        </span>
+                        <span class="font-mono font-bold text-sm">
+                            Rp {{ number_format($this->difference, 2, ',', '.') }}
+                        </span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
+
+                <!-- ACTION BUTTONS -->
+                <div class="flex items-center gap-2.5 self-end md:self-center">
                     <button 
-                        wire:click="$set('selectedBankLineId', null); $set('selectedBookLineId', null);" 
+                        wire:click="clearSelection" 
                         type="button" 
-                        class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition-colors">
-                        Batal
+                        class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition-colors">
+                        Batal Pilihan
                     </button>
-                    <button 
-                        wire:click="executeManualMatch" 
-                        type="button" 
-                        class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shadow-md shadow-emerald-500/30 flex items-center gap-1.5 transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <span>Tautkan (Cocokkan Manual)</span>
-                    </button>
+
+                    <!-- USER REQUIREMENT: JANGAN COCOKKAN JIKA MASIH SELISIH -->
+                    @if ($this->isMatchValid)
+                        <button 
+                            wire:click="executeManualMatch" 
+                            type="button" 
+                            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-xs font-bold text-white shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Tautkan Transaksi (Klop)</span>
+                        </button>
+                    @else
+                        <button 
+                            type="button" 
+                            disabled 
+                            title="Pencocokan hanya dapat dilakukan jika selisih tepat Rp 0,00 dan kedua sisi telah dipilih."
+                            class="px-4 py-2 rounded-xl bg-slate-800 text-slate-500 text-xs font-bold border border-slate-700/60 flex items-center gap-2 cursor-not-allowed opacity-70">
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            <span>Terkunci (Selisih Belum 0)</span>
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
