@@ -18,14 +18,15 @@ class JournalPostingService
     /**
      * Post a new manual journal entry with lines transactionally.
      *
-     * @param  array  $entryData  ['entry_date', 'document_number', 'description', 'company_id']
-     * @param  array  $linesData  [['account_id', 'description', 'debit', 'credit'], ...]
+     * @param  array<string, mixed>  $entryData  ['entry_date', 'document_number', 'description', 'company_id']
+     * @param  array<int, array<string, mixed>>  $linesData  [['account_id', 'description', 'debit', 'credit'], ...]
      *
      * @throws Exception
      */
     public function postManualEntry(array $entryData, array $linesData, ?int $userId = null, string $entryType = 'general'): JournalEntry
     {
-        $companyId = $entryData['company_id'] ?? Company::first()?->id ?? 1;
+        $defaultCompany = Company::first();
+        $companyId = $entryData['company_id'] ?? ($defaultCompany ? $defaultCompany->id : 1);
         $entryDate = Carbon::parse($entryData['entry_date']);
 
         // 1. Check Accounting Period Status
@@ -128,6 +129,11 @@ class JournalPostingService
 
     /**
      * Update an existing manual journal entry and sync lines transactionally.
+     *
+     * @param  array<string, mixed>  $entryData
+     * @param  array<int, array<string, mixed>>  $linesData
+     *
+     * @throws Exception
      */
     public function updateManualEntry(JournalEntry $journalEntry, array $entryData, array $linesData, ?int $userId = null): JournalEntry
     {
@@ -229,10 +235,16 @@ class JournalPostingService
 
     /**
      * Create a manual journal entry with status 'draft'.
+     *
+     * @param  array<string, mixed>  $entryData
+     * @param  array<int, array<string, mixed>>  $linesData
+     *
+     * @throws Exception
      */
     public function createDraftEntry(array $entryData, array $linesData, ?int $userId = null, string $entryType = 'general'): JournalEntry
     {
-        $companyId = $entryData['company_id'] ?? Company::first()?->id ?? 1;
+        $defaultCompany = Company::first();
+        $companyId = $entryData['company_id'] ?? ($defaultCompany ? $defaultCompany->id : 1);
         $entryDate = Carbon::parse($entryData['entry_date']);
 
         $period = AccountingPeriod::where('company_id', $companyId)

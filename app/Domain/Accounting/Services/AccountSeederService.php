@@ -44,8 +44,7 @@ class AccountSeederService
                 $parentId = Account::where('company_id', $company->id)
                     ->where('code', $item['parent_code'])
                     ->first()?->id;
-            } elseif (str_contains($code, '.')) {
-                $lastDot = strrpos($code, '.');
+            } elseif (($lastDot = strrpos($code, '.')) !== false) {
                 $parentCode = substr($code, 0, $lastDot);
                 $parentId = Account::where('company_id', $company->id)->where('code', $parentCode)->first()?->id;
             } elseif (strlen($code) > 1) {
