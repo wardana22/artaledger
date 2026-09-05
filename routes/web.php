@@ -25,6 +25,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
+use App\Http\Controllers\FinancialReportPdfController;
 use App\Livewire\Accounting\Accounts\AccountGroupIndex;
 use App\Livewire\Accounting\Import\JournalImportWizard;
 use App\Livewire\Accounting\Journals\JournalTemplateIndex;
@@ -74,6 +75,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/accounting/reports/balance-sheet', BalanceSheet::class)->name('accounting.reports.balance-sheet');
     Route::get('/accounting/reports/cash-flow', CashFlow::class)->name('accounting.reports.cash-flow');
     Route::get('/accounting/reports/changes-in-equity', ChangesInEquity::class)->name('accounting.reports.changes-in-equity');
+    Route::get('/accounting/reports/export/pdf/{type}', FinancialReportPdfController::class.'@export')->name('accounting.reports.export.pdf');
 });
 
 require __DIR__.'/settings.php';
