@@ -21,6 +21,11 @@ class BankReconciliationDetail extends Component
 
     public string $search = '';
 
+    // Filter status di panel buku kas/bank
+    public string $bookFilter = 'all'; // all, unmatched, matched
+
+    public string $bookSearch = '';
+
     // Selection untuk manual match
     public ?int $selectedBankLineId = null;
 
@@ -195,14 +200,34 @@ class BankReconciliationDetail extends Component
         $minDate = Carbon::parse($this->statement->period_start)->subDays(7)->format('Y-m-d');
         $maxDate = Carbon::parse($this->statement->period_end)->addDays(7)->format('Y-m-d');
 
-        $bookLines = JournalLine::with(['journalEntry', 'unit'])
+        $bookLinesQuery = JournalLine::with(['journalEntry', 'unit'])
             ->where('account_id', $this->statement->account_id)
             ->whereHas('journalEntry', function ($q) use ($minDate, $maxDate) {
                 $q->where('status', 'posted')
                     ->whereBetween('entry_date', [$minDate, $maxDate]);
-            })
-            ->orderBy('journal_entry_id', 'asc')
-            ->get();
+            });
+
+        if ($this->bookFilter === 'unmatched') {
+            $bookLinesQuery->whereNotIn('id', $matchedIds);
+        } elseif ($this->bookFilter === 'matched') {
+            $bookLinesQuery->whereIn('id', $matchedIds);
+        }
+
+        if (! empty($this->bookSearch)) {
+            $bs = '%'.$this->bookSearch.'%';
+            $bookLinesQuery->where(function ($q) use ($bs) {
+                $q->where('description', 'like', $bs)
+                    ->orWhere('debit', 'like', $bs)
+                    ->orWhere('credit', 'like', $bs)
+                    ->orWhereHas('journalEntry', function ($sub) use ($bs) {
+                        $sub->where('entry_number', 'like', $bs)
+                            ->orWhere('document_number', 'like', $bs)
+                            ->orWhere('description', 'like', $bs);
+                    });
+            });
+        }
+
+        $bookLines = $bookLinesQuery->orderBy('journal_entry_id', 'asc')->get();
 
         // 3. Ringkasan Rekonsiliasi
         $summary = $service->calculateSummary($this->statement);

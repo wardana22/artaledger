@@ -229,14 +229,33 @@
         <!-- RIGHT PANEL: GENERAL LEDGER LINES (BUKU BESAR KAS/BANK) -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden flex flex-col h-[700px]">
             <!-- PANEL HEADER -->
-            <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100">
-                        2. Buku Besar Kas/Bank ({{ $bookLines->count() }} Baris Jurnal)
-                    </h3>
+            <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-800 dark:text-slate-100">
+                            2. Buku Besar Kas/Bank ({{ $bookLines->count() }} Baris Jurnal)
+                        </h3>
+                    </div>
+                    <div class="inline-flex rounded-lg bg-slate-200/60 dark:bg-slate-800 p-0.5 text-[10px] font-bold">
+                        <button wire:click="$set('bookFilter', 'all')" type="button" class="px-2 py-0.5 rounded-md {{ $bookFilter === 'all' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500' }}">Semua</button>
+                        <button wire:click="$set('bookFilter', 'unmatched')" type="button" class="px-2 py-0.5 rounded-md {{ $bookFilter === 'unmatched' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500' }}">Belum Cocok</button>
+                        <button wire:click="$set('bookFilter', 'matched')" type="button" class="px-2 py-0.5 rounded-md {{ $bookFilter === 'matched' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs' : 'text-slate-500' }}">Cocok</button>
+                    </div>
                 </div>
-                <span class="text-[10px] text-slate-500 font-mono">{{ $statement->account?->code }}</span>
+
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </span>
+                    <input 
+                        wire:model.live.debounce.300ms="bookSearch" 
+                        type="text" 
+                        placeholder="Cari transaksi jurnal, nominal, atau no. bukti..." 
+                        class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                </div>
             </div>
 
             <!-- LINES LIST (SCROLLABLE) -->
