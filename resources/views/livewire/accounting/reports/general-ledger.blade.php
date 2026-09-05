@@ -52,7 +52,7 @@
                 </label>
                 <select wire:model.live="unitFilter" aria-label="Unit Perusahaan" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-semibold focus:ring-2 focus:ring-indigo-500 dark:text-slate-100 transition-all">
                     @if (auth()->user()?->hasGlobalUnitAccess())
-                        <option value="all">🌐 Konsolidasi (Seluruh 11 Unit)</option>
+                        <option value="all">🌐 Konsolidasi (Semua Unit)</option>
                     @endif
                     @foreach ($units as $unit)
                         <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
