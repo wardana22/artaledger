@@ -42,6 +42,11 @@
                                 {{ __('Periode Akuntansi') }}
                             </flux:sidebar.item>
                         @endif
+                        @if (auth()->user()?->can('reconciliation.view') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="arrows-right-left" :href="route('accounting.reconciliation.index')" :current="request()->routeIs('accounting.reconciliation.*')" wire:navigate>
+                                {{ __('Rekonsiliasi Bank') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
 
                     <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />

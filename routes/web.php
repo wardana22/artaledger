@@ -25,11 +25,14 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
+use App\Http\Controllers\BankReconciliationPdfController;
 use App\Http\Controllers\FinancialReportPdfController;
 use App\Livewire\Accounting\Accounts\AccountGroupIndex;
 use App\Livewire\Accounting\Import\JournalImportWizard;
 use App\Livewire\Accounting\Journals\JournalTemplateIndex;
 use App\Livewire\Accounting\OpeningBalance\OpeningBalanceIndex;
+use App\Livewire\Accounting\Reconciliation\BankReconciliationDetail;
+use App\Livewire\Accounting\Reconciliation\BankReconciliationIndex;
 use App\Livewire\Accounting\Settings\CompanySettingsIndex;
 use App\Livewire\Accounting\Settings\JournalTypeIndex;
 use App\Livewire\Accounting\Settings\UnitIndex;
@@ -64,6 +67,11 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/accounting/journals/{id}/edit', JournalForm::class)->name('accounting.journals.edit');
     Route::get('/accounting/adjustments', AdjustmentIndex::class)->name('accounting.adjustments.index');
     Route::get('/accounting/adjustments/create', AdjustmentForm::class)->name('accounting.adjustments.create');
+
+    // Bank Reconciliation
+    Route::get('/accounting/reconciliation', BankReconciliationIndex::class)->name('accounting.reconciliation.index');
+    Route::get('/accounting/reconciliation/{statement}', BankReconciliationDetail::class)->name('accounting.reconciliation.detail');
+    Route::get('/accounting/reconciliation/{statement}/pdf', [BankReconciliationPdfController::class, 'export'])->name('accounting.reconciliation.pdf');
 
     // Reports
     Route::get('/accounting/reports/general-ledger', GeneralLedger::class)->name('accounting.reports.general-ledger');

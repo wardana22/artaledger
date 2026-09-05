@@ -54,6 +54,11 @@ class RoleAndPermissionSeeder extends Seeder
             'reports.view' => 'Lihat Seluruh Laporan Keuangan (Global)',
             'reports.export' => 'Ekspor Laporan Keuangan (Excel/PDF)',
 
+            // Rekonsiliasi Bank Modul
+            'reconciliation.view' => 'Lihat Rekonsiliasi Bank',
+            'reconciliation.manage' => 'Kelola & Eksekusi Rekonsiliasi Bank',
+            'reconciliation.upload' => 'Unggah Rekening Koran Bank',
+
             // Master Pengaturan Modul
             'settings.view' => 'Lihat Pengaturan System',
             'settings.company' => 'Kelola Branding & Pengaturan Perusahaan',
@@ -89,6 +94,7 @@ class RoleAndPermissionSeeder extends Seeder
             'reports.general_ledger', 'reports.subsidiary_ledger', 'reports.worksheet', 'reports.trial_balance',
             'reports.balance_sheet', 'reports.profit_loss', 'reports.cash_flow', 'reports.opening_balance',
             'reports.changes_in_equity', 'reports.view', 'reports.export',
+            'reconciliation.view', 'reconciliation.manage', 'reconciliation.upload',
             'settings.view', 'settings.units', 'settings.journal_types', 'settings.templates', 'settings.manage',
         ]);
 
@@ -98,6 +104,7 @@ class RoleAndPermissionSeeder extends Seeder
             'journals.view', 'journals.create', 'journals.edit',
             'periods.view',
             'reports.general_ledger', 'reports.profit_loss', 'reports.view',
+            'reconciliation.view',
             'settings.view', 'settings.journal_types', 'settings.templates',
         ]);
 
@@ -108,6 +115,7 @@ class RoleAndPermissionSeeder extends Seeder
             'periods.view',
             'reports.general_ledger', 'reports.subsidiary_ledger', 'reports.trial_balance', 'reports.balance_sheet',
             'reports.profit_loss', 'reports.cash_flow', 'reports.changes_in_equity', 'reports.view', 'reports.export',
+            'reconciliation.view',
             'admin.audit_logs',
         ]);
 
