@@ -59,18 +59,7 @@ class JournalPostingService
         }
 
         foreach ($linesData as $index => $line) {
-            $account = Account::find($line['account_id']);
-            if (! $account) {
-                throw new Exception('Baris #'.($index + 1).": Akun ID {$line['account_id']} tidak ditemukan.");
-            }
-
-            if ($account->is_group) {
-                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' adalah Header Group dan tidak dapat diposting.");
-            }
-
-            if (! $account->is_active) {
-                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' berstatus tidak aktif.");
-            }
+            $this->findValidAccount((int) $line['account_id'], $index);
 
             $debit = (float) ($line['debit'] ?? 0);
             $credit = (float) ($line['credit'] ?? 0);
@@ -172,16 +161,7 @@ class JournalPostingService
         }
 
         foreach ($linesData as $index => $line) {
-            $account = Account::find($line['account_id']);
-            if (! $account) {
-                throw new Exception('Baris #'.($index + 1).": Akun ID {$line['account_id']} tidak ditemukan.");
-            }
-            if ($account->is_group) {
-                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' adalah Header Group.");
-            }
-            if (! $account->is_active) {
-                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' tidak aktif.");
-            }
+            $this->findValidAccount((int) $line['account_id'], $index);
             $totalDebit += (float) ($line['debit'] ?? 0);
             $totalCredit += (float) ($line['credit'] ?? 0);
         }
@@ -279,16 +259,7 @@ class JournalPostingService
         }
 
         foreach ($linesData as $index => $line) {
-            $account = Account::find($line['account_id']);
-            if (! $account) {
-                throw new Exception('Baris #'.($index + 1).": Akun ID {$line['account_id']} tidak ditemukan.");
-            }
-            if ($account->is_group) {
-                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' adalah Header Group.");
-            }
-            if (! $account->is_active) {
-                throw new Exception('Baris #'.($index + 1).": Akun '{$account->code} - {$account->name}' berstatus tidak aktif.");
-            }
+            $this->findValidAccount((int) $line['account_id'], $index);
 
             $totalDebit += (float) ($line['debit'] ?? 0);
             $totalCredit += (float) ($line['credit'] ?? 0);
@@ -358,6 +329,7 @@ class JournalPostingService
             throw new Exception("Jurnal {$journalEntry->entry_number} tidak berstatus draft.");
         }
 
+        /** @var AccountingPeriod|null $period */
         $period = $journalEntry->period;
         if ($period && ! $period->isOpen()) {
             throw new Exception("Gagal posting! Periode akuntansi berstatus '{$period->status}'.");
@@ -437,5 +409,29 @@ class JournalPostingService
         }
 
         return sprintf('%s%04d', $prefix, $seq);
+    }
+
+    /**
+     * Find a valid, postable account by ID.
+     *
+     * @throws Exception
+     */
+    private function findValidAccount(int $accountId, int $lineIndex): Account
+    {
+        $account = Account::find($accountId);
+
+        if (! $account instanceof Account) {
+            throw new Exception('Baris #'.($lineIndex + 1).": Akun ID {$accountId} tidak ditemukan.");
+        }
+
+        if ($account->is_group) {
+            throw new Exception('Baris #'.($lineIndex + 1).": Akun '{$account->code} - {$account->name}' adalah Header Group.");
+        }
+
+        if (! $account->is_active) {
+            throw new Exception('Baris #'.($lineIndex + 1).": Akun '{$account->code} - {$account->name}' berstatus tidak aktif.");
+        }
+
+        return $account;
     }
 }
