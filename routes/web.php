@@ -38,7 +38,7 @@ use App\Livewire\Admin\UserIndex;
 use App\Livewire\Dashboard\DashboardIndex;
 use App\Livewire\Dashboard\DashboardSettingsIndex;
 
-Route::middleware(['web'])->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     // Dashboard & Settings
     Route::get('/dashboard', DashboardIndex::class)->name('dashboard');
     Route::get('/dashboard/settings', DashboardSettingsIndex::class)->name('dashboard.settings.index');

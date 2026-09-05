@@ -4,8 +4,6 @@ namespace App\Livewire\Accounting\Accounts;
 
 use App\Models\Account;
 use App\Models\Company;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -56,15 +54,6 @@ class AccountIndex extends Component
     {
         if (auth()->check() && ! auth()->user()->can('accounts.view') && ! auth()->user()->can('settings.manage')) {
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
-        }
-
-        if (! Auth::check()) {
-            $user = User::first() ?? User::create([
-                'name' => 'Dev Admin',
-                'email' => 'admin@artaledger.com',
-                'password' => bcrypt('password'),
-            ]);
-            Auth::login($user);
         }
     }
 

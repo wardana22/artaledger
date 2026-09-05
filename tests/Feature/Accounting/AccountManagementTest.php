@@ -30,10 +30,9 @@ test('accounts can be seeded from scratch JSON files', function () {
     expect($asset->is_group)->toBeTrue();
 });
 
-test('master coa page automatically logs in dev user if unauthenticated', function () {
+test('master coa page redirects to login if unauthenticated', function () {
     $this->get(route('accounting.accounts.index'))
-        ->assertOk();
-    expect(Auth::check())->toBeTrue();
+        ->assertRedirect(route('login'));
 });
 
 test('authenticated user can view master coa page', function () {
