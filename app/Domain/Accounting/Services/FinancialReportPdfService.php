@@ -3,6 +3,7 @@
 namespace App\Domain\Accounting\Services;
 
 use App\Models\Account;
+use App\Models\AccountingPeriod;
 use App\Models\Company;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
@@ -52,7 +53,6 @@ class FinancialReportPdfService
             }
         }
 
-        // 1. Fetch Mutations for Period
         $mutResults = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
@@ -84,7 +84,6 @@ class FinancialReportPdfService
             }
         }
 
-        // 2. Hierarchical Rollup
         $leafAmounts = $amounts;
         foreach ($leafAmounts as $id => $amt) {
             if ($amt == 0.0) {
@@ -99,7 +98,6 @@ class FinancialReportPdfService
             }
         }
 
-        // 3. Totals
         $totalRevenue = 0.0;
         $totalHpp = 0.0;
         $totalOperatingExpenses = 0.0;
@@ -371,7 +369,6 @@ class FinancialReportPdfService
             }
         }
 
-        // Opening Balances
         $opResults = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
@@ -404,7 +401,6 @@ class FinancialReportPdfService
             }
         }
 
-        // Period Mutations
         $mutResults = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
@@ -429,7 +425,6 @@ class FinancialReportPdfService
             }
         }
 
-        // Rollup
         $maxLevel = collect($accountData)->max('level') ?: 4;
         for ($lvl = $maxLevel; $lvl > 1; $lvl--) {
             foreach ($accountData as $id => $item) {
@@ -521,7 +516,7 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Buku Besar (General Ledger) ke format PDF.
+     * Render Buku Besar (General Ledger - Header) ke format PDF.
      */
     public function renderGeneralLedgerPdf(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
     {
@@ -534,7 +529,6 @@ class FinancialReportPdfService
             $descendantIds = [$account->id];
         }
 
-        // Opening Balance
         $opQuery = JournalLine::whereHas('journalEntry', function ($q) use ($startDate) {
             $q->where('status', 'posted')
                 ->where(function ($sub) use ($startDate) {
@@ -554,7 +548,6 @@ class FinancialReportPdfService
         $opCredit = (float) $opQuery->sum('credit');
         $openingBalance = $account->normal_balance === 'debit' ? ($opDebit - $opCredit) : ($opCredit - $opDebit);
 
-        // Lines for Period
         /** @var Collection<int, JournalLine> $lines */
         $lines = JournalLine::with(['journalEntry', 'account', 'unit'])
             ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
@@ -635,6 +628,546 @@ class FinancialReportPdfService
 
         return Pdf::loadView('pdf.reports.general-ledger', $data)
             ->setPaper('a4', 'landscape')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
+
+    /**
+     * Render Buku Besar Pembantu (Subsidiary Ledger - Posting Account) ke format PDF.
+     */
+    public function renderSubsidiaryLedgerPdf(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $user = $user ?? auth()->user();
+        $account = Account::findOrFail($accountId);
+
+        $linesQuery = JournalLine::with(['journalEntry', 'unit'])
+            ->where('account_id', $account->id)
+            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
+                $q->where('status', 'posted')
+                    ->whereBetween('entry_date', [$startDate, $endDate]);
+            });
+
+        if ($unitFilter !== 'all') {
+            $linesQuery->where('unit_id', $unitFilter);
+        }
+
+        $lines = $linesQuery->get()->sortBy('journalEntry.entry_date');
+        $openingBalance = (float) $account->opening_balance;
+        $runningBalance = $openingBalance;
+        $reportLines = [];
+        $totalDebit = 0.0;
+        $totalCredit = 0.0;
+
+        foreach ($lines as $line) {
+            $debit = (float) $line->debit;
+            $credit = (float) $line->credit;
+
+            if ($account->normal_balance === 'debit') {
+                $runningBalance += ($debit - $credit);
+            } else {
+                $runningBalance += ($credit - $debit);
+            }
+
+            $totalDebit += $debit;
+            $totalCredit += $credit;
+
+            /** @var JournalEntry $jEntry */
+            $jEntry = $line->journalEntry;
+            /** @var Unit|null $jUnit */
+            $jUnit = $line->unit;
+
+            $reportLines[] = [
+                'date' => Carbon::parse($jEntry->entry_date)->format('d/m/Y'),
+                'entry_number' => $jEntry->entry_number,
+                'document_number' => $jEntry->document_number ?? '-',
+                'account_code' => $account->code,
+                'account_name' => $account->name,
+                'unit_code' => $jUnit ? $jUnit->code : '-',
+                'description' => $line->description ?? $jEntry->description,
+                'debit' => $debit,
+                'credit' => $credit,
+                'balance' => $runningBalance,
+            ];
+        }
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+
+        $data = [
+            'company' => $company,
+            'unitName' => $unitName,
+            'account' => $account,
+            'isSubsidiary' => true,
+            'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
+            'endDate' => Carbon::parse($endDate)->isoFormat('D MMMM Y'),
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Administrator',
+            'openingBalance' => $openingBalance,
+            'reportLines' => $reportLines,
+            'totalDebit' => $totalDebit,
+            'totalCredit' => $totalCredit,
+            'closingBalance' => $runningBalance,
+        ];
+
+        return Pdf::loadView('pdf.reports.subsidiary-ledger', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
+
+    /**
+     * Render Laporan Arus Kas (Cash Flow) ke format PDF.
+     */
+    public function renderCashFlowPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $user = $user ?? auth()->user();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
+        $cashAccounts = Account::where('type', 'KAS')
+            ->orWhere('type', 'BANK')
+            ->orWhere('code', 'like', '11.01%')
+            ->orWhere('code', 'like', '11.02%')
+            ->pluck('id')
+            ->toArray();
+
+        $opQuery = JournalLine::whereIn('account_id', $cashAccounts)
+            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
+                $q->where('status', 'posted')->whereBetween('entry_date', [$startDate, $endDate]);
+            })
+            ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
+                $q->whereIn('unit_id', $allowedUnitIds);
+            });
+
+        if ($unitFilter !== 'all') {
+            $opQuery->where('unit_id', $unitFilter);
+        }
+
+        $operatingLines = $opQuery->get();
+        $operatingIn = (float) $operatingLines->sum('debit');
+        $operatingOut = (float) $operatingLines->sum('credit');
+        $netOperatingCash = $operatingIn - $operatingOut;
+
+        $openingCash = (float) Account::whereIn('id', $cashAccounts)->sum('opening_balance');
+        $endingCash = $openingCash + $netOperatingCash;
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+
+        $data = [
+            'company' => $company,
+            'unitName' => $unitName,
+            'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
+            'endDate' => Carbon::parse($endDate)->isoFormat('D MMMM Y'),
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Administrator',
+            'openingCash' => $openingCash,
+            'operatingIn' => $operatingIn,
+            'operatingOut' => $operatingOut,
+            'netOperatingCash' => $netOperatingCash,
+            'endingCash' => $endingCash,
+        ];
+
+        return Pdf::loadView('pdf.reports.cash-flow', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
+
+    /**
+     * Render Laporan Perubahan Ekuitas (Changes in Equity) ke format PDF.
+     */
+    public function renderChangesInEquityPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $user = $user ?? auth()->user();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
+        $equityAccounts = Account::where('code', 'like', '3%')->posting()->active()->get();
+        $initialEquity = (float) $equityAccounts->sum('opening_balance');
+
+        $revQuery = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'credit'))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->whereBetween('entry_date', [$startDate, $endDate]))
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
+
+        if ($unitFilter !== 'all') {
+            $revQuery->where('unit_id', $unitFilter);
+        }
+
+        $revenue = (float) ($revQuery->selectRaw('SUM(credit - debit) as total')->value('total') ?? 0);
+
+        $expQuery = JournalLine::whereHas('account', fn ($q) => $q->where('report_type', 'laba_rugi')->where('normal_balance', 'debit'))
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted')->whereBetween('entry_date', [$startDate, $endDate]))
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
+
+        if ($unitFilter !== 'all') {
+            $expQuery->where('unit_id', $unitFilter);
+        }
+
+        $expenses = (float) ($expQuery->selectRaw('SUM(debit - credit) as total')->value('total') ?? 0);
+
+        $netProfit = $revenue - $expenses;
+        $endingEquity = $initialEquity + $netProfit;
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+
+        $data = [
+            'company' => $company,
+            'unitName' => $unitName,
+            'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
+            'endDate' => Carbon::parse($endDate)->isoFormat('D MMMM Y'),
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Administrator',
+            'initialEquity' => $initialEquity,
+            'revenue' => $revenue,
+            'expenses' => $expenses,
+            'netProfit' => $netProfit,
+            'endingEquity' => $endingEquity,
+            'equityAccounts' => $equityAccounts,
+        ];
+
+        return Pdf::loadView('pdf.reports.changes-in-equity', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
+
+    /**
+     * Render Neraca Lajur 10 Kolom (Worksheet) ke format PDF (Ukuran A3 Landscape).
+     */
+    public function renderWorksheetPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $user = $user ?? auth()->user();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
+        $accounts = Account::orderBy('code', 'asc')->get();
+
+        /** @var array<int, array{account: Account, id: int, parent_id: ?int, level: int}> $accountData */
+        $accountData = [];
+        /** @var array<int, int> $childCounts */
+        $childCounts = [];
+        /** @var array<int, float> $openings */
+        $openings = [];
+        /** @var array<int, float> $debits */
+        $debits = [];
+        /** @var array<int, float> $credits */
+        $credits = [];
+        /** @var array<int, float> $adjDebits */
+        $adjDebits = [];
+        /** @var array<int, float> $adjCredits */
+        $adjCredits = [];
+
+        foreach ($accounts as $acc) {
+            $accId = (int) $acc->id;
+            $accountData[$accId] = [
+                'account' => $acc,
+                'id' => $accId,
+                'parent_id' => $acc->parent_id ? (int) $acc->parent_id : null,
+                'level' => (int) ($acc->level ?? 1),
+            ];
+            $openings[$accId] = 0.0;
+            $debits[$accId] = 0.0;
+            $credits[$accId] = 0.0;
+            $adjDebits[$accId] = 0.0;
+            $adjCredits[$accId] = 0.0;
+
+            if ($acc->parent_id) {
+                $pId = (int) $acc->parent_id;
+                $childCounts[$pId] = ($childCounts[$pId] ?? 0) + 1;
+            }
+        }
+
+        // 1. Opening
+        $opResults = DB::table('journal_lines')
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->where('journal_entries.status', 'posted')
+            ->where(function ($query) use ($startDate) {
+                $query->where('journal_entries.entry_type', 'opening_balance')
+                    ->orWhere('journal_entries.entry_date', '<', $startDate);
+            })
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('journal_lines.unit_id', $allowedUnitIds))
+            ->when($unitFilter !== 'all', fn ($q) => $q->where('journal_lines.unit_id', $unitFilter))
+            ->select('journal_lines.account_id')
+            ->selectRaw('SUM(journal_lines.debit) as total_debit, SUM(journal_lines.credit) as total_credit')
+            ->groupBy('journal_lines.account_id')
+            ->get();
+
+        foreach ($opResults as $res) {
+            $accId = (int) $res->account_id;
+            if (isset($accountData[$accId])) {
+                $acc = $accountData[$accId]['account'];
+                $d = (float) $res->total_debit;
+                $c = (float) $res->total_credit;
+                $openings[$accId] = $acc->normal_balance === 'debit' ? ($d - $c) : ($c - $d);
+            }
+        }
+
+        // 2. Regular Mutations
+        $genResults = DB::table('journal_lines')
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->where('journal_entries.status', 'posted')
+            ->where('journal_entries.entry_type', '!=', 'adjustment')
+            ->where('journal_entries.entry_type', '!=', 'opening_balance')
+            ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('journal_lines.unit_id', $allowedUnitIds))
+            ->when($unitFilter !== 'all', fn ($q) => $q->where('journal_lines.unit_id', $unitFilter))
+            ->select('journal_lines.account_id')
+            ->selectRaw('SUM(journal_lines.debit) as total_debit, SUM(journal_lines.credit) as total_credit')
+            ->groupBy('journal_lines.account_id')
+            ->get();
+
+        foreach ($genResults as $res) {
+            $accId = (int) $res->account_id;
+            if (isset($accountData[$accId])) {
+                $debits[$accId] = (float) $res->total_debit;
+                $credits[$accId] = (float) $res->total_credit;
+            }
+        }
+
+        // 3. Adjustment Mutations
+        $adjResults = DB::table('journal_lines')
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->where('journal_entries.status', 'posted')
+            ->where('journal_entries.entry_type', 'adjustment')
+            ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('journal_lines.unit_id', $allowedUnitIds))
+            ->when($unitFilter !== 'all', fn ($q) => $q->where('journal_lines.unit_id', $unitFilter))
+            ->select('journal_lines.account_id')
+            ->selectRaw('SUM(journal_lines.debit) as total_debit, SUM(journal_lines.credit) as total_credit')
+            ->groupBy('journal_lines.account_id')
+            ->get();
+
+        foreach ($adjResults as $res) {
+            $accId = (int) $res->account_id;
+            if (isset($accountData[$accId])) {
+                $adjDebits[$accId] = (float) $res->total_debit;
+                $adjCredits[$accId] = (float) $res->total_credit;
+            }
+        }
+
+        // Rollup
+        $maxLevel = collect($accountData)->max('level') ?: 4;
+        for ($lvl = $maxLevel; $lvl > 1; $lvl--) {
+            foreach ($accountData as $id => $item) {
+                if ($item['level'] == $lvl && $item['parent_id'] && isset($accountData[$item['parent_id']])) {
+                    $pId = $item['parent_id'];
+                    $openings[$pId] += $openings[$id];
+                    $debits[$pId] += $debits[$id];
+                    $credits[$pId] += $credits[$id];
+                    $adjDebits[$pId] += $adjDebits[$id];
+                    $adjCredits[$pId] += $adjCredits[$id];
+                }
+            }
+        }
+
+        $rows = [];
+        $totTbDebit = 0.0;
+        $totTbCredit = 0.0;
+        $totAdjDebit = 0.0;
+        $totAdjCredit = 0.0;
+        $totAtbDebit = 0.0;
+        $totAtbCredit = 0.0;
+        $totIsDebit = 0.0;
+        $totIsCredit = 0.0;
+        $totBsDebit = 0.0;
+        $totBsCredit = 0.0;
+
+        foreach ($accountData as $id => $item) {
+            $acc = $item['account'];
+            $level = $item['level'];
+            $hasChildren = ($childCounts[$id] ?? 0) > 0;
+            $opBal = $openings[$id] ?? 0.0;
+            $debMut = $debits[$id] ?? 0.0;
+            $credMut = $credits[$id] ?? 0.0;
+            $adjDeb = $adjDebits[$id] ?? 0.0;
+            $adjCred = $adjCredits[$id] ?? 0.0;
+
+            if ($acc->normal_balance === 'debit') {
+                $tbBal = $opBal + ($debMut - $credMut);
+                $tbDebit = $tbBal > 0 ? $tbBal : 0.0;
+                $tbCredit = $tbBal < 0 ? abs($tbBal) : 0.0;
+
+                $atbBal = $tbBal + ($adjDeb - $adjCred);
+                $atbDebit = $atbBal > 0 ? $atbBal : 0.0;
+                $atbCredit = $atbBal < 0 ? abs($atbBal) : 0.0;
+            } else {
+                $tbBal = $opBal + ($credMut - $debMut);
+                $tbCredit = $tbBal > 0 ? $tbBal : 0.0;
+                $tbDebit = $tbBal < 0 ? abs($tbBal) : 0.0;
+
+                $atbBal = $tbBal + ($adjCred - $adjDeb);
+                $atbCredit = $atbBal > 0 ? $atbBal : 0.0;
+                $atbDebit = $atbBal < 0 ? abs($atbBal) : 0.0;
+            }
+
+            $isDebit = 0.0;
+            $isCredit = 0.0;
+            $bsDebit = 0.0;
+            $bsCredit = 0.0;
+
+            if ($acc->report_type === 'laba_rugi') {
+                $isDebit = $atbDebit;
+                $isCredit = $atbCredit;
+            } else {
+                $bsDebit = $atbDebit;
+                $bsCredit = $atbCredit;
+            }
+
+            if (! $hasChildren) {
+                $totTbDebit += $tbDebit;
+                $totTbCredit += $tbCredit;
+                $totAdjDebit += $adjDeb;
+                $totAdjCredit += $adjCred;
+                $totAtbDebit += $atbDebit;
+                $totAtbCredit += $atbCredit;
+                $totIsDebit += $isDebit;
+                $totIsCredit += $isCredit;
+                $totBsDebit += $bsDebit;
+                $totBsCredit += $bsCredit;
+            }
+
+            if ($tbDebit == 0 && $tbCredit == 0 && $adjDeb == 0 && $adjCred == 0 && $atbDebit == 0 && $atbCredit == 0 && ! $hasChildren) {
+                continue;
+            }
+
+            $rows[] = [
+                'account' => $acc,
+                'level' => $level,
+                'has_children' => $hasChildren,
+                'tb_debit' => $tbDebit,
+                'tb_credit' => $tbCredit,
+                'adj_debit' => $adjDeb,
+                'adj_credit' => $adjCred,
+                'atb_debit' => $atbDebit,
+                'atb_credit' => $atbCredit,
+                'is_debit' => $isDebit,
+                'is_credit' => $isCredit,
+                'bs_debit' => $bsDebit,
+                'bs_credit' => $bsCredit,
+            ];
+        }
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+
+        $data = [
+            'company' => $company,
+            'unitName' => $unitName,
+            'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
+            'endDate' => Carbon::parse($endDate)->isoFormat('D MMMM Y'),
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Administrator',
+            'rows' => $rows,
+            'totTbDebit' => $totTbDebit,
+            'totTbCredit' => $totTbCredit,
+            'totAdjDebit' => $totAdjDebit,
+            'totAdjCredit' => $totAdjCredit,
+            'totAtbDebit' => $totAtbDebit,
+            'totAtbCredit' => $totAtbCredit,
+            'totIsDebit' => $totIsDebit,
+            'totIsCredit' => $totIsCredit,
+            'totBsDebit' => $totBsDebit,
+            'totBsCredit' => $totBsCredit,
+            'netProfitLoss' => $totIsCredit - $totIsDebit,
+        ];
+
+        return Pdf::loadView('pdf.reports.worksheet', $data)
+            ->setPaper('a3', 'landscape')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
+
+    /**
+     * Render Laporan Saldo Awal (Opening Balance) ke format PDF.
+     */
+    public function renderOpeningBalancePdf(?int $periodId = null, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $user = $user ?? auth()->user();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
+        $periods = AccountingPeriod::orderBy('start_date', 'asc')->get();
+        $selectedPeriod = $periodId ? $periods->firstWhere('id', $periodId) : $periods->first();
+        if (! $selectedPeriod) {
+            $selectedPeriod = $periods->first();
+        }
+
+        $accounts = Account::active()->orderBy('code', 'asc')->get();
+        $lines = [];
+        $totalDebit = 0.0;
+        $totalCredit = 0.0;
+
+        foreach ($accounts as $acc) {
+            $mutQuery = JournalLine::where('account_id', $acc->id)
+                ->whereHas('journalEntry', function ($q) use ($selectedPeriod) {
+                    $q->where('status', 'posted')
+                        ->where(function ($subQ) use ($selectedPeriod) {
+                            $subQ->where(function ($obQ) use ($selectedPeriod) {
+                                $obQ->where(function ($types) {
+                                    $types->where('entry_number', 'like', 'SA-%')
+                                        ->orWhere('entry_type', 'opening_balance')
+                                        ->orWhere('source_type', 'opening_balance');
+                                })->where('entry_date', '<=', $selectedPeriod ? $selectedPeriod->end_date : now());
+                            })->orWhere(function ($regQ) use ($selectedPeriod) {
+                                $regQ->where('entry_number', 'not like', 'SA-%')
+                                    ->where('entry_type', '!=', 'opening_balance')
+                                    ->where('source_type', '!=', 'opening_balance')
+                                    ->where('entry_date', '<', $selectedPeriod ? $selectedPeriod->start_date : now());
+                            });
+                        });
+                })
+                ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
+
+            if ($unitFilter !== 'all') {
+                $mutQuery->where('unit_id', $unitFilter);
+            }
+
+            $totals = $mutQuery->selectRaw('SUM(debit) as tot_debit, SUM(credit) as tot_credit')->first();
+            $d = (float) ($totals->tot_debit ?? 0);
+            $c = (float) ($totals->tot_credit ?? 0);
+
+            if ($d == 0 && $c == 0 && (float) $acc->opening_balance == 0) {
+                continue;
+            }
+
+            $debitVal = 0.0;
+            $creditVal = 0.0;
+
+            if ($acc->normal_balance === 'debit') {
+                $debitVal = ($d - $c);
+                $totalDebit += $debitVal;
+            } else {
+                $creditVal = ($c - $d);
+                $totalCredit += $creditVal;
+            }
+
+            if ($debitVal == 0 && $creditVal == 0) {
+                continue;
+            }
+
+            $lines[] = [
+                'account' => $acc,
+                'debit' => $debitVal,
+                'credit' => $creditVal,
+            ];
+        }
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+        $periodName = $selectedPeriod ? Carbon::parse($selectedPeriod->start_date)->isoFormat('MMMM Y') : 'Tahun 2025';
+
+        $data = [
+            'company' => $company,
+            'unitName' => $unitName,
+            'periodName' => $periodName,
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Administrator',
+            'lines' => $lines,
+            'totalDebit' => $totalDebit,
+            'totalCredit' => $totalCredit,
+            'isBalanced' => abs($totalDebit - $totalCredit) < 0.01,
+        ];
+
+        return Pdf::loadView('pdf.reports.opening-balance', $data)
+            ->setPaper('a4', 'portrait')
             ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
     }
 }

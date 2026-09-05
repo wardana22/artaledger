@@ -79,6 +79,77 @@ test('authenticated user can export general ledger report pdf', function () {
     expect(strlen($response->getContent()))->toBeGreaterThan(500);
 });
 
+test('authenticated user can export subsidiary ledger report pdf', function () {
+    $account = Account::posting()->active()->first();
+
+    $response = $this->actingAs($this->user)
+        ->get(route('accounting.reports.export.pdf', [
+            'type' => 'subsidiary-ledger',
+            'account_id' => $account ? $account->id : 1,
+            'start_date' => '2025-01-01',
+            'end_date' => '2025-12-31',
+            'unit' => 'all',
+        ]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    expect(strlen($response->getContent()))->toBeGreaterThan(500);
+});
+
+test('authenticated user can export cash flow report pdf', function () {
+    $response = $this->actingAs($this->user)
+        ->get(route('accounting.reports.export.pdf', [
+            'type' => 'cash-flow',
+            'start_date' => '2025-01-01',
+            'end_date' => '2025-12-31',
+            'unit' => 'all',
+        ]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    expect(strlen($response->getContent()))->toBeGreaterThan(500);
+});
+
+test('authenticated user can export changes in equity report pdf', function () {
+    $response = $this->actingAs($this->user)
+        ->get(route('accounting.reports.export.pdf', [
+            'type' => 'changes-in-equity',
+            'start_date' => '2025-01-01',
+            'end_date' => '2025-12-31',
+            'unit' => 'all',
+        ]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    expect(strlen($response->getContent()))->toBeGreaterThan(500);
+});
+
+test('authenticated user can export worksheet 10 column report pdf', function () {
+    $response = $this->actingAs($this->user)
+        ->get(route('accounting.reports.export.pdf', [
+            'type' => 'worksheet',
+            'start_date' => '2025-01-01',
+            'end_date' => '2025-12-31',
+            'unit' => 'all',
+        ]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    expect(strlen($response->getContent()))->toBeGreaterThan(500);
+});
+
+test('authenticated user can export opening balance report pdf', function () {
+    $response = $this->actingAs($this->user)
+        ->get(route('accounting.reports.export.pdf', [
+            'type' => 'opening-balance',
+            'unit' => 'all',
+        ]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    expect(strlen($response->getContent()))->toBeGreaterThan(500);
+});
+
 test('invalid report type returns 404', function () {
     $this->actingAs($this->user)
         ->get(route('accounting.reports.export.pdf', ['type' => 'non-existent-report']))
