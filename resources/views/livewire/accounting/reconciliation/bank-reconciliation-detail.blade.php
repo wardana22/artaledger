@@ -350,10 +350,16 @@
                         </span>
                     </div>
 
-                    <!-- DIFFERENCE BADGE (USER REQUIREMENT: TAMPILKAN ANGKA SELISIH) -->
+                    <!-- DIFFERENCE BADGE (DENGAN TOLERANSI RP 2) -->
                     <div class="px-3.5 py-1.5 rounded-xl border {{ $this->isMatchValid ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300' : 'bg-rose-950/70 border-rose-500/60 text-rose-300' }}">
                         <span class="text-[10px] uppercase tracking-wider block font-bold {{ $this->isMatchValid ? 'text-emerald-400' : 'text-rose-400' }}">
-                            {{ $this->isMatchValid ? '✓ Seimbang (Klop)' : '⚠ Selisih Belum Nol' }}
+                            @if ($this->difference <= 0.001)
+                                ✓ Seimbang Sempurna (Rp 0)
+                            @elseif ($this->isMatchValid)
+                                ✓ Klop (Toleransi ≤ Rp 2)
+                            @else
+                                ⚠ Selisih Belum Klop (> Rp 2)
+                            @endif
                         </span>
                         <span class="font-mono font-bold text-sm">
                             Rp {{ number_format($this->difference, 2, ',', '.') }}
@@ -370,7 +376,7 @@
                         Batal Pilihan
                     </button>
 
-                    <!-- USER REQUIREMENT: JANGAN COCOKKAN JIKA MASIH SELISIH -->
+                    <!-- USER REQUIREMENT: TOLERANSI RP 2 -->
                     @if ($this->isMatchValid)
                         <button 
                             wire:click="executeManualMatch" 
@@ -385,12 +391,12 @@
                         <button 
                             type="button" 
                             disabled 
-                            title="Pencocokan hanya dapat dilakukan jika selisih tepat Rp 0,00 dan kedua sisi telah dipilih."
+                            title="Pencocokan hanya dapat dilakukan jika selisih maksimal Rp 2,00 dan kedua sisi telah dipilih."
                             class="px-4 py-2 rounded-xl bg-slate-800 text-slate-500 text-xs font-bold border border-slate-700/60 flex items-center gap-2 cursor-not-allowed opacity-70">
                             <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                             </svg>
-                            <span>Terkunci (Selisih Belum 0)</span>
+                            <span>Terkunci (Selisih > Rp 2)</span>
                         </button>
                     @endif
                 </div>

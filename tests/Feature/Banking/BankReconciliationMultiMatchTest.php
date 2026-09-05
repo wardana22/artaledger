@@ -190,6 +190,81 @@ test('service strictly rejects matching if amounts do not balance', function () 
     expect($stLine->match_status)->toBe('unmatched');
 });
 
+test('service allows matching within tolerance of Rp 2', function () {
+    $stLine = BankStatementLine::create([
+        'bank_statement_id' => $this->statement->id,
+        'transaction_date' => '2025-01-10',
+        'description' => 'Pengeluaran Bank',
+        'debit' => 10000000.00,
+        'credit' => 0.00,
+        'balance' => 90000000.00,
+        'match_status' => 'unmatched',
+    ]);
+
+    $jEntry = JournalEntry::create([
+        'company_id' => $this->company->id,
+        'entry_number' => 'JU-TEST-TOLERANCE-2',
+        'entry_date' => '2025-01-10',
+        'description' => 'Pengeluaran Jurnal',
+        'status' => 'posted',
+    ]);
+
+    $jLine = JournalLine::create([
+        'journal_entry_id' => $jEntry->id,
+        'account_id' => $this->bankAccount->id,
+        'unit_id' => $this->unit->id,
+        'debit' => 0,
+        'credit' => 10000002.00,
+        'description' => 'Jurnal Rp 10.000.002',
+    ]);
+
+    $service = app(BankReconciliationService::class);
+    $group = $service->multiMatch([$stLine->id], [$jLine->id], $this->user);
+
+    expect($group)->toBeInstanceOf(BankReconciliationMatchGroup::class);
+    expect((float) $group->difference)->toEqualWithDelta(2.00, 0.01);
+
+    $stLine->refresh();
+    expect($stLine->match_status)->toBe('manual_matched');
+});
+
+test('service rejects matching when difference exceeds Rp 2 tolerance', function () {
+    $stLine = BankStatementLine::create([
+        'bank_statement_id' => $this->statement->id,
+        'transaction_date' => '2025-01-10',
+        'description' => 'Pengeluaran Bank',
+        'debit' => 10000000.00,
+        'credit' => 0.00,
+        'balance' => 90000000.00,
+        'match_status' => 'unmatched',
+    ]);
+
+    $jEntry = JournalEntry::create([
+        'company_id' => $this->company->id,
+        'entry_number' => 'JU-TEST-TOLERANCE-EXCEED',
+        'entry_date' => '2025-01-10',
+        'description' => 'Pengeluaran Jurnal',
+        'status' => 'posted',
+    ]);
+
+    $jLine = JournalLine::create([
+        'journal_entry_id' => $jEntry->id,
+        'account_id' => $this->bankAccount->id,
+        'unit_id' => $this->unit->id,
+        'debit' => 0,
+        'credit' => 10000002.50,
+        'description' => 'Jurnal Rp 10.000.002,50',
+    ]);
+
+    $service = app(BankReconciliationService::class);
+
+    expect(fn () => $service->multiMatch([$stLine->id], [$jLine->id], $this->user))
+        ->toThrow(InvalidArgumentException::class);
+
+    $stLine->refresh();
+    expect($stLine->match_status)->toBe('unmatched');
+});
+
 test('unmatch cleanly restores all lines in a multi-match group', function () {
     $stLine1 = BankStatementLine::create([
         'bank_statement_id' => $this->statement->id,

@@ -17,6 +17,8 @@ use Illuminate\Support\Str;
 
 class BankReconciliationService
 {
+    public const MATCH_TOLERANCE = 2.00;
+
     public function __construct(
         protected BriCmsPdfParserService $parserService
     ) {}
@@ -139,7 +141,7 @@ class BankReconciliationService
                 // Jika bank credit (uang masuk), di jurnal adalah debit
                 $jAmount = $isBankDebit ? (float) $jLine->credit : (float) $jLine->debit;
 
-                return abs($jAmount - $amount) < 0.01;
+                return abs($jAmount - $amount) <= self::MATCH_TOLERANCE;
             });
 
             if ($candidate) {
@@ -176,7 +178,7 @@ class BankReconciliationService
                 }
                 $jAmount = $isBankDebit ? (float) $jLine->credit : (float) $jLine->debit;
 
-                return abs($jAmount - $amount) < 0.01;
+                return abs($jAmount - $amount) <= self::MATCH_TOLERANCE;
             });
 
             if ($candidate) {
@@ -248,13 +250,13 @@ class BankReconciliationService
 
         $diff = abs($totalBank - $totalBook);
 
-        // Validasi ketat: Selisih wajib 0
-        if ($diff >= 0.01) {
+        // Validasi: Selisih tidak boleh melebihi batas toleransi Rp 2,00
+        if ($diff > self::MATCH_TOLERANCE) {
             $formattedDiff = number_format($diff, 2, ',', '.');
-            throw new \InvalidArgumentException("Pencocokan gagal: Terdapat selisih sebesar Rp {$formattedDiff}. Nominal transaksi bank dan buku besar harus seimbang sempurna.");
+            throw new \InvalidArgumentException("Pencocokan gagal: Terdapat selisih sebesar Rp {$formattedDiff} (melebihi batas toleransi Rp 2,00). Nominal transaksi harus seimbang dalam batas toleransi.");
         }
 
-        return DB::transaction(function () use ($statement, $stLines, $statementLineIds, $journalLineIds, $totalBank, $totalBook, $user) {
+        return DB::transaction(function () use ($statement, $stLines, $statementLineIds, $journalLineIds, $totalBank, $totalBook, $diff, $user) {
             $matchType = (count($statementLineIds) > 1 || count($journalLineIds) > 1) ? 'manual_multi' : 'manual_single';
 
             /** @var BankReconciliationMatchGroup $group */
@@ -264,7 +266,7 @@ class BankReconciliationService
                 'match_type' => $matchType,
                 'total_bank_amount' => $totalBank,
                 'total_book_amount' => $totalBook,
-                'difference' => 0.00,
+                'difference' => $diff,
                 'matched_by' => $user?->id,
                 'matched_at' => now(),
             ]);

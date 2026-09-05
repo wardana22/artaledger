@@ -127,6 +127,8 @@ class BankReconciliationDetail extends Component
             });
     }
 
+    public const MATCH_TOLERANCE = 2.00;
+
     public function getDifferenceProperty(): float
     {
         return abs($this->getSelectedBankTotalProperty() - $this->getSelectedBookTotalProperty());
@@ -136,7 +138,7 @@ class BankReconciliationDetail extends Component
     {
         return count($this->selectedBankLineIds) > 0
             && count($this->selectedBookLineIds) > 0
-            && $this->getDifferenceProperty() < 0.01;
+            && $this->getDifferenceProperty() <= self::MATCH_TOLERANCE;
     }
 
     public function executeManualMatch(BankReconciliationService $service): void
@@ -154,7 +156,7 @@ class BankReconciliationDetail extends Component
 
         if (! $isMatchValid) {
             $diffFormatted = number_format($diff, 2, ',', '.');
-            session()->flash('error', "Pencocokan ditolak: Masih terdapat selisih sebesar Rp {$diffFormatted}. Transaksi harus seimbang (Rp 0,00) sebelum dicocokkan.");
+            session()->flash('error', "Pencocokan ditolak: Masih terdapat selisih sebesar Rp {$diffFormatted} (melebihi batas toleransi Rp 2,00).");
 
             return;
         }
