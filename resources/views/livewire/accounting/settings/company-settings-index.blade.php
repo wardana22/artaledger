@@ -143,6 +143,80 @@
                     </div>
                 </div>
 
+                <!-- PENANDATANGAN LAPORAN KEUANGAN -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                            </svg>
+                            Penandatangan Laporan
+                        </h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Nama dan jabatan resmi yang tercantum pada blok tanda tangan (Disusun, Diperiksa, Disetujui) di hasil cetak PDF & ekspor Excel laporan keuangan.
+                        </p>
+                    </div>
+
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- 1. DISUSUN OLEH -->
+                        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 text-[11px] font-black uppercase tracking-wider mb-3">
+                                1. Disusun Oleh (Prepared By)
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="prepared_by_name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                                    <input type="text" id="prepared_by_name" wire:model="prepared_by_name" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Contoh: Staff Akuntansi" />
+                                    @error('prepared_by_name') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="prepared_by_title" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Jabatan / Role</label>
+                                    <input type="text" id="prepared_by_title" wire:model="prepared_by_title" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Contoh: Bagian Keuangan & Akuntansi" />
+                                    @error('prepared_by_title') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. DIPERIKSA OLEH -->
+                        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 text-[11px] font-black uppercase tracking-wider mb-3">
+                                2. Diperiksa Oleh (Reviewed By)
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="reviewed_by_name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                                    <input type="text" id="reviewed_by_name" wire:model="reviewed_by_name" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Contoh: Manager Akuntansi" />
+                                    @error('reviewed_by_name') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="reviewed_by_title" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Jabatan / Role</label>
+                                    <input type="text" id="reviewed_by_title" wire:model="reviewed_by_title" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Contoh: Accounting & Tax Lead" />
+                                    @error('reviewed_by_title') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. DISETUJUI OLEH -->
+                        <div class="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-[11px] font-black uppercase tracking-wider mb-3">
+                                3. Disetujui Oleh (Approved By)
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="approved_by_name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                                    <input type="text" id="approved_by_name" wire:model="approved_by_name" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Contoh: Direktur Keuangan" />
+                                    @error('approved_by_name') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label for="approved_by_title" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Jabatan / Role</label>
+                                    <input type="text" id="approved_by_title" wire:model="approved_by_title" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Contoh: Chief Financial Officer (CFO)" />
+                                    @error('approved_by_title') <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800">
                     <button type="submit" wire:loading.attr="disabled" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-50">
                         <svg wire:loading class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

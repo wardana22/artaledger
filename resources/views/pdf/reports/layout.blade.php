@@ -249,18 +249,18 @@
             <tr>
                 <td>
                     <div class="sig-title">Disusun Oleh,</div>
-                    <div class="sig-name">{{ $printedBy ?? 'Staff Akuntansi' }}</div>
-                    <div class="sig-role">Bagian Keuangan & Akuntansi</div>
+                    <div class="sig-name">{{ $company?->prepared_by_name ?: ($printedBy ?? 'Staff Akuntansi') }}</div>
+                    <div class="sig-role">{{ $company?->prepared_by_title ?: 'Bagian Keuangan & Akuntansi' }}</div>
                 </td>
                 <td>
                     <div class="sig-title">Diperiksa Oleh,</div>
-                    <div class="sig-name">Manager Akuntansi</div>
-                    <div class="sig-role">Accounting & Tax Lead</div>
+                    <div class="sig-name">{{ $company?->reviewed_by_name ?: 'Manager Akuntansi' }}</div>
+                    <div class="sig-role">{{ $company?->reviewed_by_title ?: 'Accounting & Tax Lead' }}</div>
                 </td>
                 <td>
                     <div class="sig-title">Disetujui Oleh,</div>
-                    <div class="sig-name">Direktur Keuangan</div>
-                    <div class="sig-role">Chief Financial Officer (CFO)</div>
+                    <div class="sig-name">{{ $company?->approved_by_name ?: 'Direktur Keuangan' }}</div>
+                    <div class="sig-role">{{ $company?->approved_by_title ?: 'Chief Financial Officer (CFO)' }}</div>
                 </td>
             </tr>
         </table>

@@ -84,3 +84,27 @@ test('unauthorized user without permission receives 403 on company settings', fu
         ->test(CompanySettingsIndex::class)
         ->assertStatus(403);
 });
+
+test('super admin can configure financial report signers', function () {
+    Livewire::actingAs($this->adminUser)
+        ->test(CompanySettingsIndex::class)
+        ->assertSee('Penandatangan Laporan')
+        ->set('prepared_by_name', 'Budi Santoso')
+        ->set('prepared_by_title', 'Senior Staff Akuntansi')
+        ->set('reviewed_by_name', 'Dewi Lestari, S.E.')
+        ->set('reviewed_by_title', 'Head of Accounting & Tax')
+        ->set('approved_by_name', 'Hendra Wijaya, MBA')
+        ->set('approved_by_title', 'VP Finance & Strategy')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('companies', [
+        'id' => $this->company->id,
+        'prepared_by_name' => 'Budi Santoso',
+        'prepared_by_title' => 'Senior Staff Akuntansi',
+        'reviewed_by_name' => 'Dewi Lestari, S.E.',
+        'reviewed_by_title' => 'Head of Accounting & Tax',
+        'approved_by_name' => 'Hendra Wijaya, MBA',
+        'approved_by_title' => 'VP Finance & Strategy',
+    ]);
+});

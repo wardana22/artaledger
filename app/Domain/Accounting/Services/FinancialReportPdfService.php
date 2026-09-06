@@ -18,9 +18,11 @@ use Illuminate\Support\Facades\DB;
 class FinancialReportPdfService
 {
     /**
-     * Render Laporan Laba Rugi (Profit & Loss) ke format PDF.
+     * Ambil data Laporan Laba Rugi (Profit & Loss).
+     *
+     * @return array<string, mixed>
      */
-    public function renderProfitLossPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getProfitLossData(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -155,7 +157,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
@@ -174,6 +176,14 @@ class FinancialReportPdfService
             'taxExpense' => $taxExpense,
             'netProfit' => $netProfit,
         ];
+    }
+
+    /**
+     * Render Laporan Laba Rugi (Profit & Loss) ke format PDF.
+     */
+    public function renderProfitLossPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getProfitLossData($startDate, $endDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.profit-loss', $data)
             ->setPaper('a4', 'portrait')
@@ -181,9 +191,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Laporan Neraca (Balance Sheet) ke format PDF.
+     * Ambil data Laporan Neraca (Balance Sheet).
+     *
+     * @return array<string, mixed>
      */
-    public function renderBalanceSheetPdf(string $asOfDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getBalanceSheetData(string $asOfDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -309,7 +321,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'asOfDate' => Carbon::parse($asOfDate)->isoFormat('D MMMM Y'),
@@ -324,6 +336,14 @@ class FinancialReportPdfService
             'totalLiabilitiesAndEquity' => $totalLiabilities + $totalEquity,
             'isBalanced' => abs($totalAssets - ($totalLiabilities + $totalEquity)) < 0.01,
         ];
+    }
+
+    /**
+     * Render Laporan Neraca (Balance Sheet) ke format PDF.
+     */
+    public function renderBalanceSheetPdf(string $asOfDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getBalanceSheetData($asOfDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.balance-sheet', $data)
             ->setPaper('a4', 'portrait')
@@ -331,9 +351,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Neraca Saldo (Trial Balance) ke format PDF.
+     * Ambil data Neraca Saldo (Trial Balance).
+     *
+     * @return array<string, mixed>
      */
-    public function renderTrialBalancePdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getTrialBalanceData(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -497,7 +519,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
@@ -509,6 +531,14 @@ class FinancialReportPdfService
             'totalCredit' => $totalCredit,
             'isBalanced' => abs($totalDebit - $totalCredit) < 0.01,
         ];
+    }
+
+    /**
+     * Render Neraca Saldo (Trial Balance) ke format PDF.
+     */
+    public function renderTrialBalancePdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getTrialBalanceData($startDate, $endDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.trial-balance', $data)
             ->setPaper('a4', 'landscape')
@@ -516,9 +546,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Buku Besar (General Ledger - Header) ke format PDF.
+     * Ambil data Buku Besar (General Ledger - Header).
+     *
+     * @return array<string, mixed>
      */
-    public function renderGeneralLedgerPdf(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getGeneralLedgerData(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -611,7 +643,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'account' => $account,
@@ -625,6 +657,14 @@ class FinancialReportPdfService
             'totalCredit' => $totalCredit,
             'closingBalance' => $runningBalance,
         ];
+    }
+
+    /**
+     * Render Buku Besar (General Ledger - Header) ke format PDF.
+     */
+    public function renderGeneralLedgerPdf(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getGeneralLedgerData($accountId, $startDate, $endDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.general-ledger', $data)
             ->setPaper('a4', 'landscape')
@@ -632,9 +672,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Buku Besar Pembantu (Subsidiary Ledger - Posting Account) ke format PDF.
+     * Ambil data Buku Besar Pembantu (Subsidiary Ledger - Posting Account).
+     *
+     * @return array<string, mixed>
      */
-    public function renderSubsidiaryLedgerPdf(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getSubsidiaryLedgerData(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $account = Account::findOrFail($accountId);
@@ -693,7 +735,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'account' => $account,
@@ -708,6 +750,14 @@ class FinancialReportPdfService
             'totalCredit' => $totalCredit,
             'closingBalance' => $runningBalance,
         ];
+    }
+
+    /**
+     * Render Buku Besar Pembantu (Subsidiary Ledger - Posting Account) ke format PDF.
+     */
+    public function renderSubsidiaryLedgerPdf(int $accountId, string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getSubsidiaryLedgerData($accountId, $startDate, $endDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.subsidiary-ledger', $data)
             ->setPaper('a4', 'landscape')
@@ -715,9 +765,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Laporan Arus Kas (Cash Flow) ke format PDF.
+     * Ambil data Laporan Arus Kas (Cash Flow).
+     *
+     * @return array<string, mixed>
      */
-    public function renderCashFlowPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getCashFlowData(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -753,7 +805,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
@@ -766,6 +818,14 @@ class FinancialReportPdfService
             'netOperatingCash' => $netOperatingCash,
             'endingCash' => $endingCash,
         ];
+    }
+
+    /**
+     * Render Laporan Arus Kas (Cash Flow) ke format PDF.
+     */
+    public function renderCashFlowPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getCashFlowData($startDate, $endDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.cash-flow', $data)
             ->setPaper('a4', 'portrait')
@@ -773,9 +833,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Laporan Perubahan Ekuitas (Changes in Equity) ke format PDF.
+     * Ambil data Laporan Perubahan Ekuitas (Changes in Equity).
+     *
+     * @return array<string, mixed>
      */
-    public function renderChangesInEquityPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getChangesInEquityData(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -810,7 +872,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
@@ -824,6 +886,14 @@ class FinancialReportPdfService
             'endingEquity' => $endingEquity,
             'equityAccounts' => $equityAccounts,
         ];
+    }
+
+    /**
+     * Render Laporan Perubahan Ekuitas (Changes in Equity) ke format PDF.
+     */
+    public function renderChangesInEquityPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getChangesInEquityData($startDate, $endDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.changes-in-equity', $data)
             ->setPaper('a4', 'portrait')
@@ -831,9 +901,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Neraca Lajur 10 Kolom (Worksheet) ke format PDF (Ukuran A3 Landscape).
+     * Ambil data Neraca Lajur 10 Kolom (Worksheet).
+     *
+     * @return array<string, mixed>
      */
-    public function renderWorksheetPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getWorksheetData(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -1049,7 +1121,7 @@ class FinancialReportPdfService
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
@@ -1069,6 +1141,14 @@ class FinancialReportPdfService
             'totBsCredit' => $totBsCredit,
             'netProfitLoss' => $totIsCredit - $totIsDebit,
         ];
+    }
+
+    /**
+     * Render Neraca Lajur 10 Kolom (Worksheet) ke format PDF (Ukuran A3 Landscape).
+     */
+    public function renderWorksheetPdf(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getWorksheetData($startDate, $endDate, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.worksheet', $data)
             ->setPaper('a3', 'landscape')
@@ -1076,9 +1156,11 @@ class FinancialReportPdfService
     }
 
     /**
-     * Render Laporan Saldo Awal (Opening Balance) ke format PDF.
+     * Ambil data Laporan Saldo Awal (Opening Balance).
+     *
+     * @return array<string, mixed>
      */
-    public function renderOpeningBalancePdf(?int $periodId = null, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function getOpeningBalanceData(?int $periodId = null, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -1154,7 +1236,7 @@ class FinancialReportPdfService
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
         $periodName = $selectedPeriod ? Carbon::parse($selectedPeriod->start_date)->isoFormat('MMMM Y') : 'Tahun 2025';
 
-        $data = [
+        return [
             'company' => $company,
             'unitName' => $unitName,
             'periodName' => $periodName,
@@ -1165,6 +1247,14 @@ class FinancialReportPdfService
             'totalCredit' => $totalCredit,
             'isBalanced' => abs($totalDebit - $totalCredit) < 0.01,
         ];
+    }
+
+    /**
+     * Render Laporan Saldo Awal (Opening Balance) ke format PDF.
+     */
+    public function renderOpeningBalancePdf(?int $periodId = null, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getOpeningBalanceData($periodId, $unitFilter, $user);
 
         return Pdf::loadView('pdf.reports.opening-balance', $data)
             ->setPaper('a4', 'portrait')

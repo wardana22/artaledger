@@ -20,6 +20,12 @@ class Company extends Model
         'phone',
         'email',
         'tax_number',
+        'prepared_by_name',
+        'prepared_by_title',
+        'reviewed_by_name',
+        'reviewed_by_title',
+        'approved_by_name',
+        'approved_by_title',
         'is_active',
     ];
 

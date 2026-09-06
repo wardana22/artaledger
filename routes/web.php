@@ -31,6 +31,7 @@ use App\Http\Controllers\AssetScanController;
 Route::get('/a/{code}', [AssetScanController::class, 'show'])->name('assets.scan.public');
 
 use App\Http\Controllers\BankReconciliationPdfController;
+use App\Http\Controllers\FinancialReportExcelController;
 use App\Http\Controllers\FinancialReportPdfController;
 use App\Livewire\Accounting\Accounts\AccountGroupIndex;
 use App\Livewire\Accounting\Assets\DepreciationRun;
@@ -95,6 +96,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/accounting/reports/cash-flow', CashFlow::class)->name('accounting.reports.cash-flow');
     Route::get('/accounting/reports/changes-in-equity', ChangesInEquity::class)->name('accounting.reports.changes-in-equity');
     Route::get('/accounting/reports/export/pdf/{type}', FinancialReportPdfController::class.'@export')->name('accounting.reports.export.pdf');
+    Route::get('/accounting/reports/export/excel/{type}', FinancialReportExcelController::class.'@export')->name('accounting.reports.export.excel');
 });
 
 require __DIR__.'/settings.php';

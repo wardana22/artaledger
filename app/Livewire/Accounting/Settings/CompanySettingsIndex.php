@@ -34,6 +34,19 @@ class CompanySettingsIndex extends Component
 
     public string $tax_number = '';
 
+    // Penandatangan Laporan Keuangan
+    public string $prepared_by_name = '';
+
+    public string $prepared_by_title = '';
+
+    public string $reviewed_by_name = '';
+
+    public string $reviewed_by_title = '';
+
+    public string $approved_by_name = '';
+
+    public string $approved_by_title = '';
+
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('settings.company') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
@@ -53,6 +66,13 @@ class CompanySettingsIndex extends Component
         $this->phone = $this->company->phone ?? '';
         $this->email = $this->company->email ?? '';
         $this->tax_number = $this->company->tax_number ?? '';
+
+        $this->prepared_by_name = $this->company->prepared_by_name ?? 'Staff Akuntansi';
+        $this->prepared_by_title = $this->company->prepared_by_title ?? 'Bagian Keuangan & Akuntansi';
+        $this->reviewed_by_name = $this->company->reviewed_by_name ?? 'Manager Akuntansi';
+        $this->reviewed_by_title = $this->company->reviewed_by_title ?? 'Accounting & Tax Lead';
+        $this->approved_by_name = $this->company->approved_by_name ?? 'Direktur Keuangan';
+        $this->approved_by_title = $this->company->approved_by_title ?? 'Chief Financial Officer (CFO)';
     }
 
     public function updatedLogo()
@@ -77,6 +97,12 @@ class CompanySettingsIndex extends Component
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:100',
             'tax_number' => 'nullable|string|max:50',
+            'prepared_by_name' => 'nullable|string|max:100',
+            'prepared_by_title' => 'nullable|string|max:100',
+            'reviewed_by_name' => 'nullable|string|max:100',
+            'reviewed_by_title' => 'nullable|string|max:100',
+            'approved_by_name' => 'nullable|string|max:100',
+            'approved_by_title' => 'nullable|string|max:100',
         ]);
 
         $data = [
@@ -87,6 +113,12 @@ class CompanySettingsIndex extends Component
             'phone' => $this->phone,
             'email' => $this->email,
             'tax_number' => $this->tax_number,
+            'prepared_by_name' => $this->prepared_by_name,
+            'prepared_by_title' => $this->prepared_by_title,
+            'reviewed_by_name' => $this->reviewed_by_name,
+            'reviewed_by_title' => $this->reviewed_by_title,
+            'approved_by_name' => $this->approved_by_name,
+            'approved_by_title' => $this->approved_by_title,
         ];
 
         if ($this->logo) {
