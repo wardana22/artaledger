@@ -1,8 +1,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+@php
+    $headCompany = \App\Models\Company::first();
+    $headAppName = $headCompany?->app_name ?? config('app.name', 'E-counting');
+@endphp
+
 <title>
-    {{ filled($title ?? null) ? $title.' - '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}
+    {{ filled($title ?? null) ? $title.' - '.$headAppName : $headAppName }}
 </title>
 
 <link rel="icon" href="/favicon.ico" sizes="any">

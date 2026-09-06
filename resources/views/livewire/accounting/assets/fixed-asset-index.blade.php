@@ -853,6 +853,12 @@
     {{-- ============================================================= --}}
     {{-- MODAL: PRINT LABEL TUNGGAL (Single Asset Barcode Label)        --}}
     {{-- ============================================================= --}}
+    @php
+        $company = \App\Models\Company::first();
+        $companyLogoUrl = $company?->logo_url;
+        $companyName = $company?->name ?? 'PT ArtaLedger Enterprise';
+        $appName = $company?->app_name ?? 'E-counting';
+    @endphp
     @if($showLabelModal)
         <div x-data="{ paper: 'a4' }"
              class="fixed inset-0 z-[60] overflow-y-auto flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm"
@@ -874,9 +880,9 @@
                     </button>
                 </div>
 
-                {{-- Paper Selector Segmented Bar --}}
-                <div class="px-5 pt-4">
-                    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs">
+                {{-- Format Selector --}}
+                <div class="px-5 pt-3 pb-0 flex items-center justify-between">
+                    <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs w-full">
                         <button type="button" @click="paper = 'a4'"
                                 :class="paper === 'a4' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'"
                                 class="flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5">
@@ -899,9 +905,13 @@
                         <div id="print-single-label-card" class="label-card-single font-sans text-slate-900" style="width: 100%; box-sizing: border-box;">
                             {{-- Header Branding --}}
                             <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
-                                <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px;">
-                                    <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px;">ARTA</span>
-                                    <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 10pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
+                                <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px; max-width: 55mm; overflow: hidden;">
+                                    @if ($companyLogoUrl)
+                                        <img src="{{ $companyLogoUrl }}" alt="{{ $appName }}" style="width: 15px; height: 15px; object-fit: contain; border-radius: 3px; display: inline-block; flex-shrink: 0; background: #fff;" />
+                                    @else
+                                        <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px; flex-shrink: 0;">ARTA</span>
+                                    @endif
+                                    <span class="font-black text-slate-900 text-xs tracking-wide truncate" style="font-weight: 900; color: #0f172a; font-size: 8.5pt; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">{{ $companyName }}</span>
                                 </div>
                                 <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 6.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 1.5px 5px; border-radius: 2px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                             </div>
@@ -1021,9 +1031,13 @@
                                 <div class="batch-label-card border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white text-slate-900 font-sans shadow-sm" style="box-sizing: border-box; width: 100%;">
                                     {{-- Header Logo --}}
                                     <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
-                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px;">
-                                            <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px;">ARTA</span>
-                                            <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 10pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
+                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px; max-width: 55mm; overflow: hidden;">
+                                            @if ($companyLogoUrl)
+                                                <img src="{{ $companyLogoUrl }}" alt="{{ $appName }}" style="width: 15px; height: 15px; object-fit: contain; border-radius: 3px; display: inline-block; flex-shrink: 0; background: #fff;" />
+                                            @else
+                                                <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px; flex-shrink: 0;">ARTA</span>
+                                            @endif
+                                            <span class="font-black text-slate-900 text-xs tracking-wide truncate" style="font-weight: 900; color: #0f172a; font-size: 8.5pt; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">{{ $companyName }}</span>
                                         </div>
                                         <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 6.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 1.5px 5px; border-radius: 2px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                                     </div>
@@ -1063,9 +1077,13 @@
                                 <div class="thermal-batch-card w-full max-w-sm border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white text-slate-900 font-sans shadow-sm" style="box-sizing: border-box;">
                                     {{-- Header Logo --}}
                                     <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
-                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px;">
-                                            <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px;">ARTA</span>
-                                            <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 10pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
+                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px; max-width: 55mm; overflow: hidden;">
+                                            @if ($companyLogoUrl)
+                                                <img src="{{ $companyLogoUrl }}" alt="{{ $appName }}" style="width: 15px; height: 15px; object-fit: contain; border-radius: 3px; display: inline-block; flex-shrink: 0; background: #fff;" />
+                                            @else
+                                                <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px; flex-shrink: 0;">ARTA</span>
+                                            @endif
+                                            <span class="font-black text-slate-900 text-xs tracking-wide truncate" style="font-weight: 900; color: #0f172a; font-size: 8.5pt; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">{{ $companyName }}</span>
                                         </div>
                                         <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 6.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 1.5px 5px; border-radius: 2px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                                     </div>

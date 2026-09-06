@@ -188,18 +188,38 @@
         </table>
     </div>
 
+    @php
+        $company = $company ?? \App\Models\Company::first();
+        $logoBase64 = null;
+        if ($company?->logo_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($company->logo_path)) {
+            $logoFullPath = \Illuminate\Support\Facades\Storage::disk('public')->path($company->logo_path);
+            $logoData = @file_get_contents($logoFullPath);
+            if ($logoData) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_buffer($finfo, $logoData) ?: 'image/jpeg';
+                finfo_close($finfo);
+                $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoData);
+            }
+        }
+    @endphp
+
     <!-- LETTERHEAD HEADER -->
     <table class="header-table">
         <tr>
-            <td style="width: 55%;">
-                <div class="company-name">{{ $company->name ?? 'PT ARTA LEDGER INDONESIA' }}</div>
+            @if ($logoBase64)
+                <td style="width: 55px; vertical-align: middle; padding-right: 12px;">
+                    <img src="{{ $logoBase64 }}" style="max-height: 48px; max-width: 50px;" alt="Logo" />
+                </td>
+            @endif
+            <td style="vertical-align: middle; width: {{ $logoBase64 ? '50%' : '55%' }};">
+                <div class="company-name">{{ $company->name ?? 'PT ArtaLedger Enterprise' }}</div>
                 <div class="company-meta">
-                    {{ $company->address ?? 'Komp. Perkantoran Graha Arta, Pekanbaru - Riau' }}<br>
-                    Telp: {{ $company->phone ?? '(0761) 555-888' }} | Email: {{ $company->email ?? 'finance@artaledger.com' }}
+                    {{ $company->address ?: 'Komp. Perkantoran Graha Arta, Pekanbaru - Riau' }}<br>
+                    Telp: {{ $company->phone ?: '(0761) 555-888' }} | Email: {{ $company->email ?: 'finance@artaledger.com' }}
                     @if(!empty($company->tax_number)) | NPWP: {{ $company->tax_number }} @endif
                 </div>
             </td>
-            <td class="report-title-box" style="width: 45%;">
+            <td class="report-title-box" style="width: {{ $logoBase64 ? '45%' : '45%' }}; vertical-align: middle;">
                 <div class="report-title">@yield('report_title', 'LAPORAN KEUANGAN')</div>
                 <div class="report-subtitle">@yield('report_subtitle')</div>
             </td>
