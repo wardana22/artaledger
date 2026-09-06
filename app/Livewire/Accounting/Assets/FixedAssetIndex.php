@@ -388,6 +388,8 @@ class FixedAssetIndex extends Component
             'unit' => $a->unit->name,
             'location' => $a->location ?? '-',
             'serial' => $a->serial_number ?? '-',
+            'pic' => $a->person_in_charge ?? '-',
+            'acquisition' => $a->acquisition_date ? $a->acquisition_date->format('d/m/Y') : '-',
             'scan_url' => route('assets.scan.public', ['code' => $a->asset_code]),
         ])->toArray();
 

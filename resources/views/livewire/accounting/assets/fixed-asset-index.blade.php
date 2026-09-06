@@ -854,7 +854,8 @@
     {{-- MODAL: PRINT LABEL TUNGGAL (Single Asset Barcode Label)        --}}
     {{-- ============================================================= --}}
     @if($showLabelModal)
-        <div class="fixed inset-0 z-[60] overflow-y-auto flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm"
+        <div x-data="{ paper: 'a4' }"
+             class="fixed inset-0 z-[60] overflow-y-auto flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm"
              wire:click.self="closeLabelModal">
             <div class="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 {{-- Header --}}
@@ -865,12 +866,30 @@
                         </span>
                         <div>
                             <h3 class="font-bold text-slate-900 dark:text-white text-sm">Cetak Label Aset</h3>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Preview label sebelum dicetak</p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pilih format stiker & cetak langsung</p>
                         </div>
                     </div>
                     <button wire:click="closeLabelModal" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
+                </div>
+
+                {{-- Paper Selector Segmented Bar --}}
+                <div class="px-5 pt-4">
+                    <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs">
+                        <button type="button" @click="paper = 'a4'"
+                                :class="paper === 'a4' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'"
+                                class="flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Kertas A4 (8×5 cm)
+                        </button>
+                        <button type="button" @click="paper = 'thermal'"
+                                :class="paper === 'thermal' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'"
+                                class="flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                            Roll Thermal (80×50 mm)
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Label Preview --}}
@@ -914,7 +933,8 @@
                     </div>
 
                     <p class="text-[11px] text-slate-400 text-center mt-3">
-                        Ukuran label: 8×5 cm &bull; Cocok untuk stiker perforasi standar
+                        <span x-show="paper === 'a4'">Ukuran stiker: 8×5 cm &bull; Siap cetak di kertas A4 tanpa perlu setel ukuran kertas</span>
+                        <span x-show="paper === 'thermal'" x-cloak>Ukuran stiker: 80×50 mm &bull; Siap cetak di printer thermal roll</span>
                     </p>
                 </div>
 
@@ -924,7 +944,7 @@
                             class="px-4 py-2 text-sm font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                         Tutup
                     </button>
-                    <button onclick="window.print()"
+                    <button type="button" @click="printAssetLabel('single', paper)"
                             class="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                         Print Label
@@ -938,7 +958,8 @@
     {{-- MODAL: PRINT LABEL BATCH (All/Filtered Assets Barcode Grid)   --}}
     {{-- ============================================================= --}}
     @if($showBatchLabelModal)
-        <div class="fixed inset-0 z-[60] overflow-y-auto flex items-start justify-center p-4 pt-8 bg-slate-900/70 backdrop-blur-sm">
+        <div x-data="{ paper: 'a4' }"
+             class="fixed inset-0 z-[60] overflow-y-auto flex items-start justify-center p-4 pt-8 bg-slate-900/70 backdrop-blur-sm">
             <div class="relative z-10 w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 {{-- Header --}}
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900 sticky top-0 z-10">
@@ -949,23 +970,42 @@
                         <div>
                             <h3 class="font-bold text-slate-900 dark:text-white text-sm">Batch Print Label Aset</h3>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                {{ count($batchLabelData) }} label &bull; Layout A4 (4 kolom × 5 baris = 20 label/halaman)
+                                <span x-show="paper === 'a4'">{{ count($batchLabelData) }} label &bull; Layout Kertas A4 (Grid 4 kolom &bull; maks 20 label/lembar)</span>
+                                <span x-show="paper === 'thermal'" x-cloak>{{ count($batchLabelData) }} label &bull; Roll Thermal (1 stiker 80×50mm beruntun)</span>
                             </p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="window.print()"
+
+                    {{-- Format switcher & print button --}}
+                    <div class="flex items-center gap-2.5">
+                        <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs">
+                            <button type="button" @click="paper = 'a4'"
+                                    :class="paper === 'a4' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'"
+                                    class="py-1 px-3 rounded-lg transition-all flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Kertas A4
+                            </button>
+                            <button type="button" @click="paper = 'thermal'"
+                                    :class="paper === 'thermal' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'"
+                                    class="py-1 px-3 rounded-lg transition-all flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                                Roll Thermal
+                            </button>
+                        </div>
+
+                        <button type="button" @click="printAssetLabel('batch', paper)"
                                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                             Print {{ count($batchLabelData) }} Label
                         </button>
+
                         <button wire:click="closeBatchLabelModal" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
                 </div>
 
-                {{-- Batch Label Grid --}}
+                {{-- Batch Label Preview Content --}}
                 <div class="p-5 max-h-[75vh] overflow-y-auto">
                     @if(count($batchLabelData) === 0)
                         <div class="text-center py-12 text-slate-400">
@@ -973,7 +1013,8 @@
                             <p class="font-semibold">Tidak ada aset yang cocok dengan filter aktif.</p>
                         </div>
                     @else
-                        <div id="print-batch-labels" class="batch-label-grid grid grid-cols-4 gap-3">
+                        {{-- 1. Mode Kertas A4 (Grid 4 Kolom) --}}
+                        <div x-show="paper === 'a4'" id="print-batch-a4-labels" class="batch-label-grid grid grid-cols-4 gap-3">
                             @foreach($batchLabelData as $idx => $item)
                                 <div class="batch-label-card border border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-2.5 bg-white text-[10px] font-sans">
                                     {{-- Mini Header --}}
@@ -987,9 +1028,49 @@
                                     <div class="batch-cat text-slate-400 text-[9px] mb-1 truncate">{{ $item['category'] }}</div>
                                     {{-- Barcodes --}}
                                     <div class="flex items-end gap-1.5 pt-1 border-t border-slate-100 mt-auto">
-                                        <div id="qr-batch-{{ $idx }}" class="w-[52px] h-[52px] flex-shrink-0"></div>
+                                        <div id="qr-batch-a4-{{ $idx }}" class="w-[52px] h-[52px] flex-shrink-0"></div>
                                         <div class="flex-1 overflow-hidden">
-                                            <svg id="barcode-batch-{{ $idx }}" class="w-full"></svg>
+                                            <svg id="barcode-batch-a4-{{ $idx }}" class="w-full"></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- 2. Mode Roll Thermal (80x50 mm) --}}
+                        <div x-show="paper === 'thermal'" x-cloak id="print-batch-thermal-labels" class="flex flex-col items-center gap-4 py-2">
+                            @foreach($batchLabelData as $idx => $item)
+                                <div class="thermal-batch-card w-full max-w-sm border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-3.5 bg-white text-slate-900 font-sans">
+                                    {{-- Header Logo --}}
+                                    <div class="flex items-center gap-1.5 pb-1.5 mb-1.5 border-b border-slate-200">
+                                        <svg class="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        <span class="font-bold text-indigo-700 text-xs tracking-wide">ArtaLedger</span>
+                                        <span class="ml-auto text-[9px] text-slate-400 font-mono">ASET TETAP</span>
+                                    </div>
+
+                                    {{-- Info --}}
+                                    <div class="mb-1.5">
+                                        <div class="font-mono font-bold text-sm text-slate-900 tracking-wider">{{ $item['code'] }}</div>
+                                        <div class="font-semibold text-slate-800 text-xs leading-tight truncate">{{ $item['name'] }}</div>
+                                        <div class="text-[10px] text-slate-500">{{ $item['category'] }} &bull; {{ $item['unit'] }}</div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-x-2 text-[10px] mb-2 text-slate-600">
+                                        <div><span class="text-slate-400">Lokasi:</span> {{ $item['location'] }}</div>
+                                        <div><span class="text-slate-400">S/N:</span> {{ $item['serial'] }}</div>
+                                        <div><span class="text-slate-400">PIC:</span> {{ $item['pic'] ?? '-' }}</div>
+                                        <div><span class="text-slate-400">Tgl:</span> {{ $item['acquisition'] ?? '-' }}</div>
+                                    </div>
+
+                                    {{-- Barcodes --}}
+                                    <div class="flex items-end justify-between gap-2 pt-1.5 border-t border-slate-100">
+                                        <div class="flex flex-col items-center gap-0.5">
+                                            <div id="qr-batch-th-{{ $idx }}" class="w-[70px] h-[70px]"></div>
+                                            <span class="text-[8px] text-slate-400">Scan Info</span>
+                                        </div>
+                                        <div class="flex flex-col items-center gap-0.5 flex-1">
+                                            <svg id="barcode-batch-th-{{ $idx }}" class="max-w-full"></svg>
+                                            <span class="text-[8px] text-slate-400">Kode Aset</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1002,282 +1083,322 @@
     @endif
 
     {{-- ============================================================= --}}
-    {{-- JS ENGINE: QRCode.js + JsBarcode (client-side, no server)     --}}
-    {{-- CSS @media print: only label area visible when printing        --}}
+    {{-- JS ASSETS: QRCode.js + JsBarcode                              --}}
     {{-- ============================================================= --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js" defer></script>
+    @assets
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+    @endassets
 
-    <style>
-        @media print {
-            /* Otomatis atur kertas ke standar A4 portrait dengan margin rapi */
-            @page {
-                size: A4 portrait;
-                margin: 8mm 6mm;
-            }
-
-            html, body {
-                width: 100% !important;
-                height: auto !important;
-                min-height: auto !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #ffffff !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            /* Sembunyikan seluruh interface aplikasi di luar stiker cetak */
-            body * {
-                visibility: hidden !important;
-            }
-
-            .fixed.inset-0,
-            button,
-            header,
-            nav {
-                display: none !important;
-            }
-
-            /* ======================================================= */
-            /* 1. SINGLE LABEL PRINT (Ukuran Stiker Standar 8x5 cm)    */
-            /* ======================================================= */
-            #print-single-label,
-            #print-single-label * {
-                visibility: visible !important;
-            }
-
-            #print-single-label {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 80mm !important;
-                height: 50mm !important;
-                max-width: 80mm !important;
-                max-height: 50mm !important;
-                margin: 0 !important;
-                padding: 2.5mm 3.5mm !important;
-                box-sizing: border-box !important;
-                border: 1px dashed #64748b !important;
-                border-radius: 4px !important;
-                background: #ffffff !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-                overflow: hidden !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-            }
-
-            #print-single-label .label-header {
-                font-size: 8pt !important;
-                padding-bottom: 1mm !important;
-                margin-bottom: 1mm !important;
-            }
-
-            #print-single-label .label-code {
-                font-size: 11pt !important;
-                line-height: 1.1 !important;
-            }
-
-            #print-single-label .label-name {
-                font-size: 8.5pt !important;
-                line-height: 1.15 !important;
-            }
-
-            #print-single-label .label-sub {
-                font-size: 7pt !important;
-            }
-
-            #print-single-label .label-meta {
-                font-size: 7pt !important;
-                gap: 0.5mm 2mm !important;
-                margin-bottom: 1.5mm !important;
-            }
-
-            #print-single-label #qr-single {
-                width: 20mm !important;
-                height: 20mm !important;
-            }
-
-            #print-single-label #qr-single img,
-            #print-single-label #qr-single canvas {
-                width: 20mm !important;
-                height: 20mm !important;
-            }
-
-            /* ======================================================= */
-            /* 2. BATCH LABELS PRINT (Grid 4 Kolom x 5 Baris pada A4)  */
-            /* ======================================================= */
-            #print-batch-labels,
-            #print-batch-labels * {
-                visibility: visible !important;
-            }
-
-            #print-batch-labels {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 195mm !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #ffffff !important;
-            }
-
-            .batch-label-grid {
-                display: grid !important;
-                grid-template-columns: repeat(4, 46.5mm) !important;
-                grid-auto-rows: 52mm !important;
-                align-content: start !important;
-                align-items: start !important;
-                justify-content: start !important;
-                gap: 3mm !important;
-                width: 195mm !important;
-                margin: 0 !important;
-            }
-
-            .batch-label-card {
-                width: 46.5mm !important;
-                height: 52mm !important;
-                max-width: 46.5mm !important;
-                max-height: 52mm !important;
-                box-sizing: border-box !important;
-                border: 1px dashed #94a3b8 !important;
-                border-radius: 4px !important;
-                padding: 2mm 2.5mm !important;
-                background: #ffffff !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-                overflow: hidden !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-            }
-
-            .batch-label-card .batch-header {
-                font-size: 7pt !important;
-                padding-bottom: 0.5mm !important;
-                margin-bottom: 0.5mm !important;
-            }
-
-            .batch-label-card .batch-code {
-                font-size: 8pt !important;
-                font-weight: bold !important;
-                line-height: 1.1 !important;
-            }
-
-            .batch-label-card .batch-name {
-                font-size: 7pt !important;
-                line-height: 1.1 !important;
-                max-height: 2.2em !important;
-                overflow: hidden !important;
-            }
-
-            .batch-label-card .batch-cat {
-                font-size: 6pt !important;
-                color: #64748b !important;
-            }
-
-            .batch-label-card [id^="qr-batch-"] {
-                width: 15mm !important;
-                height: 15mm !important;
-            }
-
-            .batch-label-card [id^="qr-batch-"] img,
-            .batch-label-card [id^="qr-batch-"] canvas {
-                width: 15mm !important;
-                height: 15mm !important;
-            }
-        }
-    </style>
-
+    @script
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            function generateSingleLabel(data) {
+        window.printAssetLabel = function (targetType, paperMode = 'a4') {
+            let sourceEl = null;
+
+            if (targetType === 'single') {
+                sourceEl = document.getElementById('print-single-label');
+            } else if (targetType === 'batch') {
+                sourceEl = paperMode === 'thermal'
+                    ? document.getElementById('print-batch-thermal-labels')
+                    : document.getElementById('print-batch-a4-labels');
+            }
+
+            if (!sourceEl) {
+                window.print();
+                return;
+            }
+
+            let iframe = document.getElementById('artaledger-print-frame');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'artaledger-print-frame';
+                iframe.style.position = 'fixed';
+                iframe.style.top = '-9999px';
+                iframe.style.left = '-9999px';
+                iframe.style.width = '1px';
+                iframe.style.height = '1px';
+                iframe.style.border = 'none';
+                iframe.style.opacity = '0';
+                document.body.appendChild(iframe);
+            }
+
+            const frameDoc = iframe.contentWindow.document;
+            frameDoc.open();
+
+            let pageCss = '';
+            if (paperMode === 'thermal') {
+                pageCss = `
+                    @page {
+                        size: 80mm 50mm;
+                        margin: 1.5mm;
+                    }
+                    html, body {
+                        width: 77mm;
+                        margin: 0 auto;
+                        padding: 0;
+                        background: #fff;
+                        color: #0f172a;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    .single-label-print-box,
+                    .thermal-batch-card {
+                        width: 77mm !important;
+                        height: 47mm !important;
+                        max-width: 77mm !important;
+                        max-height: 47mm !important;
+                        box-sizing: border-box !important;
+                        border: 1px dashed #64748b !important;
+                        border-radius: 4px !important;
+                        padding: 2mm 2.5mm !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        justify-content: space-between !important;
+                        overflow: hidden !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
+                    }
+                    .single-label-print-box:last-child,
+                    .thermal-batch-card:last-child {
+                        page-break-after: auto !important;
+                        break-after: auto !important;
+                    }
+                    .label-header { font-size: 8pt; padding-bottom: 1mm; margin-bottom: 1mm; }
+                    .label-code { font-size: 11pt; line-height: 1.1; }
+                    .label-name { font-size: 8.5pt; line-height: 1.15; }
+                    .label-sub { font-size: 7pt; }
+                    .label-meta { font-size: 7pt; gap: 0.5mm 2mm; margin-bottom: 1.5mm; }
+                `;
+            } else {
+                // A4 Sheet Format
+                pageCss = `
+                    @page {
+                        size: A4 portrait;
+                        margin: 8mm 6mm;
+                    }
+                    html, body {
+                        width: 195mm;
+                        margin: 0 auto;
+                        padding: 0;
+                        background: #fff;
+                        color: #0f172a;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    .single-label-print-box {
+                        width: 80mm !important;
+                        height: 50mm !important;
+                        max-width: 80mm !important;
+                        max-height: 50mm !important;
+                        box-sizing: border-box !important;
+                        border: 1px dashed #475569 !important;
+                        border-radius: 4px !important;
+                        padding: 2.5mm 3.5mm !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        justify-content: space-between !important;
+                        overflow: hidden !important;
+                    }
+                    .batch-label-grid {
+                        display: grid !important;
+                        grid-template-columns: repeat(4, 46.5mm) !important;
+                        grid-auto-rows: 52mm !important;
+                        align-content: start !important;
+                        align-items: start !important;
+                        justify-content: start !important;
+                        gap: 3mm !important;
+                        width: 195mm !important;
+                        margin: 0 !important;
+                    }
+                    .batch-label-card {
+                        width: 46.5mm !important;
+                        height: 52mm !important;
+                        max-width: 46.5mm !important;
+                        max-height: 52mm !important;
+                        box-sizing: border-box !important;
+                        border: 1px dashed #94a3b8 !important;
+                        border-radius: 4px !important;
+                        padding: 2mm 2.5mm !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        justify-content: space-between !important;
+                        overflow: hidden !important;
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                    }
+                    .batch-header { font-size: 7pt; padding-bottom: 0.5mm; margin-bottom: 0.5mm; }
+                    .batch-code { font-size: 8pt; font-weight: bold; line-height: 1.1; }
+                    .batch-name { font-size: 7pt; line-height: 1.1; max-height: 2.2em; overflow: hidden; }
+                    .batch-cat { font-size: 6pt; color: #64748b; }
+                `;
+            }
+
+            pageCss += `
+                *, *::before, *::after { box-sizing: border-box; }
+                .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+                .font-bold { font-weight: 700; }
+                .font-semibold { font-weight: 600; }
+                .text-indigo-600, .text-indigo-700 { color: #4338ca !important; }
+                .text-slate-400 { color: #94a3b8 !important; }
+                .text-slate-500 { color: #64748b !important; }
+                .text-slate-700 { color: #334155 !important; }
+                .text-slate-800 { color: #1e293b !important; }
+                .text-slate-900 { color: #0f172a !important; }
+                .border-b { border-bottom: 1px solid #e2e8f0; }
+                .border-t { border-top: 1px solid #e2e8f0; }
+                .flex { display: flex; }
+                .flex-col { flex-direction: column; }
+                .items-center { align-items: center; }
+                .items-end { align-items: flex-end; }
+                .justify-between { justify-content: space-between; }
+                .flex-1 { flex: 1 1 0%; }
+                .flex-shrink-0 { flex-shrink: 0; }
+                .grid { display: grid; }
+                .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                svg { display: block; }
+                img { display: block; max-width: 100%; height: auto; }
+            `;
+
+            frameDoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>ArtaLedger Label</title><style>' + pageCss + '</style></head><body>' + sourceEl.innerHTML + '</body></html>');
+            frameDoc.close();
+
+            setTimeout(function () {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }, 180);
+        };
+
+        function generateSingleLabel(data) {
+            const payload = data?.data || data;
+            if (!payload || !payload.code) return;
+
+            let attempts = 0;
+            const tryRender = () => {
                 const qrEl = document.getElementById('qr-single');
                 const bcEl = document.getElementById('barcode-single');
-                if (!qrEl || !bcEl) return;
 
-                // Clear previous
-                qrEl.innerHTML = '';
-
-                // QR Code: URL ke halaman publik scan aset
-                new QRCode(qrEl, {
-                    text: data.scan_url || data.code,
-                    width: 90,
-                    height: 90,
-                    colorDark: '#1e293b',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.H,
-                });
-
-                // Barcode 1D Code128: only asset code
-                try {
-                    JsBarcode(bcEl, data.code, {
-                        format: 'CODE128',
-                        width: 1.8,
-                        height: 45,
-                        displayValue: true,
-                        fontSize: 11,
-                        textMargin: 3,
-                        margin: 4,
-                        background: '#ffffff',
-                        lineColor: '#1e293b',
+                if (window.QRCode && window.JsBarcode && qrEl && bcEl) {
+                    qrEl.innerHTML = '';
+                    new QRCode(qrEl, {
+                        text: payload.scan_url || payload.code,
+                        width: 85,
+                        height: 85,
+                        colorDark: '#1e293b',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H,
                     });
-                } catch (e) {
-                    console.warn('Barcode generation error:', e);
-                }
-            }
 
-            function generateBatchLabels(items) {
-                items.forEach(function (item, index) {
-                    const qrEl = document.getElementById('qr-batch-' + index);
-                    const bcEl = document.getElementById('barcode-batch-' + index);
-
-                    if (qrEl) {
-                        qrEl.innerHTML = '';
-                        new QRCode(qrEl, {
-                            text: item.scan_url || item.code,
-                            width: 56,
-                            height: 56,
-                            colorDark: '#1e293b',
-                            colorLight: '#ffffff',
-                            correctLevel: QRCode.CorrectLevel.M,
+                    try {
+                        JsBarcode(bcEl, payload.code, {
+                            format: 'CODE128',
+                            width: 1.8,
+                            height: 42,
+                            displayValue: true,
+                            fontSize: 11,
+                            textMargin: 3,
+                            margin: 2,
+                            background: '#ffffff',
+                            lineColor: '#1e293b',
                         });
+                    } catch (e) {
+                        console.warn('Barcode error single:', e);
                     }
+                } else if (attempts < 20) {
+                    attempts++;
+                    setTimeout(tryRender, 100);
+                }
+            };
 
-                    if (bcEl) {
-                        try {
-                            JsBarcode(bcEl, item.code, {
-                                format: 'CODE128',
-                                width: 1.2,
-                                height: 28,
-                                displayValue: true,
-                                fontSize: 8,
-                                textMargin: 2,
-                                margin: 2,
-                                background: '#ffffff',
-                                lineColor: '#1e293b',
+            setTimeout(tryRender, 50);
+        }
+
+        function generateBatchLabels(payload) {
+            const list = payload?.items || payload;
+            if (!Array.isArray(list)) return;
+
+            let attempts = 0;
+            const tryRender = () => {
+                if (window.QRCode && window.JsBarcode) {
+                    list.forEach(function (item, index) {
+                        // 1. A4 Barcodes
+                        const qrA4 = document.getElementById('qr-batch-a4-' + index);
+                        const bcA4 = document.getElementById('barcode-batch-a4-' + index);
+                        if (qrA4) {
+                            qrA4.innerHTML = '';
+                            new QRCode(qrA4, {
+                                text: item.scan_url || item.code,
+                                width: 52,
+                                height: 52,
+                                colorDark: '#1e293b',
+                                colorLight: '#ffffff',
+                                correctLevel: QRCode.CorrectLevel.M,
                             });
-                        } catch (e) {
-                            console.warn('Barcode error for', item.code, e);
                         }
-                    }
-                });
-            }
+                        if (bcA4) {
+                            try {
+                                JsBarcode(bcA4, item.code, {
+                                    format: 'CODE128',
+                                    width: 1.2,
+                                    height: 26,
+                                    displayValue: true,
+                                    fontSize: 8,
+                                    textMargin: 2,
+                                    margin: 2,
+                                    background: '#ffffff',
+                                    lineColor: '#1e293b',
+                                });
+                            } catch (e) {}
+                        }
 
-            // Livewire event listeners (wait for Livewire to boot)
-            document.addEventListener('livewire:initialized', function () {
-                Livewire.on('labelModalOpened', function (event) {
-                    const data = event.data ?? event[0]?.data ?? event;
-                    setTimeout(function () { generateSingleLabel(data); }, 250);
-                });
+                        // 2. Thermal Barcodes
+                        const qrTh = document.getElementById('qr-batch-th-' + index);
+                        const bcTh = document.getElementById('barcode-batch-th-' + index);
+                        if (qrTh) {
+                            qrTh.innerHTML = '';
+                            new QRCode(qrTh, {
+                                text: item.scan_url || item.code,
+                                width: 70,
+                                height: 70,
+                                colorDark: '#1e293b',
+                                colorLight: '#ffffff',
+                                correctLevel: QRCode.CorrectLevel.H,
+                            });
+                        }
+                        if (bcTh) {
+                            try {
+                                JsBarcode(bcTh, item.code, {
+                                    format: 'CODE128',
+                                    width: 1.6,
+                                    height: 38,
+                                    displayValue: true,
+                                    fontSize: 10,
+                                    textMargin: 3,
+                                    margin: 2,
+                                    background: '#ffffff',
+                                    lineColor: '#1e293b',
+                                });
+                            } catch (e) {}
+                        }
+                    });
+                } else if (attempts < 20) {
+                    attempts++;
+                    setTimeout(tryRender, 100);
+                }
+            };
 
-                Livewire.on('batchLabelModalOpened', function (event) {
-                    const items = event.items ?? event[0]?.items ?? event;
-                    setTimeout(function () { generateBatchLabels(items); }, 300);
-                });
-            });
+            setTimeout(tryRender, 50);
+        }
+
+        $wire.on('labelModalOpened', (event) => {
+            generateSingleLabel(event);
+        });
+
+        $wire.on('batchLabelModalOpened', (event) => {
+            generateBatchLabels(event);
         });
     </script>
+    @endscript
 </div>
