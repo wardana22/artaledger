@@ -19,6 +19,14 @@
         </div>
 
         <div class="flex items-center gap-3">
+            <button wire:click="openCategoryManagerModal" 
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
+                <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+                Kelola Kategori
+            </button>
+
             <a href="{{ route('accounting.fixed-assets.depreciation') }}" 
                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold text-sm hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all shadow-sm">
                 <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,7 +321,13 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Kategori Aset *</label>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Kategori Aset *</label>
+                                    <button type="button" wire:click="openCreateCategoryModal" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                        + Kategori Baru
+                                    </button>
+                                </div>
                                 <select wire:model.live="asset_category_id" class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
                                     <option value="">-- Pilih Kategori --</option>
                                     @foreach($categories as $cat)
@@ -541,6 +555,241 @@
                         </button>
                     </div>
                 </div>
+        </div>
+    @endif
+
+    <!-- MODAL 1: KELOLA MASTER KATEGORI ASET (LIST & CRUD ACTIONS) -->
+    @if($showCategoryManagerModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+             wire:click.self="closeCategoryManagerModal"
+             aria-labelledby="modal-category-manager" role="dialog" aria-modal="true">
+            <div class="relative bg-white dark:bg-slate-900 rounded-2xl text-left overflow-hidden shadow-2xl w-full max-w-4xl border border-slate-200 dark:border-slate-800 my-8">
+                <!-- Header -->
+                <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            Master Kategori Aset Tetap & Pemetaan COA
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Konfigurasi kelompok aset tetap, masa manfaat standar, dan akun pembukuan otomatis.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" wire:click="openCreateCategoryModal" 
+                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Tambah Kategori Baru
+                        </button>
+                        <button wire:click="closeCategoryManagerModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1.5">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Categories -->
+                <div class="p-6 max-h-[60vh] overflow-y-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                                <th class="py-2.5 px-3">Kode & Nama</th>
+                                <th class="py-2.5 px-3 text-center">Masa Manfaat</th>
+                                <th class="py-2.5 px-3">Akun Aset & Akumulasi</th>
+                                <th class="py-2.5 px-3">Akun Beban</th>
+                                <th class="py-2.5 px-3 text-center">Aset Terdaftar</th>
+                                <th class="py-2.5 px-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @forelse($allCategories as $c)
+                                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                                    <td class="py-3 px-3">
+                                        <div class="font-bold text-slate-900 dark:text-white">{{ $c->name }}</div>
+                                        <div class="font-mono text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">{{ $c->code }}</div>
+                                        @if($c->description)
+                                            <div class="text-[11px] text-slate-400 mt-0.5">{{ Str::limit($c->description, 45) }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            {{ $c->useful_life_years }} Thn
+                                        </span>
+                                        <div class="text-[11px] text-slate-400 mt-0.5">{{ $c->useful_life_years * 12 }} Bulan</div>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <div class="text-slate-800 dark:text-slate-200 font-medium">
+                                            <span class="text-blue-600 font-bold">A:</span> {{ $c->assetAccount?->code ?? '-' }} {{ $c->assetAccount?->name }}
+                                        </div>
+                                        <div class="text-slate-500 dark:text-slate-400 mt-0.5">
+                                            <span class="text-amber-600 font-bold">K:</span> {{ $c->accumulatedDepreciationAccount?->code ?? '-' }} {{ $c->accumulatedDepreciationAccount?->name }}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <div class="text-slate-800 dark:text-slate-200 font-medium">
+                                            <span class="text-emerald-600 font-bold">B:</span> {{ $c->depreciationExpenseAccount?->code ?? '-' }} {{ $c->depreciationExpenseAccount?->name }}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <span class="font-mono font-semibold {{ $c->fixed_assets_count > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}">
+                                            {{ $c->fixed_assets_count }} Unit
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <button type="button" wire:click="openEditCategoryModal({{ $c->id }})" 
+                                                    title="Edit Kategori"
+                                                    class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            </button>
+                                            @if($c->fixed_assets_count === 0)
+                                                <button type="button" wire:click="deleteCategory({{ $c->id }})" 
+                                                        wire:confirm="Yakin ingin menghapus kategori '{{ $c->name }}'?"
+                                                        title="Hapus Kategori"
+                                                        class="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            @else
+                                                <span title="Kategori sedang digunakan oleh {{ $c->fixed_assets_count }} aset (tidak dapat dihapus)" class="p-1.5 text-slate-300 dark:text-slate-600 cursor-not-allowed">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center text-slate-400">
+                                        Belum ada kategori aset tetap yang terdaftar.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex justify-end">
+                    <button type="button" wire:click="closeCategoryManagerModal" 
+                            class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- MODAL 2: FORM TAMBAH / EDIT KATEGORI ASET -->
+    @if($showCategoryFormModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+             wire:click.self="closeCategoryFormModal"
+             aria-labelledby="modal-category-form" role="dialog" aria-modal="true">
+            <div class="relative bg-white dark:bg-slate-900 rounded-2xl text-left overflow-hidden shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-800 my-8">
+                <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                        {{ $editingCategoryId ? 'Edit Kategori Aset Tetap' : 'Tambah Kategori Aset Tetap Baru' }}
+                    </h3>
+                    <button type="button" wire:click="closeCategoryFormModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form wire:submit.prevent="saveCategory">
+                    <div class="p-5 space-y-3.5 max-h-[70vh] overflow-y-auto text-xs">
+                        <!-- Kode & Nama -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Kode *</label>
+                                <input type="text" wire:model="cat_code" placeholder="e.g. KAT-ELK" 
+                                       class="w-full text-xs font-mono uppercase rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                @error('cat_code') <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Nama Kategori *</label>
+                                <input type="text" wire:model="cat_name" placeholder="e.g. Peralatan Elektronik & IT" 
+                                       class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                @error('cat_name') <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <!-- Masa Manfaat & Nilai Residu -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Masa Manfaat (Tahun) *</label>
+                                <input type="number" wire:model="cat_useful_life_years" min="0" max="100" 
+                                       class="w-full text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                <span class="text-[11px] text-slate-400 mt-0.5 block">Isi 0 jika non-depreciable (seperti Tanah).</span>
+                                @error('cat_useful_life_years') <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Nilai Residu Default (%)</label>
+                                <input type="number" step="0.01" wire:model="cat_salvage_percentage" min="0" max="100" 
+                                       class="w-full text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                <span class="text-[11px] text-slate-400 mt-0.5 block">Persentase estimasi nilai sisa (default 0%).</span>
+                            </div>
+                        </div>
+
+                        <!-- Pemetaan Akun COA -->
+                        <div class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                            <div class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Pemetaan Akun Buku Besar (COA Mapping)
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Akun Aset Tetap (12.xx)</label>
+                                <select wire:model="cat_asset_account_id" class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">-- Pilih Akun Aset Tetap --</option>
+                                    @foreach($assetAccounts as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Akun Akumulasi Penyusutan (12.10.x)</label>
+                                <select wire:model="cat_accumulated_account_id" class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">-- Pilih Akun Akumulasi Penyusutan --</option>
+                                    @foreach($accumAccounts as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Akun Beban Penyusutan (68.xx)</label>
+                                <select wire:model="cat_expense_account_id" class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">-- Pilih Akun Beban Penyusutan --</option>
+                                    @foreach($expenseAccounts as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Keterangan -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Deskripsi / Keterangan</label>
+                            <textarea wire:model="cat_description" rows="2" placeholder="Keterangan cakupan aset untuk kelompok kategori ini..."
+                                      class="w-full text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex justify-end gap-2.5">
+                        <button type="button" wire:click="closeCategoryFormModal" 
+                                class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                            Batal
+                        </button>
+                        <button type="submit" 
+                                class="px-5 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 transition-all">
+                            {{ $editingCategoryId ? 'Simpan Perubahan' : 'Tambah Kategori' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     @endif
 </div>

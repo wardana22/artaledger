@@ -3,6 +3,7 @@
 namespace App\Livewire\Accounting\Assets;
 
 use App\Domain\Asset\Services\FixedAssetDepreciationService;
+use App\Models\Account;
 use App\Models\AssetCategory;
 use App\Models\Company;
 use App\Models\FixedAsset;
@@ -63,6 +64,32 @@ class FixedAssetIndex extends Component
     public ?FixedAsset $selectedAssetForSchedule = null;
 
     public array $scheduleData = [];
+
+    // Category Management Modals
+    public bool $showCategoryManagerModal = false;
+
+    public bool $showCategoryFormModal = false;
+
+    public ?int $editingCategoryId = null;
+
+    // Category Form Fields
+    public string $cat_code = '';
+
+    public string $cat_name = '';
+
+    public int $cat_useful_life_years = 4;
+
+    public string $cat_salvage_percentage = '0.00';
+
+    public string $cat_asset_account_id = '';
+
+    public string $cat_accumulated_account_id = '';
+
+    public string $cat_expense_account_id = '';
+
+    public string $cat_description = '';
+
+    public bool $cat_is_active = true;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -255,6 +282,124 @@ class FixedAssetIndex extends Component
         $this->scheduleData = [];
     }
 
+    public function openCategoryManagerModal(): void
+    {
+        $this->showCategoryManagerModal = true;
+    }
+
+    public function closeCategoryManagerModal(): void
+    {
+        $this->showCategoryManagerModal = false;
+    }
+
+    public function openCreateCategoryModal(): void
+    {
+        $this->resetValidation();
+        $this->editingCategoryId = null;
+        $this->cat_code = '';
+        $this->cat_name = '';
+        $this->cat_useful_life_years = 4;
+        $this->cat_salvage_percentage = '0.00';
+        $this->cat_asset_account_id = '';
+        $this->cat_accumulated_account_id = '';
+        $this->cat_expense_account_id = '';
+        $this->cat_description = '';
+        $this->cat_is_active = true;
+
+        $this->showCategoryFormModal = true;
+    }
+
+    public function openEditCategoryModal(int $id): void
+    {
+        $this->resetValidation();
+        $cat = AssetCategory::findOrFail($id);
+        $this->editingCategoryId = $cat->id;
+        $this->cat_code = $cat->code;
+        $this->cat_name = $cat->name;
+        $this->cat_useful_life_years = (int) $cat->useful_life_years;
+        $this->cat_salvage_percentage = (string) $cat->salvage_percentage;
+        $this->cat_asset_account_id = (string) ($cat->asset_account_id ?? '');
+        $this->cat_accumulated_account_id = (string) ($cat->accumulated_depreciation_account_id ?? '');
+        $this->cat_expense_account_id = (string) ($cat->depreciation_expense_account_id ?? '');
+        $this->cat_description = $cat->description ?? '';
+        $this->cat_is_active = (bool) $cat->is_active;
+
+        $this->showCategoryFormModal = true;
+    }
+
+    public function closeCategoryFormModal(): void
+    {
+        $this->showCategoryFormModal = false;
+        $this->editingCategoryId = null;
+    }
+
+    public function saveCategory(): void
+    {
+        $uniqueRule = 'unique:asset_categories,code';
+        if ($this->editingCategoryId) {
+            $uniqueRule .= ','.$this->editingCategoryId;
+        }
+
+        $this->validate([
+            'cat_code' => ['required', 'string', 'max:50', $uniqueRule],
+            'cat_name' => ['required', 'string', 'max:255'],
+            'cat_useful_life_years' => ['required', 'integer', 'min:0'],
+            'cat_salvage_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'cat_asset_account_id' => ['nullable', 'exists:accounts,id'],
+            'cat_accumulated_account_id' => ['nullable', 'exists:accounts,id'],
+            'cat_expense_account_id' => ['nullable', 'exists:accounts,id'],
+        ], [
+            'cat_code.required' => 'Kode kategori wajib diisi.',
+            'cat_code.unique' => 'Kode kategori sudah digunakan.',
+            'cat_name.required' => 'Nama kategori wajib diisi.',
+            'cat_useful_life_years.required' => 'Masa manfaat tahun wajib diisi.',
+        ]);
+
+        $data = [
+            'code' => strtoupper($this->cat_code),
+            'name' => $this->cat_name,
+            'useful_life_years' => $this->cat_useful_life_years,
+            'salvage_percentage' => (float) $this->cat_salvage_percentage,
+            'asset_account_id' => $this->cat_asset_account_id ?: null,
+            'accumulated_depreciation_account_id' => $this->cat_accumulated_account_id ?: null,
+            'depreciation_expense_account_id' => $this->cat_expense_account_id ?: null,
+            'description' => $this->cat_description ?: null,
+            'is_active' => $this->cat_is_active,
+        ];
+
+        if ($this->editingCategoryId) {
+            $cat = AssetCategory::findOrFail($this->editingCategoryId);
+            $cat->update($data);
+            session()->flash('success', "Kategori aset '{$cat->name}' berhasil diperbarui.");
+        } else {
+            $cat = AssetCategory::create($data);
+            session()->flash('success', "Kategori aset baru '{$cat->name}' berhasil ditambahkan.");
+
+            // Jika form Tambah Aset sedang terbuka, otomatis pilihkan kategori baru ini!
+            if ($this->showAssetModal) {
+                $this->asset_category_id = (string) $cat->id;
+                $this->useful_life_months = $cat->useful_life_years * 12;
+            }
+        }
+
+        $this->showCategoryFormModal = false;
+        $this->editingCategoryId = null;
+    }
+
+    public function deleteCategory(int $id): void
+    {
+        $cat = AssetCategory::withCount('fixedAssets')->findOrFail($id);
+
+        if ($cat->fixed_assets_count > 0) {
+            session()->flash('error', "Kategori '{$cat->name}' tidak dapat dihapus karena masih digunakan oleh {$cat->fixed_assets_count} data aset tetap.");
+
+            return;
+        }
+
+        $cat->delete();
+        session()->flash('success', "Kategori '{$cat->name}' berhasil dihapus.");
+    }
+
     public function render(): View
     {
         $query = FixedAsset::query()->with(['category', 'unit']);
@@ -292,6 +437,26 @@ class FixedAssetIndex extends Component
         $categories = AssetCategory::where('is_active', true)->orderBy('name')->get();
         $units = Unit::orderBy('name')->get();
 
+        // Kategori lengkap dengan relasi dan jumlah aset terdaftar untuk Category Manager
+        $allCategories = AssetCategory::with(['assetAccount', 'accumulatedDepreciationAccount', 'depreciationExpenseAccount'])
+            ->withCount('fixedAssets')
+            ->orderBy('code')
+            ->get();
+
+        // Akun COA untuk dropdown mapping
+        $assetAccounts = Account::where(function ($q) {
+            $q->where('code', 'like', '12.01%')
+                ->orWhere('code', 'like', '12.02%')
+                ->orWhere('code', 'like', '12.03%')
+                ->orWhere('code', 'like', '12.04%');
+        })->posting()->active()->orderBy('code')->get();
+
+        $accumAccounts = Account::where('code', 'like', '12.1%')
+            ->posting()->active()->orderBy('code')->get();
+
+        $expenseAccounts = Account::where('code', 'like', '68%')
+            ->posting()->active()->orderBy('code')->get();
+
         return view('livewire.accounting.assets.fixed-asset-index', [
             'assets' => $assets,
             'totalCost' => $totalCost,
@@ -299,7 +464,11 @@ class FixedAssetIndex extends Component
             'totalBookValue' => $totalBookValue,
             'totalActive' => $totalActive,
             'categories' => $categories,
+            'allCategories' => $allCategories,
             'units' => $units,
+            'assetAccounts' => $assetAccounts,
+            'accumAccounts' => $accumAccounts,
+            'expenseAccounts' => $expenseAccounts,
         ])->layout('layouts.app');
     }
 }

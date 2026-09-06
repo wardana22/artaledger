@@ -268,3 +268,62 @@ test('depreciation run page renders and executes via livewire', function () {
     expect(AssetDepreciation::where('period', '2025-01')->count())->toBe(1);
     expect(JournalEntry::where('source_type', 'depreciation')->count())->toBe(1);
 });
+
+test('can create, update, and manage asset categories via livewire', function () {
+    $component = Livewire\Livewire::actingAs($this->user)
+        ->test(FixedAssetIndex::class)
+        ->call('openCategoryManagerModal')
+        ->assertSet('showCategoryManagerModal', true)
+        ->call('openCreateCategoryModal')
+        ->assertSet('showCategoryFormModal', true)
+        ->set('cat_code', 'KAT-ELK')
+        ->set('cat_name', 'Peralatan Elektronik & Gadget')
+        ->set('cat_useful_life_years', 3)
+        ->set('cat_salvage_percentage', '5.00')
+        ->call('saveCategory')
+        ->assertHasNoErrors()
+        ->assertSet('showCategoryFormModal', false);
+
+    $cat = AssetCategory::where('code', 'KAT-ELK')->first();
+    expect($cat)->not->toBeNull();
+    expect($cat->name)->toBe('Peralatan Elektronik & Gadget');
+    expect($cat->useful_life_years)->toBe(3);
+
+    // Update Category
+    $component->call('openEditCategoryModal', $cat->id)
+        ->set('cat_name', 'Peralatan Elektronik & Komputer')
+        ->call('saveCategory')
+        ->assertHasNoErrors();
+
+    $cat->refresh();
+    expect($cat->name)->toBe('Peralatan Elektronik & Komputer');
+
+    // Delete Category without assets
+    $component->call('deleteCategory', $cat->id);
+    expect(AssetCategory::where('code', 'KAT-ELK')->exists())->toBeFalse();
+});
+
+test('prevents deletion of category that has registered assets', function () {
+    $category = AssetCategory::where('code', 'KAT-KND')->firstOrFail();
+    FixedAsset::create([
+        'company_id' => $this->company->id,
+        'unit_id' => $this->unit->id,
+        'asset_category_id' => $category->id,
+        'asset_code' => 'AST-KP-2025-0099',
+        'name' => 'Mobil Box Operasional',
+        'acquisition_date' => '2025-01-01',
+        'acquisition_cost' => 150000000,
+        'salvage_value' => 0,
+        'useful_life_months' => 48,
+        'monthly_depreciation_amount' => 3125000,
+        'book_value' => 150000000,
+        'status' => 'active',
+    ]);
+
+    Livewire\Livewire::actingAs($this->user)
+        ->test(FixedAssetIndex::class)
+        ->call('deleteCategory', $category->id);
+
+    // Category must still exist
+    expect(AssetCategory::where('id', $category->id)->exists())->toBeTrue();
+});
