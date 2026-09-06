@@ -875,11 +875,11 @@
 
                 {{-- Label Preview --}}
                 <div class="p-5">
-                    <div id="print-label-area" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white">
+                    <div id="print-single-label" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white single-label-print-box">
                         {{-- Label Card --}}
                         <div class="label-card-single font-sans">
                             {{-- Header Logo --}}
-                            <div class="flex items-center gap-1.5 pb-2 mb-2 border-b border-slate-200">
+                            <div class="label-header flex items-center gap-1.5 pb-2 mb-2 border-b border-slate-200">
                                 <svg class="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                 <span class="font-bold text-indigo-700 text-sm tracking-wide">ArtaLedger</span>
                                 <span class="ml-auto text-[10px] text-slate-400 font-mono">ASET TETAP</span>
@@ -887,22 +887,22 @@
 
                             {{-- Asset Info --}}
                             <div class="mb-2">
-                                <div class="font-mono font-bold text-lg text-slate-900 tracking-wider">{{ $labelAssetData['code'] ?? '' }}</div>
-                                <div class="font-semibold text-slate-800 text-sm leading-tight">{{ $labelAssetData['name'] ?? '' }}</div>
-                                <div class="text-[11px] text-slate-500 mt-0.5">{{ $labelAssetData['category'] ?? '' }} &bull; {{ $labelAssetData['unit'] ?? '' }}</div>
+                                <div class="label-code font-mono font-bold text-lg text-slate-900 tracking-wider">{{ $labelAssetData['code'] ?? '' }}</div>
+                                <div class="label-name font-semibold text-slate-800 text-sm leading-tight">{{ $labelAssetData['name'] ?? '' }}</div>
+                                <div class="label-sub text-[11px] text-slate-500 mt-0.5">{{ $labelAssetData['category'] ?? '' }} &bull; {{ $labelAssetData['unit'] ?? '' }}</div>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-x-3 text-[11px] mb-3">
+                            <div class="label-meta grid grid-cols-2 gap-x-3 text-[11px] mb-3">
                                 <div><span class="text-slate-400">Lokasi:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['location'] ?? '-' }}</span></div>
                                 <div><span class="text-slate-400">S/N:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['serial'] ?? '-' }}</span></div>
+                                <div><span class="text-slate-400">PIC:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['pic'] ?? '-' }}</span></div>
                                 <div><span class="text-slate-400">Tgl Perolehan:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['acquisition'] ?? '-' }}</span></div>
-                                <div><span class="text-slate-400">Nilai Buku:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['book_value'] ?? '-' }}</span></div>
                             </div>
 
                             {{-- Barcodes --}}
                             <div class="flex items-end justify-between gap-3 pt-2 border-t border-slate-100">
                                 <div class="flex flex-col items-center gap-1">
-                                    <div id="qr-single" class="w-[90px] h-[90px]"></div>
+                                    <div id="qr-single" class="w-[85px] h-[85px]"></div>
                                     <span class="text-[9px] text-slate-400">Scan Info</span>
                                 </div>
                                 <div class="flex flex-col items-center gap-1 flex-1">
@@ -973,21 +973,21 @@
                             <p class="font-semibold">Tidak ada aset yang cocok dengan filter aktif.</p>
                         </div>
                     @else
-                        <div id="print-label-area" class="label-grid grid grid-cols-4 gap-3">
+                        <div id="print-batch-labels" class="batch-label-grid grid grid-cols-4 gap-3">
                             @foreach($batchLabelData as $idx => $item)
-                                <div class="label-card border border-dashed border-slate-200 rounded-lg p-2.5 bg-white text-[10px] font-sans">
+                                <div class="batch-label-card border border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-2.5 bg-white text-[10px] font-sans">
                                     {{-- Mini Header --}}
-                                    <div class="flex items-center gap-1 pb-1 mb-1 border-b border-slate-100">
+                                    <div class="batch-header flex items-center gap-1 pb-1 mb-1 border-b border-slate-100">
                                         <svg class="w-2.5 h-2.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                         <span class="font-bold text-indigo-700 text-[9px] tracking-wide">ArtaLedger</span>
                                     </div>
                                     {{-- Code & Name --}}
-                                    <div class="font-mono font-bold text-xs text-slate-900 mb-0.5">{{ $item['code'] }}</div>
-                                    <div class="text-slate-700 font-semibold leading-tight mb-0.5 truncate">{{ $item['name'] }}</div>
-                                    <div class="text-slate-400 text-[9px] mb-1 truncate">{{ $item['category'] }}</div>
+                                    <div class="batch-code font-mono font-bold text-xs text-slate-900 mb-0.5">{{ $item['code'] }}</div>
+                                    <div class="batch-name text-slate-700 font-semibold leading-tight mb-0.5 truncate">{{ $item['name'] }}</div>
+                                    <div class="batch-cat text-slate-400 text-[9px] mb-1 truncate">{{ $item['category'] }}</div>
                                     {{-- Barcodes --}}
-                                    <div class="flex items-end gap-1.5 pt-1 border-t border-slate-100">
-                                        <div id="qr-batch-{{ $idx }}" class="w-[56px] h-[56px] flex-shrink-0"></div>
+                                    <div class="flex items-end gap-1.5 pt-1 border-t border-slate-100 mt-auto">
+                                        <div id="qr-batch-{{ $idx }}" class="w-[52px] h-[52px] flex-shrink-0"></div>
                                         <div class="flex-1 overflow-hidden">
                                             <svg id="barcode-batch-{{ $idx }}" class="w-full"></svg>
                                         </div>
@@ -1010,33 +1010,183 @@
 
     <style>
         @media print {
-            /* Hide everything except the label area */
-            body > *:not(#app-root),
-            body * { visibility: hidden; }
-
-            #print-label-area,
-            #print-label-area * { visibility: visible; }
-
-            #print-label-area {
-                position: fixed;
-                inset: 0;
-                margin: 0;
-                padding: 8mm;
-                background: white;
+            /* Otomatis atur kertas ke standar A4 portrait dengan margin rapi */
+            @page {
+                size: A4 portrait;
+                margin: 8mm 6mm;
             }
 
-            /* Batch: A4 grid 4 columns */
-            .label-grid {
-                display: grid !important;
-                grid-template-columns: repeat(4, 1fr) !important;
-                gap: 4mm !important;
+            html, body {
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            .label-card {
-                border: 1px solid #cbd5e1 !important;
+            /* Sembunyikan seluruh interface aplikasi di luar stiker cetak */
+            body * {
+                visibility: hidden !important;
+            }
+
+            .fixed.inset-0,
+            button,
+            header,
+            nav {
+                display: none !important;
+            }
+
+            /* ======================================================= */
+            /* 1. SINGLE LABEL PRINT (Ukuran Stiker Standar 8x5 cm)    */
+            /* ======================================================= */
+            #print-single-label,
+            #print-single-label * {
+                visibility: visible !important;
+            }
+
+            #print-single-label {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 80mm !important;
+                height: 50mm !important;
+                max-width: 80mm !important;
+                max-height: 50mm !important;
+                margin: 0 !important;
+                padding: 2.5mm 3.5mm !important;
+                box-sizing: border-box !important;
+                border: 1px dashed #64748b !important;
                 border-radius: 4px !important;
+                background: #ffffff !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+            }
+
+            #print-single-label .label-header {
+                font-size: 8pt !important;
+                padding-bottom: 1mm !important;
+                margin-bottom: 1mm !important;
+            }
+
+            #print-single-label .label-code {
+                font-size: 11pt !important;
+                line-height: 1.1 !important;
+            }
+
+            #print-single-label .label-name {
+                font-size: 8.5pt !important;
+                line-height: 1.15 !important;
+            }
+
+            #print-single-label .label-sub {
+                font-size: 7pt !important;
+            }
+
+            #print-single-label .label-meta {
+                font-size: 7pt !important;
+                gap: 0.5mm 2mm !important;
+                margin-bottom: 1.5mm !important;
+            }
+
+            #print-single-label #qr-single {
+                width: 20mm !important;
+                height: 20mm !important;
+            }
+
+            #print-single-label #qr-single img,
+            #print-single-label #qr-single canvas {
+                width: 20mm !important;
+                height: 20mm !important;
+            }
+
+            /* ======================================================= */
+            /* 2. BATCH LABELS PRINT (Grid 4 Kolom x 5 Baris pada A4)  */
+            /* ======================================================= */
+            #print-batch-labels,
+            #print-batch-labels * {
+                visibility: visible !important;
+            }
+
+            #print-batch-labels {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 195mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+            }
+
+            .batch-label-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 46.5mm) !important;
+                grid-auto-rows: 52mm !important;
+                align-content: start !important;
+                align-items: start !important;
+                justify-content: start !important;
+                gap: 3mm !important;
+                width: 195mm !important;
+                margin: 0 !important;
+            }
+
+            .batch-label-card {
+                width: 46.5mm !important;
+                height: 52mm !important;
+                max-width: 46.5mm !important;
+                max-height: 52mm !important;
+                box-sizing: border-box !important;
+                border: 1px dashed #94a3b8 !important;
+                border-radius: 4px !important;
+                padding: 2mm 2.5mm !important;
+                background: #ffffff !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+            }
+
+            .batch-label-card .batch-header {
+                font-size: 7pt !important;
+                padding-bottom: 0.5mm !important;
+                margin-bottom: 0.5mm !important;
+            }
+
+            .batch-label-card .batch-code {
+                font-size: 8pt !important;
+                font-weight: bold !important;
+                line-height: 1.1 !important;
+            }
+
+            .batch-label-card .batch-name {
+                font-size: 7pt !important;
+                line-height: 1.1 !important;
+                max-height: 2.2em !important;
+                overflow: hidden !important;
+            }
+
+            .batch-label-card .batch-cat {
+                font-size: 6pt !important;
+                color: #64748b !important;
+            }
+
+            .batch-label-card [id^="qr-batch-"] {
+                width: 15mm !important;
+                height: 15mm !important;
+            }
+
+            .batch-label-card [id^="qr-batch-"] img,
+            .batch-label-card [id^="qr-batch-"] canvas {
+                width: 15mm !important;
+                height: 15mm !important;
             }
         }
     </style>

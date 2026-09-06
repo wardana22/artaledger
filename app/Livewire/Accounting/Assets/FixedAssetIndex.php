@@ -333,9 +333,8 @@ class FixedAssetIndex extends Component
             'unit' => $asset->unit->name,
             'location' => $asset->location ?? '-',
             'serial' => $asset->serial_number ?? '-',
+            'pic' => $asset->person_in_charge ?? '-',
             'acquisition' => $asset->acquisition_date->format('d/m/Y'),
-            'cost' => 'Rp '.number_format((float) $asset->acquisition_cost, 0, ',', '.'),
-            'book_value' => 'Rp '.number_format((float) $asset->book_value, 0, ',', '.'),
             'scan_url' => route('assets.scan.public', ['code' => $asset->asset_code]),
             'status' => match ($asset->status) {
                 'active' => 'Aktif',
