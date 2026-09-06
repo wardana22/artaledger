@@ -15,6 +15,8 @@ use App\Models\User;
 use Database\Seeders\AssetCategorySeeder;
 use Database\Seeders\JournalTypeSeeder;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
@@ -388,4 +390,55 @@ test('opens batch label modal and populates all filtered assets', function () {
 
     expect($component->get('batchLabelData'))->toHaveCount(3);
     expect($component->get('batchLabelData.0'))->toHaveKeys(['code', 'name', 'category', 'unit', 'location', 'serial']);
+});
+
+test('can upload photo when creating fixed asset via livewire', function () {
+    Storage::fake('public');
+    $category = AssetCategory::where('code', 'KAT-KND')->firstOrFail();
+    $file = UploadedFile::fake()->image('mobil.jpg');
+
+    Livewire\Livewire::actingAs($this->user)
+        ->test(FixedAssetIndex::class)
+        ->set('name', 'Innova Reborn 2.4 V')
+        ->set('unit_id', $this->unit->id)
+        ->set('asset_category_id', $category->id)
+        ->set('acquisition_date', '2025-03-01')
+        ->set('acquisition_cost', 350000000)
+        ->set('salvage_value', 50000000)
+        ->set('useful_life_months', 60)
+        ->set('photo', $file)
+        ->call('saveAsset');
+
+    $asset = FixedAsset::where('name', 'Innova Reborn 2.4 V')->first();
+    expect($asset)->not->toBeNull();
+    expect($asset->photo_path)->not->toBeNull();
+    Storage::disk('public')->assertExists($asset->photo_path);
+});
+
+test('public scan page renders asset details with light theme and photo placeholder or image', function () {
+    $category = AssetCategory::where('code', 'KAT-KND')->firstOrFail();
+    $asset = FixedAsset::create([
+        'company_id' => $this->company->id,
+        'unit_id' => $this->unit->id,
+        'asset_category_id' => $category->id,
+        'asset_code' => 'AST-KP-2025-SCAN01',
+        'name' => 'Toyota Hiace Premio',
+        'location' => 'Pool Armada',
+        'serial_number' => 'HCE-9921',
+        'acquisition_date' => '2025-01-10',
+        'acquisition_cost' => 500000000,
+        'salvage_value' => 50000000,
+        'useful_life_months' => 60,
+        'monthly_depreciation_amount' => 7500000,
+        'book_value' => 500000000,
+        'status' => 'active',
+    ]);
+
+    $response = $this->get(route('assets.scan.public', $asset->asset_code));
+    $response->assertStatus(200);
+    $response->assertSee('Toyota Hiace Premio');
+    $response->assertSee('Pool Armada');
+    $response->assertSee('HCE-9921');
+    $response->assertSee('AST-KP-2025-SCAN01');
+    $response->assertSee('#f1f5f9'); // Light theme background color check
 });

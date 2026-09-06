@@ -69,6 +69,7 @@ class FixedAssetDepreciationService
             'asset_code' => $data['asset_code'],
             'name' => $data['name'],
             'serial_number' => $data['serial_number'] ?? null,
+            'photo_path' => $data['photo_path'] ?? null,
             'location' => $data['location'] ?? null,
             'person_in_charge' => $data['person_in_charge'] ?? null,
             'acquisition_date' => $data['acquisition_date'],

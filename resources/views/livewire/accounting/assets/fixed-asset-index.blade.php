@@ -456,6 +456,47 @@
                             <textarea wire:model="notes" rows="2" placeholder="Keterangan spesifikasi teknis, kondisi fisik, dll..."
                                       class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                         </div>
+
+                        <!-- Foto Aset -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Foto Aset</label>
+                            <div class="relative">
+                                @if($photo)
+                                    {{-- Preview foto baru --}}
+                                    <div class="relative rounded-xl overflow-hidden border-2 border-indigo-400 dark:border-indigo-600">
+                                        <img src="{{ $photo->temporaryUrl() }}" alt="Preview" class="w-full h-40 object-cover">
+                                        <div class="absolute top-2 right-2">
+                                            <button type="button" wire:click="$set('photo', null)"
+                                                    class="p-1.5 rounded-lg bg-rose-600 text-white shadow-lg hover:bg-rose-700 transition-all">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                        <div class="absolute bottom-0 inset-x-0 bg-indigo-600/80 text-white text-[10px] text-center py-1 font-medium">Foto baru — belum disimpan</div>
+                                    </div>
+                                @elseif($existingPhotoPath)
+                                    {{-- Foto existing --}}
+                                    <div class="relative rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-700">
+                                        <img src="{{ Storage::url($existingPhotoPath) }}" alt="Foto Aset" class="w-full h-40 object-cover">
+                                        <div class="absolute top-2 right-2">
+                                            <label class="cursor-pointer p-1.5 rounded-lg bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all block">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                <input type="file" wire:model="photo" accept="image/*" class="hidden">
+                                            </label>
+                                        </div>
+                                        <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-slate-200 text-[10px] text-center py-1">Foto saat ini — klik ✏️ untuk ganti</div>
+                                    </div>
+                                @else
+                                    {{-- Upload zone --}}
+                                    <label class="cursor-pointer flex flex-col items-center justify-center gap-2 h-28 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 hover:border-indigo-400 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all">
+                                        <svg class="w-8 h-8 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span class="text-xs text-slate-400">Klik untuk upload foto aset</span>
+                                        <span class="text-[10px] text-slate-300 dark:text-slate-600">JPG, PNG, WebP — max 2MB</span>
+                                        <input type="file" wire:model="photo" accept="image/*" class="hidden">
+                                    </label>
+                                @endif
+                                @error('photo') <span class="text-xs text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                     </div>
 
                     <div class="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-end gap-3">

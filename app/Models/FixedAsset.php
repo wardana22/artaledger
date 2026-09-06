@@ -19,6 +19,7 @@ class FixedAsset extends Model
         'asset_code',
         'name',
         'serial_number',
+        'photo_path',
         'location',
         'person_in_charge',
         'acquisition_date',

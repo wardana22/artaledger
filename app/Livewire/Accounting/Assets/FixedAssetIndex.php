@@ -10,11 +10,12 @@ use App\Models\FixedAsset;
 use App\Models\Unit;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class FixedAssetIndex extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     public string $search = '';
 
@@ -57,6 +58,11 @@ class FixedAssetIndex extends Component
     public int $useful_life_months = 48;
 
     public string $notes = '';
+
+    // Photo upload
+    public $photo = null;
+
+    public ?string $existingPhotoPath = null;
 
     // Schedule Drawer/Modal
     public bool $showScheduleModal = false;
@@ -162,6 +168,8 @@ class FixedAssetIndex extends Component
         $this->acquisition_cost = '0';
         $this->salvage_value = '0';
         $this->notes = '';
+        $this->photo = null;
+        $this->existingPhotoPath = null;
 
         $cat = AssetCategory::find($this->asset_category_id);
         if ($cat) {
@@ -189,6 +197,8 @@ class FixedAssetIndex extends Component
         $this->salvage_value = (string) $asset->salvage_value;
         $this->useful_life_months = $asset->useful_life_months;
         $this->notes = $asset->notes ?? '';
+        $this->photo = null;
+        $this->existingPhotoPath = $asset->photo_path;
 
         $this->showAssetModal = true;
     }
@@ -204,6 +214,7 @@ class FixedAssetIndex extends Component
             'acquisition_cost' => 'required|numeric|min:0',
             'salvage_value' => 'nullable|numeric|min:0',
             'useful_life_months' => 'required|integer|min:0',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ], [
             'name.required' => 'Nama aset wajib diisi.',
             'asset_category_id.required' => 'Kategori aset wajib dipilih.',
@@ -222,11 +233,21 @@ class FixedAssetIndex extends Component
             $asset = FixedAsset::findOrFail($this->editingAssetId);
             $monthlyAmount = $service->calculateMonthlyStraightLine($cost, $salvage, $usefulMonths);
 
+            // Handle photo upload on edit
+            $photoPath = $asset->photo_path;
+            if ($this->photo) {
+                if ($photoPath) {
+                    \Storage::disk('public')->delete($photoPath);
+                }
+                $photoPath = $this->photo->store('assets/photos', 'public');
+            }
+
             $asset->update([
                 'unit_id' => $this->unit_id,
                 'asset_category_id' => $this->asset_category_id,
                 'name' => $this->name,
                 'serial_number' => $this->serial_number ?: null,
+                'photo_path' => $photoPath,
                 'location' => $this->location ?: null,
                 'person_in_charge' => $this->person_in_charge ?: null,
                 'acquisition_date' => $this->acquisition_date,
@@ -241,6 +262,12 @@ class FixedAssetIndex extends Component
 
             session()->flash('success', 'Data aset tetap berhasil diperbarui.');
         } else {
+            // Handle photo upload on create
+            $photoPath = null;
+            if ($this->photo) {
+                $photoPath = $this->photo->store('assets/photos', 'public');
+            }
+
             $service->createAsset([
                 'company_id' => $companyId,
                 'unit_id' => $this->unit_id,
@@ -248,6 +275,7 @@ class FixedAssetIndex extends Component
                 'asset_code' => $this->asset_code ?: null,
                 'name' => $this->name,
                 'serial_number' => $this->serial_number ?: null,
+                'photo_path' => $photoPath,
                 'location' => $this->location ?: null,
                 'person_in_charge' => $this->person_in_charge ?: null,
                 'acquisition_date' => $this->acquisition_date,
