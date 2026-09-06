@@ -1476,9 +1476,9 @@
     {
         "id": 68,
         "journal_voucher_id": 1,
-        "account_id": 151,
-        "account_code": "21.02",
-        "account_name": "Biaya Yang Masih Harus Dibayar",
+        "account_id": 153,
+        "account_code": "21.02.02",
+        "account_name": "Biaya Lain-lain Yang Masih Harus Dibayar",
         "sub_account_id": null,
         "unit_id": 1,
         "description": "Saldo Awal 2025 - Biaya Yang Masih Harus Dibayar",

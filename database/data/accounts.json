@@ -1957,7 +1957,7 @@
         "type": "HUTANG LANCAR",
         "normal_balance": "credit",
         "report_type": "neraca",
-        "opening_balance": 3156025634.61,
+        "opening_balance": 0,
         "is_group": true,
         "is_active": true,
         "level": 3
@@ -1983,7 +1983,7 @@
         "type": null,
         "normal_balance": "credit",
         "report_type": "neraca",
-        "opening_balance": 0,
+        "opening_balance": 3156025634.61,
         "is_group": false,
         "is_active": true,
         "level": 4

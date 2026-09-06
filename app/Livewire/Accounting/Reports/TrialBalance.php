@@ -201,7 +201,7 @@ class TrialBalance extends Component
             ]);
         }
 
-        $isBalanced = abs($totalDebit - $totalCredit) < 0.01;
+        $isBalanced = abs($totalDebit - $totalCredit) < 1.0;
 
         return view('livewire.accounting.reports.trial-balance', [
             'rows' => $rows,

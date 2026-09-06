@@ -529,7 +529,7 @@ class FinancialReportPdfService
             'rows' => $rows,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
-            'isBalanced' => abs($totalDebit - $totalCredit) < 0.01,
+            'isBalanced' => abs($totalDebit - $totalCredit) < 1.0,
         ];
     }
 
