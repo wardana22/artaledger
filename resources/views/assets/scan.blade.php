@@ -1,10 +1,16 @@
+@php
+    $company = \App\Models\Company::first();
+    $appName = $company?->app_name ?? config('app.name', 'E-counting');
+    $companyName = $company?->name ?? 'PT ArtaLedger Enterprise';
+    $logoUrl = $company?->logo_url;
+@endphp
 <!DOCTYPE html>
 <html lang="id" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>{{ $asset->asset_code }} — {{ $asset->name }} | ArtaLedger</title>
+    <title>{{ $asset->asset_code }} — {{ $asset->name }} | {{ $appName }} - {{ $companyName }}</title>
     <meta name="description" content="Informasi aset: {{ $asset->name }}, kategori {{ $asset->category->name }}.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -33,26 +39,68 @@
             width: 100%;
             background: white;
             border-bottom: 1px solid #e2e8f0;
-            padding: 12px 20px;
+            padding: 10px 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            gap: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             margin-bottom: 20px;
         }
+        .brand-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+        }
+        .brand-link:hover {
+            opacity: 0.85;
+            transform: translateY(-0.5px);
+        }
+        .brand-logo-img {
+            max-height: 38px;
+            width: auto;
+            max-width: 180px;
+            object-fit: contain;
+            display: block;
+            border-radius: 6px;
+        }
         .brand-icon {
-            width: 32px; height: 32px;
+            width: 36px; height: 36px;
             background: linear-gradient(135deg, #6366f1, #818cf8);
-            border-radius: 8px;
+            border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
         }
-        .brand-icon svg { width: 17px; height: 17px; }
-        .brand-name { font-size: 16px; font-weight: 800; color: #4f46e5; }
+        .brand-icon svg { width: 20px; height: 20px; }
+        .brand-text-col {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.25;
+            text-align: left;
+        }
+        .brand-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #1e1b4b;
+            letter-spacing: -0.01em;
+        }
+        .brand-sub {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+        }
         .brand-tag {
-            font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-            color: #94a3b8; text-transform: uppercase;
-            margin-left: auto;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+            color: #6366f1; background: #eef2ff;
+            border: 1px solid #e0e7ff;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            white-space: nowrap;
         }
 
         /* ---- Card ---- */
@@ -239,12 +287,21 @@
 
         {{-- Brand Bar --}}
         <div class="brand-bar">
-            <div class="brand-icon">
-                <svg fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-            </div>
-            <div class="brand-name">ArtaLedger</div>
+            <a href="{{ route('dashboard') }}" class="brand-link" title="Buka Dashboard {{ $appName }}">
+                @if ($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $appName }} - {{ $companyName }}" class="brand-logo-img">
+                @else
+                    <div class="brand-icon">
+                        <svg fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                @endif
+                <div class="brand-text-col">
+                    <span class="brand-name">{{ $appName }}</span>
+                    <span class="brand-sub">{{ $companyName }}</span>
+                </div>
+            </a>
             <div class="brand-tag">Inventaris Aset Tetap</div>
         </div>
 
@@ -348,7 +405,7 @@
 
             {{-- Footer --}}
             <div class="card-footer">
-                <div class="footer-brand">Dikelola oleh <span>ArtaLedger</span></div>
+                <div class="footer-brand">Dikelola oleh <span>{{ $companyName }}</span></div>
                 <div class="footer-scan-time" id="scan-time"></div>
             </div>
         </div>

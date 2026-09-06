@@ -13,7 +13,7 @@
                 <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
                 <a href="{{ route('dashboard') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight">
                     <span class="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ $appName }}</span>
-                    <span class="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ $company?->name ?? 'PT Arta Ledger' }}</span>
+                    <span class="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ $company?->name ?? 'PT ArtaLedger Enterprise' }}</span>
                 </a>
                 <flux:sidebar.collapse class="lg:hidden ms-auto" />
             </flux:sidebar.header>
