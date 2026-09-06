@@ -865,8 +865,8 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                         </span>
                         <div>
-                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Cetak Label Aset</h3>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Pilih format stiker & cetak langsung</p>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Cetak Label Barcode Aset</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Format stiker presisi &bull; Siap cetak tanpa atur margin</p>
                         </div>
                     </div>
                     <button wire:click="closeLabelModal" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
@@ -881,7 +881,7 @@
                                 :class="paper === 'a4' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'"
                                 class="flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            Kertas A4 (8×5 cm)
+                            Kertas A4 (Garis Potong)
                         </button>
                         <button type="button" @click="paper = 'thermal'"
                                 :class="paper === 'thermal' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'"
@@ -894,47 +894,50 @@
 
                 {{-- Label Preview --}}
                 <div class="p-5">
-                    <div id="print-single-label" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white single-label-print-box">
+                    <div id="print-single-label" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-3 bg-white max-w-sm mx-auto shadow-sm">
                         {{-- Label Card --}}
-                        <div class="label-card-single font-sans">
-                            {{-- Header Logo --}}
-                            <div class="label-header flex items-center gap-1.5 pb-2 mb-2 border-b border-slate-200">
-                                <svg class="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                <span class="font-bold text-indigo-700 text-sm tracking-wide">ArtaLedger</span>
-                                <span class="ml-auto text-[10px] text-slate-400 font-mono">ASET TETAP</span>
+                        <div id="print-single-label-card" class="label-card-single font-sans text-slate-900" style="width: 100%; box-sizing: border-box;">
+                            {{-- Header Branding --}}
+                            <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1.5 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 6px;">
+                                <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 8px; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px;">ARTA</span>
+                                    <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 11pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
+                                </div>
+                                <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 7.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 2px 6px; border-radius: 3px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                             </div>
 
                             {{-- Asset Info --}}
-                            <div class="mb-2">
-                                <div class="label-code font-mono font-bold text-lg text-slate-900 tracking-wider">{{ $labelAssetData['code'] ?? '' }}</div>
-                                <div class="label-name font-semibold text-slate-800 text-sm leading-tight">{{ $labelAssetData['name'] ?? '' }}</div>
-                                <div class="label-sub text-[11px] text-slate-500 mt-0.5">{{ $labelAssetData['category'] ?? '' }} &bull; {{ $labelAssetData['unit'] ?? '' }}</div>
+                            <div class="mb-2" style="margin-bottom: 6px;">
+                                <div class="font-mono font-black text-base text-slate-900 tracking-wider leading-none" style="font-family: monospace; font-weight: 900; font-size: 12pt; color: #0f172a; letter-spacing: 0.5px; line-height: 1.1;">{{ $labelAssetData['code'] ?? '' }}</div>
+                                <div class="font-bold text-slate-800 text-xs leading-snug mt-1 truncate" style="font-weight: 700; font-size: 9pt; color: #1e293b; line-height: 1.25; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $labelAssetData['name'] ?? '' }}</div>
+                                <div class="text-[10px] text-slate-500 mt-0.5" style="font-size: 7.5pt; color: #64748b; margin-top: 1px;">{{ $labelAssetData['category'] ?? '' }} &bull; {{ $labelAssetData['unit'] ?? '' }}</div>
                             </div>
 
-                            <div class="label-meta grid grid-cols-2 gap-x-3 text-[11px] mb-3">
-                                <div><span class="text-slate-400">Lokasi:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['location'] ?? '-' }}</span></div>
-                                <div><span class="text-slate-400">S/N:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['serial'] ?? '-' }}</span></div>
-                                <div><span class="text-slate-400">PIC:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['pic'] ?? '-' }}</span></div>
-                                <div><span class="text-slate-400">Tgl Perolehan:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['acquisition'] ?? '-' }}</span></div>
+                            {{-- Meta Table --}}
+                            <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] mb-2 p-1.5 bg-slate-50 rounded border border-slate-100 text-slate-700" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-size: 7pt; color: #334155; margin-bottom: 6px; padding: 3px 6px; background-color: #f8fafc; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                <div><span style="color: #94a3b8;">Lokasi:</span> <strong style="color: #1e293b;">{{ $labelAssetData['location'] ?? '-' }}</strong></div>
+                                <div><span style="color: #94a3b8;">S/N:</span> <strong style="color: #1e293b;">{{ $labelAssetData['serial'] ?? '-' }}</strong></div>
+                                <div><span style="color: #94a3b8;">PIC:</span> <strong style="color: #1e293b;">{{ $labelAssetData['pic'] ?? '-' }}</strong></div>
+                                <div><span style="color: #94a3b8;">Tgl Perolehan:</span> <strong style="color: #1e293b;">{{ $labelAssetData['acquisition'] ?? '-' }}</strong></div>
                             </div>
 
-                            {{-- Barcodes --}}
-                            <div class="flex items-end justify-between gap-3 pt-2 border-t border-slate-100">
-                                <div class="flex flex-col items-center gap-1">
-                                    <div id="qr-single" class="w-[85px] h-[85px]"></div>
-                                    <span class="text-[9px] text-slate-400">Scan Info</span>
+                            {{-- Barcodes Section --}}
+                            <div class="flex items-end justify-between gap-3 pt-2 border-t border-slate-200 mt-auto" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; border-top: 1px solid #cbd5e1; padding-top: 4px; margin-top: 4px;">
+                                <div class="flex flex-col items-center gap-0.5 flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                                    <div id="qr-single" style="width: 68px; height: 68px;"></div>
+                                    <span class="text-[8px] font-bold tracking-wider text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px;">Scan Info</span>
                                 </div>
-                                <div class="flex flex-col items-center gap-1 flex-1">
-                                    <svg id="barcode-single" class="max-w-full"></svg>
-                                    <span class="text-[9px] text-slate-400">Kode Aset</span>
+                                <div class="flex flex-col items-center gap-0.5 flex-1 min-w-0 overflow-hidden" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; overflow: hidden;">
+                                    <svg id="barcode-single" style="width: 100%; max-height: 40px; display: block;"></svg>
+                                    <span class="text-[8px] font-bold tracking-wider text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Kode Aset</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <p class="text-[11px] text-slate-400 text-center mt-3">
-                        <span x-show="paper === 'a4'">Ukuran stiker: 8×5 cm &bull; Siap cetak di kertas A4 tanpa perlu setel ukuran kertas</span>
-                        <span x-show="paper === 'thermal'" x-cloak>Ukuran stiker: 80×50 mm &bull; Siap cetak di printer thermal roll</span>
+                        <span x-show="paper === 'a4'">Format Kertas A4 &bull; Dicetak dengan panduan garis potong rapi (80 × 50 mm)</span>
+                        <span x-show="paper === 'thermal'" x-cloak>Format Roll Thermal &bull; Dimensi 80 × 50 mm 1:1 pas di stiker roll</span>
                     </p>
                 </div>
 
@@ -1016,21 +1019,24 @@
                         {{-- 1. Mode Kertas A4 (Grid 4 Kolom) --}}
                         <div x-show="paper === 'a4'" id="print-batch-a4-labels" class="batch-label-grid grid grid-cols-4 gap-3">
                             @foreach($batchLabelData as $idx => $item)
-                                <div class="batch-label-card border border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-2.5 bg-white text-[10px] font-sans">
+                                <div class="batch-label-card border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-2 bg-white text-[10px] font-sans text-slate-900" style="box-sizing: border-box;">
                                     {{-- Mini Header --}}
-                                    <div class="batch-header flex items-center gap-1 pb-1 mb-1 border-b border-slate-100">
-                                        <svg class="w-2.5 h-2.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                        <span class="font-bold text-indigo-700 text-[9px] tracking-wide">ArtaLedger</span>
+                                    <div class="batch-header flex items-center justify-between pb-1 mb-1 border-b border-slate-200" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 3px;">
+                                        <div class="flex items-center gap-1" style="display: flex; align-items: center; gap: 3px;">
+                                            <span class="bg-indigo-600 text-white font-black text-[7px] px-1 py-0.2 rounded" style="background-color: #4f46e5; color: #fff; font-weight: 900; font-size: 7px; padding: 1px 3px; border-radius: 2px;">ARTA</span>
+                                            <span class="font-black text-slate-900 text-[9px]" style="font-weight: 900; color: #0f172a; font-size: 7.5pt; font-family: sans-serif;">ArtaLedger</span>
+                                        </div>
+                                        <span class="text-[7px] font-bold text-slate-500 font-mono" style="font-size: 5.5pt; font-weight: 700; color: #64748b; font-family: monospace;">ASET TETAP</span>
                                     </div>
                                     {{-- Code & Name --}}
-                                    <div class="batch-code font-mono font-bold text-xs text-slate-900 mb-0.5">{{ $item['code'] }}</div>
-                                    <div class="batch-name text-slate-700 font-semibold leading-tight mb-0.5 truncate">{{ $item['name'] }}</div>
-                                    <div class="batch-cat text-slate-400 text-[9px] mb-1 truncate">{{ $item['category'] }}</div>
+                                    <div class="batch-code font-mono font-black text-[10px] text-slate-900 mb-0.5 leading-tight" style="font-family: monospace; font-weight: 900; font-size: 8pt; color: #0f172a; line-height: 1.1;">{{ $item['code'] }}</div>
+                                    <div class="batch-name text-slate-800 font-bold text-[9px] leading-tight mb-0.5 truncate" style="font-weight: 700; font-size: 7pt; color: #1e293b; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['name'] }}</div>
+                                    <div class="batch-cat text-slate-500 text-[8px] mb-1 truncate" style="font-size: 6pt; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['category'] }}</div>
                                     {{-- Barcodes --}}
-                                    <div class="flex items-end gap-1.5 pt-1 border-t border-slate-100 mt-auto">
-                                        <div id="qr-batch-a4-{{ $idx }}" class="w-[52px] h-[52px] flex-shrink-0"></div>
-                                        <div class="flex-1 overflow-hidden">
-                                            <svg id="barcode-batch-a4-{{ $idx }}" class="w-full"></svg>
+                                    <div class="flex items-end gap-1.5 pt-1 border-t border-slate-200 mt-auto" style="display: flex; align-items: flex-end; gap: 4px; border-top: 1px solid #e2e8f0; padding-top: 2px; margin-top: auto;">
+                                        <div id="qr-batch-a4-{{ $idx }}" class="w-[44px] h-[44px] flex-shrink-0" style="width: 44px; height: 44px; flex-shrink: 0;"></div>
+                                        <div class="flex-1 overflow-hidden" style="flex: 1; min-width: 0; overflow: hidden;">
+                                            <svg id="barcode-batch-a4-{{ $idx }}" style="width: 100%; max-height: 26px; display: block;"></svg>
                                         </div>
                                     </div>
                                 </div>
@@ -1040,37 +1046,39 @@
                         {{-- 2. Mode Roll Thermal (80x50 mm) --}}
                         <div x-show="paper === 'thermal'" x-cloak id="print-batch-thermal-labels" class="flex flex-col items-center gap-4 py-2">
                             @foreach($batchLabelData as $idx => $item)
-                                <div class="thermal-batch-card w-full max-w-sm border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-3.5 bg-white text-slate-900 font-sans">
+                                <div class="thermal-batch-card w-full max-w-sm border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white text-slate-900 font-sans shadow-sm" style="box-sizing: border-box;">
                                     {{-- Header Logo --}}
-                                    <div class="flex items-center gap-1.5 pb-1.5 mb-1.5 border-b border-slate-200">
-                                        <svg class="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                        <span class="font-bold text-indigo-700 text-xs tracking-wide">ArtaLedger</span>
-                                        <span class="ml-auto text-[9px] text-slate-400 font-mono">ASET TETAP</span>
+                                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1.5 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 6px;">
+                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 6px;">
+                                            <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 8px; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px;">ARTA</span>
+                                            <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 11pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
+                                        </div>
+                                        <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 7.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 2px 6px; border-radius: 3px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                                     </div>
 
                                     {{-- Info --}}
-                                    <div class="mb-1.5">
-                                        <div class="font-mono font-bold text-sm text-slate-900 tracking-wider">{{ $item['code'] }}</div>
-                                        <div class="font-semibold text-slate-800 text-xs leading-tight truncate">{{ $item['name'] }}</div>
-                                        <div class="text-[10px] text-slate-500">{{ $item['category'] }} &bull; {{ $item['unit'] }}</div>
+                                    <div class="mb-2" style="margin-bottom: 5px;">
+                                        <div class="font-mono font-black text-sm text-slate-900 tracking-wider leading-none" style="font-family: monospace; font-weight: 900; font-size: 11pt; color: #0f172a; line-height: 1.1;">{{ $item['code'] }}</div>
+                                        <div class="font-bold text-slate-800 text-xs leading-tight truncate mt-1" style="font-weight: 700; font-size: 8.5pt; color: #1e293b; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['name'] }}</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5" style="font-size: 7pt; color: #64748b; margin-top: 1px;">{{ $item['category'] }} &bull; {{ $item['unit'] }}</div>
                                     </div>
 
-                                    <div class="grid grid-cols-2 gap-x-2 text-[10px] mb-2 text-slate-600">
-                                        <div><span class="text-slate-400">Lokasi:</span> {{ $item['location'] }}</div>
-                                        <div><span class="text-slate-400">S/N:</span> {{ $item['serial'] }}</div>
-                                        <div><span class="text-slate-400">PIC:</span> {{ $item['pic'] ?? '-' }}</div>
-                                        <div><span class="text-slate-400">Tgl:</span> {{ $item['acquisition'] ?? '-' }}</div>
+                                    <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] mb-2 p-1.5 bg-slate-50 rounded border border-slate-100 text-slate-700" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-size: 7pt; color: #334155; margin-bottom: 5px; padding: 3px 6px; background-color: #f8fafc; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                        <div><span style="color: #94a3b8;">Lokasi:</span> <strong style="color: #1e293b;">{{ $item['location'] }}</strong></div>
+                                        <div><span style="color: #94a3b8;">S/N:</span> <strong style="color: #1e293b;">{{ $item['serial'] }}</strong></div>
+                                        <div><span style="color: #94a3b8;">PIC:</span> <strong style="color: #1e293b;">{{ $item['pic'] ?? '-' }}</strong></div>
+                                        <div><span style="color: #94a3b8;">Tgl:</span> <strong style="color: #1e293b;">{{ $item['acquisition'] ?? '-' }}</strong></div>
                                     </div>
 
                                     {{-- Barcodes --}}
-                                    <div class="flex items-end justify-between gap-2 pt-1.5 border-t border-slate-100">
-                                        <div class="flex flex-col items-center gap-0.5">
-                                            <div id="qr-batch-th-{{ $idx }}" class="w-[70px] h-[70px]"></div>
-                                            <span class="text-[8px] text-slate-400">Scan Info</span>
+                                    <div class="flex items-end justify-between gap-2 pt-1.5 border-t border-slate-200 mt-auto" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; border-top: 1px solid #cbd5e1; padding-top: 4px; margin-top: auto;">
+                                        <div class="flex flex-col items-center gap-0.5 flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                                            <div id="qr-batch-th-{{ $idx }}" style="width: 65px; height: 65px;"></div>
+                                            <span class="text-[8px] font-bold text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
                                         </div>
-                                        <div class="flex flex-col items-center gap-0.5 flex-1">
-                                            <svg id="barcode-batch-th-{{ $idx }}" class="max-w-full"></svg>
-                                            <span class="text-[8px] text-slate-400">Kode Aset</span>
+                                        <div class="flex flex-col items-center gap-0.5 flex-1 min-w-0 overflow-hidden" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; overflow: hidden;">
+                                            <svg id="barcode-batch-th-{{ $idx }}" style="width: 100%; max-height: 38px; display: block;"></svg>
+                                            <span class="text-[8px] font-bold text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Kode Aset</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1093,19 +1101,40 @@
     @script
     <script>
         window.printAssetLabel = function (targetType, paperMode = 'a4') {
-            let sourceEl = null;
+            let printableHtml = '';
 
             if (targetType === 'single') {
-                sourceEl = document.getElementById('print-single-label');
+                const cardEl = document.getElementById('print-single-label-card');
+                if (!cardEl) return;
+                const cardHtml = cardEl.innerHTML;
+
+                if (paperMode === 'a4') {
+                    printableHtml = `
+                        <div class="a4-sheet-container">
+                            <div class="cut-guide-box">
+                                <div class="cut-hint">✂ Gunting / Potong Sesuai Garis Putus-putus (Ukuran Stiker: 80 × 50 mm)</div>
+                                <div class="sticker-card">
+                                    ${cardHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    printableHtml = `
+                        <div class="thermal-sheet-container">
+                            <div class="sticker-card">
+                                ${cardHtml}
+                            </div>
+                        </div>
+                    `;
+                }
             } else if (targetType === 'batch') {
-                sourceEl = paperMode === 'thermal'
+                const sourceEl = paperMode === 'thermal'
                     ? document.getElementById('print-batch-thermal-labels')
                     : document.getElementById('print-batch-a4-labels');
-            }
 
-            if (!sourceEl) {
-                window.print();
-                return;
+                if (!sourceEl) return;
+                printableHtml = sourceEl.outerHTML;
             }
 
             let iframe = document.getElementById('artaledger-print-frame');
@@ -1125,144 +1154,160 @@
             const frameDoc = iframe.contentWindow.document;
             frameDoc.open();
 
-            let pageCss = '';
+            let pageRule = '';
             if (paperMode === 'thermal') {
-                pageCss = `
+                pageRule = `
                     @page {
                         size: 80mm 50mm;
-                        margin: 1.5mm;
+                        margin: 0;
                     }
                     html, body {
-                        width: 77mm;
-                        margin: 0 auto;
+                        width: 80mm;
+                        margin: 0;
                         padding: 0;
                         background: #fff;
-                        color: #0f172a;
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
                     }
-                    .single-label-print-box,
-                    .thermal-batch-card {
-                        width: 77mm !important;
-                        height: 47mm !important;
-                        max-width: 77mm !important;
-                        max-height: 47mm !important;
-                        box-sizing: border-box !important;
-                        border: 1px dashed #64748b !important;
-                        border-radius: 4px !important;
-                        padding: 2mm 2.5mm !important;
-                        display: flex !important;
-                        flex-direction: column !important;
-                        justify-content: space-between !important;
-                        overflow: hidden !important;
-                        page-break-after: always !important;
-                        break-after: page !important;
-                    }
-                    .single-label-print-box:last-child,
-                    .thermal-batch-card:last-child {
-                        page-break-after: auto !important;
-                        break-after: auto !important;
-                    }
-                    .label-header { font-size: 8pt; padding-bottom: 1mm; margin-bottom: 1mm; }
-                    .label-code { font-size: 11pt; line-height: 1.1; }
-                    .label-name { font-size: 8.5pt; line-height: 1.15; }
-                    .label-sub { font-size: 7pt; }
-                    .label-meta { font-size: 7pt; gap: 0.5mm 2mm; margin-bottom: 1.5mm; }
                 `;
             } else {
-                // A4 Sheet Format
-                pageCss = `
+                pageRule = `
                     @page {
                         size: A4 portrait;
-                        margin: 8mm 6mm;
+                        margin: ${targetType === 'single' ? '12mm 15mm' : '8mm 6mm'};
                     }
                     html, body {
                         width: 195mm;
                         margin: 0 auto;
                         padding: 0;
                         background: #fff;
-                        color: #0f172a;
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
                     }
-                    .single-label-print-box {
-                        width: 80mm !important;
-                        height: 50mm !important;
-                        max-width: 80mm !important;
-                        max-height: 50mm !important;
-                        box-sizing: border-box !important;
-                        border: 1px dashed #475569 !important;
-                        border-radius: 4px !important;
-                        padding: 2.5mm 3.5mm !important;
-                        display: flex !important;
-                        flex-direction: column !important;
-                        justify-content: space-between !important;
-                        overflow: hidden !important;
-                    }
-                    .batch-label-grid {
-                        display: grid !important;
-                        grid-template-columns: repeat(4, 46.5mm) !important;
-                        grid-auto-rows: 52mm !important;
-                        align-content: start !important;
-                        align-items: start !important;
-                        justify-content: start !important;
-                        gap: 3mm !important;
-                        width: 195mm !important;
-                        margin: 0 !important;
-                    }
-                    .batch-label-card {
-                        width: 46.5mm !important;
-                        height: 52mm !important;
-                        max-width: 46.5mm !important;
-                        max-height: 52mm !important;
-                        box-sizing: border-box !important;
-                        border: 1px dashed #94a3b8 !important;
-                        border-radius: 4px !important;
-                        padding: 2mm 2.5mm !important;
-                        display: flex !important;
-                        flex-direction: column !important;
-                        justify-content: space-between !important;
-                        overflow: hidden !important;
-                        page-break-inside: avoid !important;
-                        break-inside: avoid !important;
-                    }
-                    .batch-header { font-size: 7pt; padding-bottom: 0.5mm; margin-bottom: 0.5mm; }
-                    .batch-code { font-size: 8pt; font-weight: bold; line-height: 1.1; }
-                    .batch-name { font-size: 7pt; line-height: 1.1; max-height: 2.2em; overflow: hidden; }
-                    .batch-cat { font-size: 6pt; color: #64748b; }
                 `;
             }
 
-            pageCss += `
-                *, *::before, *::after { box-sizing: border-box; }
-                .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-                .font-bold { font-weight: 700; }
-                .font-semibold { font-weight: 600; }
-                .text-indigo-600, .text-indigo-700 { color: #4338ca !important; }
-                .text-slate-400 { color: #94a3b8 !important; }
-                .text-slate-500 { color: #64748b !important; }
-                .text-slate-700 { color: #334155 !important; }
-                .text-slate-800 { color: #1e293b !important; }
-                .text-slate-900 { color: #0f172a !important; }
-                .border-b { border-bottom: 1px solid #e2e8f0; }
-                .border-t { border-top: 1px solid #e2e8f0; }
-                .flex { display: flex; }
-                .flex-col { flex-direction: column; }
-                .items-center { align-items: center; }
-                .items-end { align-items: flex-end; }
-                .justify-between { justify-content: space-between; }
-                .flex-1 { flex: 1 1 0%; }
-                .flex-shrink-0 { flex-shrink: 0; }
-                .grid { display: grid; }
-                .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-                .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                svg { display: block; }
-                img { display: block; max-width: 100%; height: auto; }
+            const baseCss = `
+                *, *::before, *::after {
+                    box-sizing: border-box;
+                    margin: 0;
+                    padding: 0;
+                }
+                html, body {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    color: #0f172a;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+
+                /* Single A4 Guide Container */
+                .a4-sheet-container {
+                    width: 100%;
+                }
+                .cut-guide-box {
+                    display: inline-block;
+                }
+                .cut-hint {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    font-size: 7.5pt;
+                    color: #64748b;
+                    margin-bottom: 2mm;
+                    font-weight: 600;
+                }
+
+                /* Thermal Sheet Container */
+                .thermal-sheet-container {
+                    width: 80mm;
+                    height: 50mm;
+                    margin: 0;
+                    padding: 1.5mm;
+                    box-sizing: border-box;
+                }
+
+                /* Single Sticker Card Dimension */
+                .sticker-card {
+                    width: 77mm !important;
+                    height: 47mm !important;
+                    max-width: 77mm !important;
+                    max-height: 47mm !important;
+                    box-sizing: border-box !important;
+                    border: 1.5px dashed #475569 !important;
+                    border-radius: 4px !important;
+                    padding: 2mm 2.5mm !important;
+                    background: #ffffff !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: space-between !important;
+                    overflow: hidden !important;
+                }
+
+                /* Batch A4 Grid Layout */
+                .batch-label-grid {
+                    display: grid !important;
+                    grid-template-columns: repeat(4, 46.5mm) !important;
+                    grid-auto-rows: 52mm !important;
+                    align-content: start !important;
+                    align-items: start !important;
+                    justify-content: start !important;
+                    gap: 3mm !important;
+                    width: 195mm !important;
+                    margin: 0 !important;
+                }
+                .batch-label-card {
+                    width: 46.5mm !important;
+                    height: 52mm !important;
+                    max-width: 46.5mm !important;
+                    max-height: 52mm !important;
+                    box-sizing: border-box !important;
+                    border: 1px dashed #94a3b8 !important;
+                    border-radius: 4px !important;
+                    padding: 2mm 2.5mm !important;
+                    background: #ffffff !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: space-between !important;
+                    overflow: hidden !important;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+
+                /* Batch Thermal Roll Continuous Layout */
+                .thermal-batch-card {
+                    width: 77mm !important;
+                    height: 47mm !important;
+                    max-width: 77mm !important;
+                    max-height: 47mm !important;
+                    margin: 1.5mm auto !important;
+                    box-sizing: border-box !important;
+                    border: 1px dashed #64748b !important;
+                    border-radius: 4px !important;
+                    padding: 2mm 2.5mm !important;
+                    background: #ffffff !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: space-between !important;
+                    overflow: hidden !important;
+                    page-break-after: always !important;
+                    break-after: page !important;
+                }
+                .thermal-batch-card:last-child {
+                    page-break-after: auto !important;
+                    break-after: auto !important;
+                }
+
+                /* Strict SVG Clamping */
+                svg:not([id*="barcode"]) {
+                    width: 14px !important;
+                    height: 14px !important;
+                    max-width: 14px !important;
+                    max-height: 14px !important;
+                    display: inline-block !important;
+                }
+                svg[id*="barcode"] {
+                    width: 100% !important;
+                    max-height: 42px !important;
+                    display: block !important;
+                }
+                img { max-width: 100% !important; height: auto !important; }
             `;
 
-            frameDoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>ArtaLedger Label</title><style>' + pageCss + '</style></head><body>' + sourceEl.innerHTML + '</body></html>');
+            frameDoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>ArtaLedger Label</title><style>' + pageRule + baseCss + '</style></head><body>' + printableHtml + '</body></html>');
             frameDoc.close();
 
             setTimeout(function () {
@@ -1284,9 +1329,9 @@
                     qrEl.innerHTML = '';
                     new QRCode(qrEl, {
                         text: payload.scan_url || payload.code,
-                        width: 85,
-                        height: 85,
-                        colorDark: '#1e293b',
+                        width: 68,
+                        height: 68,
+                        colorDark: '#0f172a',
                         colorLight: '#ffffff',
                         correctLevel: QRCode.CorrectLevel.H,
                     });
@@ -1294,14 +1339,14 @@
                     try {
                         JsBarcode(bcEl, payload.code, {
                             format: 'CODE128',
-                            width: 1.8,
-                            height: 42,
+                            width: 1.5,
+                            height: 38,
                             displayValue: true,
-                            fontSize: 11,
-                            textMargin: 3,
-                            margin: 2,
+                            fontSize: 10,
+                            textMargin: 2,
+                            margin: 1,
                             background: '#ffffff',
-                            lineColor: '#1e293b',
+                            lineColor: '#0f172a',
                         });
                     } catch (e) {
                         console.warn('Barcode error single:', e);
@@ -1330,9 +1375,9 @@
                             qrA4.innerHTML = '';
                             new QRCode(qrA4, {
                                 text: item.scan_url || item.code,
-                                width: 52,
-                                height: 52,
-                                colorDark: '#1e293b',
+                                width: 44,
+                                height: 44,
+                                colorDark: '#0f172a',
                                 colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.M,
                             });
@@ -1341,14 +1386,14 @@
                             try {
                                 JsBarcode(bcA4, item.code, {
                                     format: 'CODE128',
-                                    width: 1.2,
-                                    height: 26,
+                                    width: 1.1,
+                                    height: 24,
                                     displayValue: true,
-                                    fontSize: 8,
-                                    textMargin: 2,
-                                    margin: 2,
+                                    fontSize: 7,
+                                    textMargin: 1,
+                                    margin: 1,
                                     background: '#ffffff',
-                                    lineColor: '#1e293b',
+                                    lineColor: '#0f172a',
                                 });
                             } catch (e) {}
                         }
@@ -1360,9 +1405,9 @@
                             qrTh.innerHTML = '';
                             new QRCode(qrTh, {
                                 text: item.scan_url || item.code,
-                                width: 70,
-                                height: 70,
-                                colorDark: '#1e293b',
+                                width: 65,
+                                height: 65,
+                                colorDark: '#0f172a',
                                 colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.H,
                             });
@@ -1371,14 +1416,14 @@
                             try {
                                 JsBarcode(bcTh, item.code, {
                                     format: 'CODE128',
-                                    width: 1.6,
-                                    height: 38,
+                                    width: 1.5,
+                                    height: 36,
                                     displayValue: true,
-                                    fontSize: 10,
-                                    textMargin: 3,
-                                    margin: 2,
+                                    fontSize: 9,
+                                    textMargin: 2,
+                                    margin: 1,
                                     background: '#ffffff',
-                                    lineColor: '#1e293b',
+                                    lineColor: '#0f172a',
                                 });
                             } catch (e) {}
                         }
