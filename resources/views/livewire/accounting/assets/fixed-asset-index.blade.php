@@ -1010,22 +1010,14 @@
                 // Clear previous
                 qrEl.innerHTML = '';
 
-                // QR Code: JSON payload of asset info
+                // QR Code: URL ke halaman publik scan aset
                 new QRCode(qrEl, {
-                    text: JSON.stringify({
-                        code: data.code,
-                        name: data.name,
-                        category: data.category,
-                        unit: data.unit,
-                        location: data.location,
-                        serial: data.serial,
-                        acquisition: data.acquisition,
-                    }),
+                    text: data.scan_url || data.code,
                     width: 90,
                     height: 90,
                     colorDark: '#1e293b',
                     colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.M,
+                    correctLevel: QRCode.CorrectLevel.H,
                 });
 
                 // Barcode 1D Code128: only asset code
@@ -1054,18 +1046,12 @@
                     if (qrEl) {
                         qrEl.innerHTML = '';
                         new QRCode(qrEl, {
-                            text: JSON.stringify({
-                                code: item.code,
-                                name: item.name,
-                                category: item.category,
-                                location: item.location,
-                                serial: item.serial,
-                            }),
+                            text: item.scan_url || item.code,
                             width: 56,
                             height: 56,
                             colorDark: '#1e293b',
                             colorLight: '#ffffff',
-                            correctLevel: QRCode.CorrectLevel.L,
+                            correctLevel: QRCode.CorrectLevel.M,
                         });
                     }
 

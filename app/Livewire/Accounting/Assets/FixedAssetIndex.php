@@ -308,6 +308,7 @@ class FixedAssetIndex extends Component
             'acquisition' => $asset->acquisition_date->format('d/m/Y'),
             'cost' => 'Rp '.number_format((float) $asset->acquisition_cost, 0, ',', '.'),
             'book_value' => 'Rp '.number_format((float) $asset->book_value, 0, ',', '.'),
+            'scan_url' => route('assets.scan.public', ['code' => $asset->asset_code]),
             'status' => match ($asset->status) {
                 'active' => 'Aktif',
                 'fully_depreciated' => 'Habis Disusutkan',
@@ -360,6 +361,7 @@ class FixedAssetIndex extends Component
             'unit' => $a->unit->name,
             'location' => $a->location ?? '-',
             'serial' => $a->serial_number ?? '-',
+            'scan_url' => route('assets.scan.public', ['code' => $a->asset_code]),
         ])->toArray();
 
         $this->showBatchLabelModal = true;

@@ -25,6 +25,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
+// Public route: Asset QR Code scan landing page (no auth required)
+use App\Http\Controllers\AssetScanController;
+
+Route::get('/a/{code}', [AssetScanController::class, 'show'])->name('assets.scan.public');
+
 use App\Http\Controllers\BankReconciliationPdfController;
 use App\Http\Controllers\FinancialReportPdfController;
 use App\Livewire\Accounting\Accounts\AccountGroupIndex;
