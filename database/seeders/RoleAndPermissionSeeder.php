@@ -59,6 +59,13 @@ class RoleAndPermissionSeeder extends Seeder
             'reconciliation.manage' => 'Kelola & Eksekusi Rekonsiliasi Bank',
             'reconciliation.upload' => 'Unggah Rekening Koran Bank',
 
+            // Aset Tetap & Penyusutan Modul
+            'assets.view' => 'Lihat Master Register Aset Tetap',
+            'assets.create' => 'Tambah Data Aset Tetap Baru',
+            'assets.edit' => 'Edit Data Aset Tetap',
+            'assets.delete' => 'Hapus Data Aset Tetap',
+            'assets.depreciate' => 'Eksekusi & Posting Penyusutan Aset Tetap',
+
             // Master Pengaturan Modul
             'settings.view' => 'Lihat Pengaturan System',
             'settings.company' => 'Kelola Branding & Pengaturan Perusahaan',
@@ -95,6 +102,7 @@ class RoleAndPermissionSeeder extends Seeder
             'reports.balance_sheet', 'reports.profit_loss', 'reports.cash_flow', 'reports.opening_balance',
             'reports.changes_in_equity', 'reports.view', 'reports.export',
             'reconciliation.view', 'reconciliation.manage', 'reconciliation.upload',
+            'assets.view', 'assets.create', 'assets.edit', 'assets.delete', 'assets.depreciate',
             'settings.view', 'settings.units', 'settings.journal_types', 'settings.templates', 'settings.manage',
         ]);
 

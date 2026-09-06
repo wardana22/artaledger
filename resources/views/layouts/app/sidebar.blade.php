@@ -47,6 +47,11 @@
                                 {{ __('Rekonsiliasi Bank') }}
                             </flux:sidebar.item>
                         @endif
+                        @if (auth()->user()?->can('assets.view') || auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="building-office-2" :href="route('accounting.fixed-assets.index')" :current="request()->routeIs('accounting.fixed-assets.*')" wire:navigate>
+                                {{ __('Aset Tetap & Depresiasi') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
 
                     <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />

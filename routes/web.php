@@ -28,6 +28,8 @@ Route::get('/', function () {
 use App\Http\Controllers\BankReconciliationPdfController;
 use App\Http\Controllers\FinancialReportPdfController;
 use App\Livewire\Accounting\Accounts\AccountGroupIndex;
+use App\Livewire\Accounting\Assets\DepreciationRun;
+use App\Livewire\Accounting\Assets\FixedAssetIndex;
 use App\Livewire\Accounting\Import\JournalImportWizard;
 use App\Livewire\Accounting\Journals\JournalTemplateIndex;
 use App\Livewire\Accounting\OpeningBalance\OpeningBalanceIndex;
@@ -72,6 +74,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/accounting/reconciliation', BankReconciliationIndex::class)->name('accounting.reconciliation.index');
     Route::get('/accounting/reconciliation/{statement}', BankReconciliationDetail::class)->name('accounting.reconciliation.detail');
     Route::get('/accounting/reconciliation/{statement}/pdf', [BankReconciliationPdfController::class, 'export'])->name('accounting.reconciliation.pdf');
+
+    // Fixed Assets & Depreciation
+    Route::get('/accounting/fixed-assets', FixedAssetIndex::class)->name('accounting.fixed-assets.index');
+    Route::get('/accounting/fixed-assets/depreciation', DepreciationRun::class)->name('accounting.fixed-assets.depreciation');
 
     // Reports
     Route::get('/accounting/reports/general-ledger', GeneralLedger::class)->name('accounting.reports.general-ledger');

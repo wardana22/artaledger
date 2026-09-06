@@ -1,0 +1,554 @@
+<div class="space-y-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2 text-xs text-slate-500 mb-1">
+                <span>Akuntansi</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <span class="text-indigo-600 dark:text-indigo-400 font-medium">Aset Tetap</span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <svg class="w-7 h-7 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                Register Aset Tetap & Amortisasi
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                Pengelolaan inventaris aset berwujud, nilai buku, dan jadwal depresiasi garis lurus (Straight-Line).
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ route('accounting.fixed-assets.depreciation') }}" 
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold text-sm hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all shadow-sm">
+                <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Eksekusi Penyusutan Bulanan
+            </a>
+
+            <button wire:click="openCreateModal" 
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Tambah Aset Tetap
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Flash Notifications -->
+    @if (session()->has('success'))
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm">
+            <svg class="w-5 h-5 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span class="font-medium">{{ session('success') }}</span>
+        </div>
+    @endif
+    @if (session()->has('error'))
+        <div class="flex items-center gap-3 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-sm">
+            <svg class="w-5 h-5 flex-shrink-0 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <span class="font-medium">{{ session('error') }}</span>
+        </div>
+    @endif
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Perolehan -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Harga Perolehan</span>
+                <span class="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold text-slate-900 dark:text-white font-mono">
+                    Rp {{ number_format($totalCost, 0, ',', '.') }}
+                </div>
+                <div class="text-xs text-slate-400 mt-1">Nilai bruto seluruh aset terdaftar</div>
+            </div>
+        </div>
+
+        <!-- Akumulasi Penyusutan -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Akumulasi Penyusutan</span>
+                <span class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold text-amber-600 dark:text-amber-400 font-mono">
+                    Rp {{ number_format($totalAccum, 0, ',', '.') }}
+                </div>
+                <div class="text-xs text-slate-400 mt-1">Total beban yang telah dibukukan</div>
+            </div>
+        </div>
+
+        <!-- Nilai Buku Bersih (Net Book Value) -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nilai Buku Bersih (NBV)</span>
+                <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                    Rp {{ number_format($totalBookValue, 0, ',', '.') }}
+                </div>
+                <div class="text-xs text-slate-400 mt-1">Nilai tercatat di Laporan Neraca</div>
+            </div>
+        </div>
+
+        <!-- Total Aset Aktif -->
+        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Aset Aktif Disusutkan</span>
+                <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                </span>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+                    {{ $totalActive }} <span class="text-sm font-normal text-slate-500">Unit</span>
+                </div>
+                <div class="text-xs text-slate-400 mt-1">Aset dengan masa manfaat berjalan</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <!-- Search -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input type="text" wire:model.live.debounce.300ms="search" 
+                       placeholder="Cari kode, nama aset, PIC..." 
+                       class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none">
+            </div>
+
+            <!-- Kategori -->
+            <div>
+                <select wire:model.live="selectedCategoryId" 
+                        class="w-full py-2 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="">Semua Kategori Aset</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Unit -->
+            <div>
+                <select wire:model.live="selectedUnitId" 
+                        class="w-full py-2 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="">Semua Unit Kerja</option>
+                    @foreach($units as $unit)
+                        <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <select wire:model.live="selectedStatus" 
+                        class="w-full py-2 px-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="">Semua Status</option>
+                    <option value="active">Aktif Disusutkan</option>
+                    <option value="fully_depreciated">Habis Disusutkan</option>
+                    <option value="disposed">Dilepas / Dijual</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                        <th class="py-3.5 px-4">Kode & Nama Aset</th>
+                        <th class="py-3.5 px-4">Kategori & Unit</th>
+                        <th class="py-3.5 px-4">Tgl Perolehan</th>
+                        <th class="py-3.5 px-4 text-right">Harga Perolehan</th>
+                        <th class="py-3.5 px-4 text-right">Beban / Bln</th>
+                        <th class="py-3.5 px-4 text-right">Akumulasi Susut</th>
+                        <th class="py-3.5 px-4 text-right">Nilai Buku</th>
+                        <th class="py-3.5 px-4 text-center">Status</th>
+                        <th class="py-3.5 px-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+                    @forelse($assets as $asset)
+                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                            <td class="py-3.5 px-4">
+                                <div class="font-semibold text-slate-900 dark:text-white">{{ $asset->name }}</div>
+                                <div class="font-mono text-xs text-indigo-600 dark:text-indigo-400">{{ $asset->asset_code }}</div>
+                                @if($asset->location)
+                                    <div class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                                        {{ $asset->location }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                    {{ $asset->category->name }}
+                                </span>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    {{ $asset->unit->name }} ({{ $asset->unit->code }})
+                                </div>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                                <div>{{ $asset->acquisition_date->format('d/m/Y') }}</div>
+                                <div class="text-xs text-slate-400">{{ $asset->useful_life_months }} bln ({{ round($asset->useful_life_months / 12, 1) }} thn)</div>
+                            </td>
+                            <td class="py-3.5 px-4 text-right font-mono font-medium text-slate-900 dark:text-white">
+                                Rp {{ number_format($asset->acquisition_cost, 0, ',', '.') }}
+                            </td>
+                            <td class="py-3.5 px-4 text-right font-mono text-xs text-slate-600 dark:text-slate-400">
+                                Rp {{ number_format($asset->monthly_depreciation_amount, 0, ',', '.') }}
+                            </td>
+                            <td class="py-3.5 px-4 text-right font-mono text-amber-600 dark:text-amber-400 font-medium">
+                                Rp {{ number_format($asset->accumulated_depreciation, 0, ',', '.') }}
+                            </td>
+                            <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                Rp {{ number_format($asset->book_value, 0, ',', '.') }}
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                @if($asset->status === 'active')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Aktif
+                                    </span>
+                                @elseif($asset->status === 'fully_depreciated')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
+                                        Habis Susut
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                        Dilepas
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="py-3.5 px-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <!-- Tombol Jadwal -->
+                                    <button wire:click="viewSchedule({{ $asset->id }})" 
+                                            title="Lihat Jadwal Amortisasi"
+                                            class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </button>
+
+                                    <!-- Tombol Edit -->
+                                    <button wire:click="openEditModal({{ $asset->id }})" 
+                                            title="Edit Data Aset"
+                                            class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    </button>
+
+                                    <!-- Tombol Hapus -->
+                                    <button wire:click="deleteAsset({{ $asset->id }})" 
+                                            wire:confirm="Yakin ingin menghapus aset ini? Pastikan belum ada transaksi jurnal penyusutan."
+                                            title="Hapus Aset"
+                                            class="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="py-12 text-center text-slate-400">
+                                <svg class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                <p class="text-base font-semibold text-slate-600 dark:text-slate-300">Belum Ada Aset Tetap Terdaftar</p>
+                                <p class="text-xs text-slate-400 mt-1">Daftarkan inventaris aset tetap perusahaan untuk memulai kalkulasi amortisasi otomatis.</p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($assets->hasPages())
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+                {{ $assets->links() }}
+            </div>
+        @endif
+    </div>
+
+    <!-- Modal Form Tambah / Edit Aset -->
+    @if($showAssetModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" wire:click="$set('showAssetModal', false)"></div>
+
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white dark:bg-slate-900 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-slate-200 dark:border-slate-800">
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            {{ $editingAssetId ? 'Edit Data Aset Tetap' : 'Daftarkan Aset Tetap Baru' }}
+                        </h3>
+                        <button wire:click="$set('showAssetModal', false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <form wire:submit.prevent="saveAsset">
+                        <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                            <!-- Unit & Kategori -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Unit Kerja *</label>
+                                    <select wire:model="unit_id" class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                        @foreach($units as $unit)
+                                            <option value="{{ $unit->id }}">{{ $unit->name }} ({{ $unit->code }})</option>
+                                        @endforeach
+                                    </select>
+                                    @error('unit_id') <span class="text-xs text-rose-500 mt-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Kategori Aset *</label>
+                                    <select wire:model.live="asset_category_id" class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">-- Pilih Kategori --</option>
+                                        @foreach($categories as $cat)
+                                            <option value="{{ $cat->id }}">{{ $cat->name }} ({{ $cat->useful_life_years }} thn)</option>
+                                        @endforeach
+                                    </select>
+                                    @error('asset_category_id') <span class="text-xs text-rose-500 mt-1">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <!-- Nama & Kode -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="sm:col-span-2">
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nama Aset *</label>
+                                    <input type="text" wire:model="name" placeholder="Contoh: Toyota Hilux 2.4 G M/T" 
+                                           class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    @error('name') <span class="text-xs text-rose-500 mt-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Kode Aset (Opsional)</label>
+                                    <input type="text" wire:model="asset_code" placeholder="Otomatis jika kosong" 
+                                           class="w-full text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- Tanggal Perolehan & Mulai Penyusutan -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Tanggal Perolehan *</label>
+                                    <input type="date" wire:model="acquisition_date" 
+                                           class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    @error('acquisition_date') <span class="text-xs text-rose-500 mt-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Mulai Disusutkan *</label>
+                                    <input type="date" wire:model="start_depreciation_date" 
+                                           class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    @error('start_depreciation_date') <span class="text-xs text-rose-500 mt-1">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <!-- Harga Perolehan, Residu, Masa Manfaat -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Harga Perolehan (Rp) *</label>
+                                    <input type="number" step="any" wire:model.live="acquisition_cost" 
+                                           class="w-full text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    @error('acquisition_cost') <span class="text-xs text-rose-500 mt-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Nilai Residu (Rp)</label>
+                                    <input type="number" step="any" wire:model.live="salvage_value" 
+                                           class="w-full text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Masa Manfaat (Bulan) *</label>
+                                    <input type="number" wire:model.live="useful_life_months" 
+                                           class="w-full text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                    @error('useful_life_months') <span class="text-xs text-rose-500 mt-1">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <!-- Live Calculation Banner -->
+                            <div class="p-3.5 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="p-2 rounded-lg bg-indigo-600 text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-semibold text-indigo-900 dark:text-indigo-300">Estimasi Beban Garis Lurus:</div>
+                                        <div class="text-xs text-indigo-600 dark:text-indigo-400">Formula: (Harga Perolehan - Residu) / Masa Manfaat Bulan</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold font-mono text-indigo-700 dark:text-indigo-300">
+                                        Rp {{ number_format($this->estimatedMonthly, 0, ',', '.') }}
+                                    </div>
+                                    <div class="text-[11px] text-slate-500">per bulan</div>
+                                </div>
+                            </div>
+
+                            <!-- Lokasi, PIC, Serial Number -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Lokasi Fisik</label>
+                                    <input type="text" wire:model="location" placeholder="e.g. Kantor Lt. 2" 
+                                           class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Penanggung Jawab (PIC)</label>
+                                    <input type="text" wire:model="person_in_charge" placeholder="e.g. Budi Santoso" 
+                                           class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">No. Seri / Rangka</label>
+                                    <input type="text" wire:model="serial_number" placeholder="e.g. MH1JM..." 
+                                           class="w-full text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- Catatan -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Catatan Tambahan</label>
+                                <textarea wire:model="notes" rows="2" placeholder="Keterangan spesifikasi teknis, kondisi fisik, dll..."
+                                          class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-end gap-3">
+                            <button type="button" wire:click="$set('showAssetModal', false)" 
+                                    class="px-4 py-2 text-sm font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                                Batal
+                            </button>
+                            <button type="submit" 
+                                    class="px-5 py-2 text-sm font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/20 transition-all">
+                                {{ $editingAssetId ? 'Simpan Perubahan' : 'Daftarkan Aset' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Jadwal Amortisasi Penyusutan (Amortization Schedule) -->
+    @if($showScheduleModal && $selectedAssetForSchedule)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-schedule" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" wire:click="closeScheduleModal"></div>
+
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div class="inline-block align-bottom bg-white dark:bg-slate-900 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-slate-200 dark:border-slate-800">
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Jadwal Penyusutan Garis Lurus (Straight-Line)
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {{ $selectedAssetForSchedule->name }} ({{ $selectedAssetForSchedule->asset_code }})
+                            </p>
+                        </div>
+                        <button wire:click="closeScheduleModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Summary Info Box -->
+                    <div class="p-6 bg-slate-50/75 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                        <div>
+                            <span class="text-slate-400 block">Harga Perolehan:</span>
+                            <span class="font-bold font-mono text-slate-900 dark:text-white text-sm">Rp {{ number_format($selectedAssetForSchedule->acquisition_cost, 0, ',', '.') }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">Nilai Residu:</span>
+                            <span class="font-bold font-mono text-slate-900 dark:text-white text-sm">Rp {{ number_format($selectedAssetForSchedule->salvage_value, 0, ',', '.') }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">Masa Manfaat:</span>
+                            <span class="font-bold text-slate-900 dark:text-white text-sm">{{ $selectedAssetForSchedule->useful_life_months }} Bulan</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">Sisa Nilai Buku:</span>
+                            <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm">Rp {{ number_format($selectedAssetForSchedule->book_value, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Table -->
+                    <div class="p-6 max-h-[60vh] overflow-y-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                                    <th class="py-2.5 px-3">Bulan</th>
+                                    <th class="py-2.5 px-3">Periode</th>
+                                    <th class="py-2.5 px-3 text-right">Beban Depresiasi</th>
+                                    <th class="py-2.5 px-3 text-right">Akumulasi Susut</th>
+                                    <th class="py-2.5 px-3 text-right">Nilai Buku</th>
+                                    <th class="py-2.5 px-3 text-center">Status Jurnal</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @forelse($scheduleData as $row)
+                                    <tr class="{{ $row['is_posted'] ? 'bg-emerald-50/40 dark:bg-emerald-950/20' : '' }}">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">#{{ $row['month_no'] }}</td>
+                                        <td class="py-2.5 px-3 font-mono text-slate-900 dark:text-white">{{ $row['period'] }}</td>
+                                        <td class="py-2.5 px-3 text-right font-mono text-slate-900 dark:text-white font-medium">
+                                            Rp {{ number_format($row['depreciation_amount'], 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-2.5 px-3 text-right font-mono text-amber-600 dark:text-amber-400">
+                                            Rp {{ number_format($row['accumulated_depreciation'], 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                            Rp {{ number_format($row['book_value'], 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-2.5 px-3 text-center">
+                                            @if($row['is_posted'])
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300">
+                                                    ✓ Terposting
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                                    Rencana
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="py-6 text-center text-slate-400">
+                                            Aset ini tidak memiliki jadwal penyusutan (non-depreciable).
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex justify-end">
+                        <button type="button" wire:click="closeScheduleModal" 
+                                class="px-4 py-2 text-sm font-semibold rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
