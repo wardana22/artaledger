@@ -13,4 +13,7 @@ Skill ini menyediakan kerangka kerja kontrol rekayasa sistem (*Engineering Contr
 2. **Test**: Siapkan test suite atau verifikasi kasus uji awal.
 3. **Implement**: Eksekusi penulisan kode atau konfigurasi secara presisi.
 4. **Review**: Lakukan linting (`pint`) dan analisis kode.
-5. **Verify & Local Commit Only**: Pastikan seluruh test passed dan lakukan komit lokal. **DILARANG MERGE ke `main` atau melakukan `git push` ke GitHub sebelum mendapatkan PERINTAH / INSTRUKSI EKSPLISIT DARI PENGGUNA**.
+5. **Graphify Sync, Verify & Local Commit Only**:
+   - **Sinkronisasi Knowledge Graph**: Pastikan berkas [docs/KNOWLEDGE_GRAPH.md](file:///d:/Belajar%20Laravel/artaledger/docs/KNOWLEDGE_GRAPH.md) telah diperbarui dengan rute, controller, service, model, atau test baru.
+   - **Verifikasi**: Pastikan seluruh test Pest PHP passed.
+   - **Komit Lokal**: Lakukan komit lokal pada branch fitur/topik. **SEKALI-KALI DILARANG MERGE ke `main` atau melakukan `git push` ke GitHub sebelum mendapatkan PERINTAH / INSTRUKSI EKSPLISIT DARI PENGGUNA**.

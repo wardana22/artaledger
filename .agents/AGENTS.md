@@ -35,3 +35,7 @@ Dokumen ini mendefinisikan aturan dan alur kerja utama bagi AI Agen yang beroper
 7. **Isolated Topic Branching & Controlled Push Strategy (Manajemen Branch & Push Terkontrol)**
    - **Pembuatan Branch Baru**: Setiap kali mengerjakan topik/fitur baru di luar konteks branch saat ini, agen WAJIB membuat Git branch baru yang spesifik (contoh: `feature/update-dashboard`, `fix/journal-validation`, `feature/accounting-report`).
    - **HANYA PUSH & MERGE ATAS PERINTAH PENGGUNA**: Agen diperbolehkan melakukan komit lokal pada branch fitur tersebut, namun **SEKALI-KALI DILARANG MELEKUKAN `git push` ATAU `git merge` KE BRANCH `main` SEBELUM ADA PERINTAH/INSTRUKSI EKSPLISIT DARI PENGGUNA**.
+
+8. **Mandatory Knowledge Graph Sync (Sinkronisasi Graphify Wajib pada Setiap Pembaruan)**
+   - Setiap kali terjadi penambahan atau perubahan rute (`routes/`), komponen Livewire, Controller, Service Layer (`app/Domain/` atau `app/Services/`), Model Eloquent (`app/Models/`), tabel migrasi, atau suite pengujian Pest PHP (`tests/`), agen **WAJIB** memperbarui diagram DAG Mermaid dan daftar rincian berkas pada `docs/KNOWLEDGE_GRAPH.md` sebelum melakukan komit lokal atau menyelesaikan sesi tugas.
+   - Basis kode dan dokumentasi arsitektur Graphify harus selalu sinkron 100% tanpa ada komponen baru yang terlewat.

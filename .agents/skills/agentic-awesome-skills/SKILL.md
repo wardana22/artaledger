@@ -14,3 +14,4 @@ Skill ini menyediakan pedoman eksekusi agen terpusat untuk proyek **ArtaLedger**
 3. **Pemberitahuan & Verifikasi**: Selalu jalankan uji coba setelah mengubah kode PHP atau skema database.
 4. **AgentShield**: Proteksi kredensial dan integritas sistem.
 5. **Project Skill Mandatory Check**: Wajib membaca dan menerapkan instruksi dari folder `.agents/skills/` (seperti `ui-ux-pro-max`, `code-quality-and-testing`, `ecc-agent-toolkit`) sebelum mengimplementasikan fitur.
+6. **Knowledge Graph Auto-Sync**: Wajib memutakhirkan berkas [docs/KNOWLEDGE_GRAPH.md](file:///d:/Belajar%20Laravel/artaledger/docs/KNOWLEDGE_GRAPH.md) setiap kali terdapat perubahan arsitektur (rute, controller, service, model, migration, test) sebelum komit.
