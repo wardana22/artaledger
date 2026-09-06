@@ -10,8 +10,8 @@
                 $appName = $company?->app_name ?? config('app.name', 'ArtaLedger');
             @endphp
             <flux:sidebar.header class="flex items-center gap-2.5 px-3 py-2">
-                <x-app-logo href="{{ route('accounting.accounts.index') }}" wire:navigate />
-                <a href="{{ route('accounting.accounts.index') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight">
+                <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
+                <a href="{{ route('dashboard') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight">
                     <span class="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ $appName }}</span>
                     <span class="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ $company?->name ?? 'PT Arta Ledger' }}</span>
                 </a>
