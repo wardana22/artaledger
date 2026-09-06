@@ -296,7 +296,7 @@ class BankReconciliationDetail extends Component
 
         // Kueri Dasar Buku Besar: Jurnal posted untuk akun ini yang berada di periode berjalan ATAU belum direkonsiliasi (lintas periode sebelum & sesudah)
         $baseBookQuery = JournalLine::with(['journalEntry', 'unit'])
-            ->where('account_id', $this->statement->account_id)
+            ->where('journal_lines.account_id', $this->statement->account_id)
             ->whereHas('journalEntry', function ($q) {
                 $q->where('status', 'posted');
             })
@@ -318,9 +318,9 @@ class BankReconciliationDetail extends Component
         if (! empty($this->bookSearch)) {
             $bs = '%'.$this->bookSearch.'%';
             $filterAppliedQuery->where(function ($q) use ($bs) {
-                $q->where('description', 'like', $bs)
-                    ->orWhere('debit', 'like', $bs)
-                    ->orWhere('credit', 'like', $bs)
+                $q->where('journal_lines.description', 'like', $bs)
+                    ->orWhere('journal_lines.debit', 'like', $bs)
+                    ->orWhere('journal_lines.credit', 'like', $bs)
                     ->orWhereHas('journalEntry', function ($sub) use ($bs) {
                         $sub->where('entry_number', 'like', $bs)
                             ->orWhere('document_number', 'like', $bs)

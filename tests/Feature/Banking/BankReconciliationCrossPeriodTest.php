@@ -208,3 +208,30 @@ test('unreconciled journal from subsequent month appears with Periode Sesudah ba
     $janBankLine->refresh();
     expect($janBankLine->match_status)->toBe('manual_matched');
 });
+
+test('searching book lines with keyword does not fail with ambiguous column error and filters results correctly', function () {
+    $entry = JournalEntry::create([
+        'company_id' => $this->company->id,
+        'entry_number' => 'BM-2025-001',
+        'entry_date' => '2025-01-15',
+        'description' => 'Bukti Bank Masuk Dari Pelanggan',
+        'status' => 'posted',
+    ]);
+
+    $line = JournalLine::create([
+        'journal_entry_id' => $entry->id,
+        'account_id' => $this->bankAccount->id,
+        'unit_id' => $this->unit->id,
+        'debit' => 2500000.00,
+        'credit' => 0,
+        'description' => 'Penerimaan Kas BM BM-2025-001',
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test(BankReconciliationDetail::class, ['statement' => $this->statement])
+        ->set('bookSearch', 'BM')
+        ->assertSee('BM-2025-001')
+        ->assertSee('2.500.000,00')
+        ->set('bookSearch', 'NONEXISTENTSTRING')
+        ->assertDontSee('BM-2025-001');
+});
