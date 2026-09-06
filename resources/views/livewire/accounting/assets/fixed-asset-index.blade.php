@@ -894,43 +894,42 @@
 
                 {{-- Label Preview --}}
                 <div class="p-5">
-                    <div id="print-single-label" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-3 bg-white max-w-sm mx-auto shadow-sm">
+                    <div id="print-single-label" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-3.5 bg-white max-w-sm mx-auto shadow-sm">
                         {{-- Label Card --}}
                         <div id="print-single-label-card" class="label-card-single font-sans text-slate-900" style="width: 100%; box-sizing: border-box;">
                             {{-- Header Branding --}}
-                            <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1.5 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 6px;">
-                                <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 6px;">
-                                    <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 8px; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px;">ARTA</span>
-                                    <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 11pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
+                            <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
+                                <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px;">
+                                    <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px;">ARTA</span>
+                                    <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 10pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
                                 </div>
-                                <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 7.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 2px 6px; border-radius: 3px; border: 1px solid #e2e8f0;">ASET TETAP</span>
+                                <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 6.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 1.5px 5px; border-radius: 2px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                             </div>
 
-                            {{-- Asset Info --}}
-                            <div class="mb-2" style="margin-bottom: 6px;">
-                                <div class="font-mono font-black text-base text-slate-900 tracking-wider leading-none" style="font-family: monospace; font-weight: 900; font-size: 12pt; color: #0f172a; letter-spacing: 0.5px; line-height: 1.1;">{{ $labelAssetData['code'] ?? '' }}</div>
-                                <div class="font-bold text-slate-800 text-xs leading-snug mt-1 truncate" style="font-weight: 700; font-size: 9pt; color: #1e293b; line-height: 1.25; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $labelAssetData['name'] ?? '' }}</div>
-                                <div class="text-[10px] text-slate-500 mt-0.5" style="font-size: 7.5pt; color: #64748b; margin-top: 1px;">{{ $labelAssetData['category'] ?? '' }} &bull; {{ $labelAssetData['unit'] ?? '' }}</div>
+                            {{-- Middle Section: QR Code on Left, Info on Right --}}
+                            <div class="flex items-start gap-2.5 mb-2" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                {{-- QR Code --}}
+                                <div class="flex flex-col items-center flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                                    <div id="qr-single" style="width: 58px; height: 58px;"></div>
+                                    <span class="text-[8px] font-bold text-slate-500 uppercase mt-0.5" style="font-size: 5.5pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
+                                </div>
+
+                                {{-- Details --}}
+                                <div class="flex-1 min-w-0" style="flex: 1; min-width: 0;">
+                                    <div class="font-mono font-black text-sm text-slate-900 tracking-wider leading-none" style="font-family: monospace; font-weight: 900; font-size: 10pt; color: #0f172a; line-height: 1.1; letter-spacing: 0.3px;">{{ $labelAssetData['code'] ?? '' }}</div>
+                                    <div class="font-bold text-slate-800 text-xs leading-tight mt-1 truncate" style="font-weight: 700; font-size: 8pt; color: #1e293b; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $labelAssetData['name'] ?? '' }}</div>
+                                    <div class="text-[10px] text-slate-500 mt-0.5 truncate" style="font-size: 6.5pt; color: #64748b; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $labelAssetData['category'] ?? '' }} &bull; {{ $labelAssetData['unit'] ?? '' }}</div>
+
+                                    <div class="mt-1.5 pt-1 border-t border-slate-100 text-[10px] text-slate-600 leading-snug" style="margin-top: 3px; padding-top: 2px; border-top: 1px solid #f1f5f9; font-size: 6.5pt; line-height: 1.3; color: #334155;">
+                                        <div><span style="color: #94a3b8;">Lok:</span> <strong style="color: #1e293b;">{{ $labelAssetData['location'] ?? '-' }}</strong> &bull; <span style="color: #94a3b8;">PIC:</span> <strong style="color: #1e293b;">{{ $labelAssetData['pic'] ?? '-' }}</strong></div>
+                                        <div><span style="color: #94a3b8;">S/N:</span> <strong style="color: #1e293b;">{{ $labelAssetData['serial'] ?? '-' }}</strong> &bull; <span style="color: #94a3b8;">Tgl:</span> <strong style="color: #1e293b;">{{ $labelAssetData['acquisition'] ?? '-' }}</strong></div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {{-- Meta Table --}}
-                            <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] mb-2 p-1.5 bg-slate-50 rounded border border-slate-100 text-slate-700" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-size: 7pt; color: #334155; margin-bottom: 6px; padding: 3px 6px; background-color: #f8fafc; border-radius: 4px; border: 1px solid #e2e8f0;">
-                                <div><span style="color: #94a3b8;">Lokasi:</span> <strong style="color: #1e293b;">{{ $labelAssetData['location'] ?? '-' }}</strong></div>
-                                <div><span style="color: #94a3b8;">S/N:</span> <strong style="color: #1e293b;">{{ $labelAssetData['serial'] ?? '-' }}</strong></div>
-                                <div><span style="color: #94a3b8;">PIC:</span> <strong style="color: #1e293b;">{{ $labelAssetData['pic'] ?? '-' }}</strong></div>
-                                <div><span style="color: #94a3b8;">Tgl Perolehan:</span> <strong style="color: #1e293b;">{{ $labelAssetData['acquisition'] ?? '-' }}</strong></div>
-                            </div>
-
-                            {{-- Barcodes Section --}}
-                            <div class="flex items-end justify-between gap-3 pt-2 border-t border-slate-200 mt-auto" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; border-top: 1px solid #cbd5e1; padding-top: 4px; margin-top: 4px;">
-                                <div class="flex flex-col items-center gap-0.5 flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
-                                    <div id="qr-single" style="width: 68px; height: 68px;"></div>
-                                    <span class="text-[8px] font-bold tracking-wider text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px;">Scan Info</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-0.5 flex-1 min-w-0 overflow-hidden" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; overflow: hidden;">
-                                    <svg id="barcode-single" style="width: 100%; max-height: 40px; display: block;"></svg>
-                                    <span class="text-[8px] font-bold tracking-wider text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Kode Aset</span>
-                                </div>
+                            {{-- Bottom Section: Full Width 1D Barcode --}}
+                            <div class="pt-1.5 border-t border-slate-200 text-center" style="border-top: 1px solid #cbd5e1; padding-top: 2px; margin-top: auto; text-align: center;">
+                                <svg id="barcode-single" style="width: 100%; max-height: 30px; display: block; margin: 0 auto;"></svg>
                             </div>
                         </div>
                     </div>
@@ -1034,9 +1033,9 @@
                                     <div class="batch-cat text-slate-500 text-[8px] mb-1 truncate" style="font-size: 6pt; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['category'] }}</div>
                                     {{-- Barcodes --}}
                                     <div class="flex items-end gap-1.5 pt-1 border-t border-slate-200 mt-auto" style="display: flex; align-items: flex-end; gap: 4px; border-top: 1px solid #e2e8f0; padding-top: 2px; margin-top: auto;">
-                                        <div id="qr-batch-a4-{{ $idx }}" class="w-[44px] h-[44px] flex-shrink-0" style="width: 44px; height: 44px; flex-shrink: 0;"></div>
+                                        <div id="qr-batch-a4-{{ $idx }}" class="w-[42px] h-[42px] flex-shrink-0" style="width: 42px; height: 42px; flex-shrink: 0;"></div>
                                         <div class="flex-1 overflow-hidden" style="flex: 1; min-width: 0; overflow: hidden;">
-                                            <svg id="barcode-batch-a4-{{ $idx }}" style="width: 100%; max-height: 26px; display: block;"></svg>
+                                            <svg id="barcode-batch-a4-{{ $idx }}" style="width: 100%; max-height: 24px; display: block;"></svg>
                                         </div>
                                     </div>
                                 </div>
@@ -1048,38 +1047,38 @@
                             @foreach($batchLabelData as $idx => $item)
                                 <div class="thermal-batch-card w-full max-w-sm border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white text-slate-900 font-sans shadow-sm" style="box-sizing: border-box;">
                                     {{-- Header Logo --}}
-                                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1.5 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 6px;">
-                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 6px;">
-                                            <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 8px; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px;">ARTA</span>
-                                            <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 11pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
+                                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
+                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px;">
+                                            <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px;">ARTA</span>
+                                            <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 10pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
                                         </div>
-                                        <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 7.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 2px 6px; border-radius: 3px; border: 1px solid #e2e8f0;">ASET TETAP</span>
+                                        <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 6.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 1.5px 5px; border-radius: 2px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                                     </div>
 
-                                    {{-- Info --}}
-                                    <div class="mb-2" style="margin-bottom: 5px;">
-                                        <div class="font-mono font-black text-sm text-slate-900 tracking-wider leading-none" style="font-family: monospace; font-weight: 900; font-size: 11pt; color: #0f172a; line-height: 1.1;">{{ $item['code'] }}</div>
-                                        <div class="font-bold text-slate-800 text-xs leading-tight truncate mt-1" style="font-weight: 700; font-size: 8.5pt; color: #1e293b; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['name'] }}</div>
-                                        <div class="text-[10px] text-slate-500 mt-0.5" style="font-size: 7pt; color: #64748b; margin-top: 1px;">{{ $item['category'] }} &bull; {{ $item['unit'] }}</div>
+                                    {{-- Middle: QR Code on Left, Info on Right --}}
+                                    <div class="flex items-start gap-2.5 mb-2" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                        {{-- QR Code --}}
+                                        <div class="flex flex-col items-center flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                                            <div id="qr-batch-th-{{ $idx }}" style="width: 58px; height: 58px;"></div>
+                                            <span class="text-[8px] font-bold text-slate-500 uppercase mt-0.5" style="font-size: 5.5pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
+                                        </div>
+
+                                        {{-- Details --}}
+                                        <div class="flex-1 min-w-0" style="flex: 1; min-width: 0;">
+                                            <div class="font-mono font-black text-sm text-slate-900 tracking-wider leading-none" style="font-family: monospace; font-weight: 900; font-size: 10pt; color: #0f172a; line-height: 1.1; letter-spacing: 0.3px;">{{ $item['code'] }}</div>
+                                            <div class="font-bold text-slate-800 text-xs leading-tight mt-1 truncate" style="font-weight: 700; font-size: 8pt; color: #1e293b; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['name'] }}</div>
+                                            <div class="text-[10px] text-slate-500 mt-0.5 truncate" style="font-size: 6.5pt; color: #64748b; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['category'] }} &bull; {{ $item['unit'] }}</div>
+
+                                            <div class="mt-1.5 pt-1 border-t border-slate-100 text-[10px] text-slate-600 leading-snug" style="margin-top: 3px; padding-top: 2px; border-top: 1px solid #f1f5f9; font-size: 6.5pt; line-height: 1.3; color: #334155;">
+                                                <div><span style="color: #94a3b8;">Lok:</span> <strong style="color: #1e293b;">{{ $item['location'] }}</strong> &bull; <span style="color: #94a3b8;">PIC:</span> <strong style="color: #1e293b;">{{ $item['pic'] ?? '-' }}</strong></div>
+                                                <div><span style="color: #94a3b8;">S/N:</span> <strong style="color: #1e293b;">{{ $item['serial'] }}</strong> &bull; <span style="color: #94a3b8;">Tgl:</span> <strong style="color: #1e293b;">{{ $item['acquisition'] ?? '-' }}</strong></div>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] mb-2 p-1.5 bg-slate-50 rounded border border-slate-100 text-slate-700" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-size: 7pt; color: #334155; margin-bottom: 5px; padding: 3px 6px; background-color: #f8fafc; border-radius: 4px; border: 1px solid #e2e8f0;">
-                                        <div><span style="color: #94a3b8;">Lokasi:</span> <strong style="color: #1e293b;">{{ $item['location'] }}</strong></div>
-                                        <div><span style="color: #94a3b8;">S/N:</span> <strong style="color: #1e293b;">{{ $item['serial'] }}</strong></div>
-                                        <div><span style="color: #94a3b8;">PIC:</span> <strong style="color: #1e293b;">{{ $item['pic'] ?? '-' }}</strong></div>
-                                        <div><span style="color: #94a3b8;">Tgl:</span> <strong style="color: #1e293b;">{{ $item['acquisition'] ?? '-' }}</strong></div>
-                                    </div>
-
-                                    {{-- Barcodes --}}
-                                    <div class="flex items-end justify-between gap-2 pt-1.5 border-t border-slate-200 mt-auto" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; border-top: 1px solid #cbd5e1; padding-top: 4px; margin-top: auto;">
-                                        <div class="flex flex-col items-center gap-0.5 flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
-                                            <div id="qr-batch-th-{{ $idx }}" style="width: 65px; height: 65px;"></div>
-                                            <span class="text-[8px] font-bold text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
-                                        </div>
-                                        <div class="flex flex-col items-center gap-0.5 flex-1 min-w-0 overflow-hidden" style="display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; overflow: hidden;">
-                                            <svg id="barcode-batch-th-{{ $idx }}" style="width: 100%; max-height: 38px; display: block;"></svg>
-                                            <span class="text-[8px] font-bold text-slate-500 uppercase" style="font-size: 6pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Kode Aset</span>
-                                        </div>
+                                    {{-- Bottom Section: Full Width 1D Barcode --}}
+                                    <div class="pt-1.5 border-t border-slate-200 text-center" style="border-top: 1px solid #cbd5e1; padding-top: 2px; margin-top: auto; text-align: center;">
+                                        <svg id="barcode-batch-th-{{ $idx }}" style="width: 100%; max-height: 30px; display: block; margin: 0 auto;"></svg>
                                     </div>
                                 </div>
                             @endforeach
@@ -1172,7 +1171,7 @@
                 pageRule = `
                     @page {
                         size: A4 portrait;
-                        margin: ${targetType === 'single' ? '12mm 15mm' : '8mm 6mm'};
+                        margin: ${targetType === 'single' ? '10mm 12mm' : '8mm 6mm'};
                     }
                     html, body {
                         width: 195mm;
@@ -1220,21 +1219,20 @@
                     box-sizing: border-box;
                 }
 
-                /* Single Sticker Card Dimension */
+                /* Single Sticker Card Dimension (80x50 mm) */
                 .sticker-card {
-                    width: 77mm !important;
-                    height: 47mm !important;
-                    max-width: 77mm !important;
-                    max-height: 47mm !important;
+                    width: 80mm !important;
+                    min-height: 50mm !important;
+                    max-width: 80mm !important;
                     box-sizing: border-box !important;
                     border: 1.5px dashed #475569 !important;
                     border-radius: 4px !important;
-                    padding: 2mm 2.5mm !important;
+                    padding: 2.5mm 3.5mm !important;
                     background: #ffffff !important;
                     display: flex !important;
                     flex-direction: column !important;
                     justify-content: space-between !important;
-                    overflow: hidden !important;
+                    overflow: visible !important;
                 }
 
                 /* Batch A4 Grid Layout */
@@ -1262,7 +1260,7 @@
                     display: flex !important;
                     flex-direction: column !important;
                     justify-content: space-between !important;
-                    overflow: hidden !important;
+                    overflow: visible !important;
                     page-break-inside: avoid !important;
                     break-inside: avoid !important;
                 }
@@ -1270,9 +1268,8 @@
                 /* Batch Thermal Roll Continuous Layout */
                 .thermal-batch-card {
                     width: 77mm !important;
-                    height: 47mm !important;
+                    min-height: 47mm !important;
                     max-width: 77mm !important;
-                    max-height: 47mm !important;
                     margin: 1.5mm auto !important;
                     box-sizing: border-box !important;
                     border: 1px dashed #64748b !important;
@@ -1282,7 +1279,7 @@
                     display: flex !important;
                     flex-direction: column !important;
                     justify-content: space-between !important;
-                    overflow: hidden !important;
+                    overflow: visible !important;
                     page-break-after: always !important;
                     break-after: page !important;
                 }
@@ -1301,7 +1298,7 @@
                 }
                 svg[id*="barcode"] {
                     width: 100% !important;
-                    max-height: 42px !important;
+                    max-height: 32px !important;
                     display: block !important;
                 }
                 img { max-width: 100% !important; height: auto !important; }
@@ -1329,21 +1326,21 @@
                     qrEl.innerHTML = '';
                     new QRCode(qrEl, {
                         text: payload.scan_url || payload.code,
-                        width: 68,
-                        height: 68,
+                        width: 58,
+                        height: 58,
                         colorDark: '#0f172a',
                         colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.H,
+                        correctLevel: QRCode.CorrectLevel.M,
                     });
 
                     try {
                         JsBarcode(bcEl, payload.code, {
                             format: 'CODE128',
-                            width: 1.5,
-                            height: 38,
+                            width: 1.4,
+                            height: 22,
                             displayValue: true,
-                            fontSize: 10,
-                            textMargin: 2,
+                            fontSize: 8.5,
+                            textMargin: 1,
                             margin: 1,
                             background: '#ffffff',
                             lineColor: '#0f172a',
@@ -1375,8 +1372,8 @@
                             qrA4.innerHTML = '';
                             new QRCode(qrA4, {
                                 text: item.scan_url || item.code,
-                                width: 44,
-                                height: 44,
+                                width: 42,
+                                height: 42,
                                 colorDark: '#0f172a',
                                 colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.M,
@@ -1387,7 +1384,7 @@
                                 JsBarcode(bcA4, item.code, {
                                     format: 'CODE128',
                                     width: 1.1,
-                                    height: 24,
+                                    height: 20,
                                     displayValue: true,
                                     fontSize: 7,
                                     textMargin: 1,
@@ -1405,22 +1402,22 @@
                             qrTh.innerHTML = '';
                             new QRCode(qrTh, {
                                 text: item.scan_url || item.code,
-                                width: 65,
-                                height: 65,
+                                width: 58,
+                                height: 58,
                                 colorDark: '#0f172a',
                                 colorLight: '#ffffff',
-                                correctLevel: QRCode.CorrectLevel.H,
+                                correctLevel: QRCode.CorrectLevel.M,
                             });
                         }
                         if (bcTh) {
                             try {
                                 JsBarcode(bcTh, item.code, {
                                     format: 'CODE128',
-                                    width: 1.5,
-                                    height: 36,
+                                    width: 1.4,
+                                    height: 22,
                                     displayValue: true,
-                                    fontSize: 9,
-                                    textMargin: 2,
+                                    fontSize: 8.5,
+                                    textMargin: 1,
                                     margin: 1,
                                     background: '#ffffff',
                                     lineColor: '#0f172a',
