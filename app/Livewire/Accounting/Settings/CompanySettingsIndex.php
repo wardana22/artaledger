@@ -55,6 +55,13 @@ class CompanySettingsIndex extends Component
         $this->tax_number = $this->company->tax_number ?? '';
     }
 
+    public function updatedLogo()
+    {
+        $this->validate([
+            'logo' => 'nullable|file|mimes:jpeg,jpg,png,webp,svg,bmp,ico,gif',
+        ]);
+    }
+
     public function save()
     {
         if (auth()->check() && ! auth()->user()->can('settings.company') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
@@ -65,7 +72,7 @@ class CompanySettingsIndex extends Component
             'app_name' => 'required|string|max:100',
             'name' => 'required|string|max:150',
             'code' => 'required|string|max:20|unique:companies,code,'.$this->company->id,
-            'logo' => 'nullable|image|max:2048', // 2MB Max
+            'logo' => 'nullable|file|mimes:jpeg,jpg,png,webp,svg,bmp,ico,gif',
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:100',
@@ -90,6 +97,36 @@ class CompanySettingsIndex extends Component
 
             $logoPath = $this->logo->store('logos', 'public');
             $data['logo_path'] = $logoPath;
+
+            try {
+                $fullPath = Storage::disk('public')->path($logoPath);
+                if (file_exists($fullPath)) {
+                    $imgInfo = @getimagesize($fullPath);
+                    if ($imgInfo) {
+                        $src = match ($imgInfo[2]) {
+                            IMAGETYPE_JPEG => @imagecreatefromjpeg($fullPath),
+                            IMAGETYPE_PNG => @imagecreatefrompng($fullPath),
+                            IMAGETYPE_WEBP => @imagecreatefromwebp($fullPath),
+                            default => null,
+                        };
+                        if ($src) {
+                            $w = imagesx($src);
+                            $h = imagesy($src);
+                            $dst = imagecreatetruecolor(64, 64);
+                            imagealphablending($dst, false);
+                            imagesavealpha($dst, true);
+                            imagecopyresampled($dst, $src, 0, 0, 0, 0, 64, 64, $w, $h);
+                            imagepng($dst, public_path('favicon.png'));
+                            imagepng($dst, public_path('favicon.ico'));
+                            imagepng($dst, public_path('apple-touch-icon.png'));
+                            imagedestroy($dst);
+                            imagedestroy($src);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Silently continue if GD format is unsupported (e.g. SVG)
+            }
         }
 
         $this->company->update($data);

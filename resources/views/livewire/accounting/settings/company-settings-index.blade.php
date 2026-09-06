@@ -69,7 +69,7 @@
                                 @endif
                             </div>
 
-                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Ukuran berkas maks 2MB. Format direkomendasikan: PNG / SVG dengan latar belakang transparan.</p>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500">Mendukung resolusi tinggi tanpa batasan ukuran ketat agar kualitas logo tetap tajam. Format direkomendasikan: PNG / SVG / JPG dengan latar belakang transparan.</p>
                             @error('logo') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
                         </div>
                     </div>
