@@ -27,6 +27,15 @@
                 Kelola Kategori
             </button>
 
+            <button wire:click="openBatchLabelModal"
+                    title="Cetak label barcode semua aset yang difilter"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Print Label
+            </button>
+
             <a href="{{ route('accounting.fixed-assets.depreciation') }}" 
                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold text-sm hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all shadow-sm">
                 <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,17 +255,24 @@
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
+                                    <!-- Tombol Label/Barcode -->
+                                    <button wire:click="openLabelModal({{ $asset->id }})"
+                                            title="Cetak Label Barcode Aset"
+                                            class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-2xs hover:shadow-md hover:shadow-emerald-500/20">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 3.5a.5.5 0 11-1 0 .5.5 0 011 0zM6 20h4"/></svg>
+                                    </button>
+
                                     <!-- Tombol Jadwal -->
                                     <button wire:click="viewSchedule({{ $asset->id }})" 
                                             title="Lihat Jadwal Amortisasi"
-                                            class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors">
+                                            class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-sky-600 hover:text-white hover:border-sky-600 shadow-2xs hover:shadow-md hover:shadow-sky-500/20">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                     </button>
 
                                     <!-- Tombol Edit -->
                                     <button wire:click="openEditModal({{ $asset->id }})" 
                                             title="Edit Data Aset"
-                                            class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                            class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-2xs hover:shadow-md hover:shadow-indigo-500/20">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                     </button>
 
@@ -264,7 +280,7 @@
                                     <button wire:click="deleteAsset({{ $asset->id }})" 
                                             wire:confirm="Yakin ingin menghapus aset ini? Pastikan belum ada transaksi jurnal penyusutan."
                                             title="Hapus Aset"
-                                            class="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors">
+                                            class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 shadow-2xs hover:shadow-md hover:shadow-rose-500/20">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
                                 </div>
@@ -325,7 +341,7 @@
                                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Kategori Aset *</label>
                                     <button type="button" wire:click="openCreateCategoryModal" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                        + Kategori Baru
+                                        Kategori Baru
                                     </button>
                                 </div>
                                 <select wire:model.live="asset_category_id" class="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-2 px-3 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
@@ -792,4 +808,299 @@
             </div>
         </div>
     @endif
+
+    {{-- ============================================================= --}}
+    {{-- MODAL: PRINT LABEL TUNGGAL (Single Asset Barcode Label)        --}}
+    {{-- ============================================================= --}}
+    @if($showLabelModal)
+        <div class="fixed inset-0 z-[60] overflow-y-auto flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm"
+             wire:click.self="closeLabelModal">
+            <div class="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                {{-- Header --}}
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900">
+                    <div class="flex items-center gap-2.5">
+                        <span class="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Cetak Label Aset</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Preview label sebelum dicetak</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeLabelModal" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                {{-- Label Preview --}}
+                <div class="p-5">
+                    <div id="print-label-area" class="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white">
+                        {{-- Label Card --}}
+                        <div class="label-card-single font-sans">
+                            {{-- Header Logo --}}
+                            <div class="flex items-center gap-1.5 pb-2 mb-2 border-b border-slate-200">
+                                <svg class="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                <span class="font-bold text-indigo-700 text-sm tracking-wide">ArtaLedger</span>
+                                <span class="ml-auto text-[10px] text-slate-400 font-mono">ASET TETAP</span>
+                            </div>
+
+                            {{-- Asset Info --}}
+                            <div class="mb-2">
+                                <div class="font-mono font-bold text-lg text-slate-900 tracking-wider">{{ $labelAssetData['code'] ?? '' }}</div>
+                                <div class="font-semibold text-slate-800 text-sm leading-tight">{{ $labelAssetData['name'] ?? '' }}</div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">{{ $labelAssetData['category'] ?? '' }} &bull; {{ $labelAssetData['unit'] ?? '' }}</div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-x-3 text-[11px] mb-3">
+                                <div><span class="text-slate-400">Lokasi:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['location'] ?? '-' }}</span></div>
+                                <div><span class="text-slate-400">S/N:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['serial'] ?? '-' }}</span></div>
+                                <div><span class="text-slate-400">Tgl Perolehan:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['acquisition'] ?? '-' }}</span></div>
+                                <div><span class="text-slate-400">Nilai Buku:</span> <span class="text-slate-700 font-medium">{{ $labelAssetData['book_value'] ?? '-' }}</span></div>
+                            </div>
+
+                            {{-- Barcodes --}}
+                            <div class="flex items-end justify-between gap-3 pt-2 border-t border-slate-100">
+                                <div class="flex flex-col items-center gap-1">
+                                    <div id="qr-single" class="w-[90px] h-[90px]"></div>
+                                    <span class="text-[9px] text-slate-400">Scan Info</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1 flex-1">
+                                    <svg id="barcode-single" class="max-w-full"></svg>
+                                    <span class="text-[9px] text-slate-400">Kode Aset</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-400 text-center mt-3">
+                        Ukuran label: 8×5 cm &bull; Cocok untuk stiker perforasi standar
+                    </p>
+                </div>
+
+                {{-- Footer Buttons --}}
+                <div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex justify-end gap-2.5">
+                    <button wire:click="closeLabelModal"
+                            class="px-4 py-2 text-sm font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                        Tutup
+                    </button>
+                    <button onclick="window.print()"
+                            class="inline-flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        Print Label
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ============================================================= --}}
+    {{-- MODAL: PRINT LABEL BATCH (All/Filtered Assets Barcode Grid)   --}}
+    {{-- ============================================================= --}}
+    @if($showBatchLabelModal)
+        <div class="fixed inset-0 z-[60] overflow-y-auto flex items-start justify-center p-4 pt-8 bg-slate-900/70 backdrop-blur-sm">
+            <div class="relative z-10 w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                {{-- Header --}}
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900 sticky top-0 z-10">
+                    <div class="flex items-center gap-2.5">
+                        <span class="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Batch Print Label Aset</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ count($batchLabelData) }} label &bull; Layout A4 (4 kolom × 5 baris = 20 label/halaman)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="window.print()"
+                                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            Print {{ count($batchLabelData) }} Label
+                        </button>
+                        <button wire:click="closeBatchLabelModal" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Batch Label Grid --}}
+                <div class="p-5 max-h-[75vh] overflow-y-auto">
+                    @if(count($batchLabelData) === 0)
+                        <div class="text-center py-12 text-slate-400">
+                            <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+                            <p class="font-semibold">Tidak ada aset yang cocok dengan filter aktif.</p>
+                        </div>
+                    @else
+                        <div id="print-label-area" class="label-grid grid grid-cols-4 gap-3">
+                            @foreach($batchLabelData as $idx => $item)
+                                <div class="label-card border border-dashed border-slate-200 rounded-lg p-2.5 bg-white text-[10px] font-sans">
+                                    {{-- Mini Header --}}
+                                    <div class="flex items-center gap-1 pb-1 mb-1 border-b border-slate-100">
+                                        <svg class="w-2.5 h-2.5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        <span class="font-bold text-indigo-700 text-[9px] tracking-wide">ArtaLedger</span>
+                                    </div>
+                                    {{-- Code & Name --}}
+                                    <div class="font-mono font-bold text-xs text-slate-900 mb-0.5">{{ $item['code'] }}</div>
+                                    <div class="text-slate-700 font-semibold leading-tight mb-0.5 truncate">{{ $item['name'] }}</div>
+                                    <div class="text-slate-400 text-[9px] mb-1 truncate">{{ $item['category'] }}</div>
+                                    {{-- Barcodes --}}
+                                    <div class="flex items-end gap-1.5 pt-1 border-t border-slate-100">
+                                        <div id="qr-batch-{{ $idx }}" class="w-[56px] h-[56px] flex-shrink-0"></div>
+                                        <div class="flex-1 overflow-hidden">
+                                            <svg id="barcode-batch-{{ $idx }}" class="w-full"></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ============================================================= --}}
+    {{-- JS ENGINE: QRCode.js + JsBarcode (client-side, no server)     --}}
+    {{-- CSS @media print: only label area visible when printing        --}}
+    {{-- ============================================================= --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js" defer></script>
+
+    <style>
+        @media print {
+            /* Hide everything except the label area */
+            body > *:not(#app-root),
+            body * { visibility: hidden; }
+
+            #print-label-area,
+            #print-label-area * { visibility: visible; }
+
+            #print-label-area {
+                position: fixed;
+                inset: 0;
+                margin: 0;
+                padding: 8mm;
+                background: white;
+            }
+
+            /* Batch: A4 grid 4 columns */
+            .label-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 4mm !important;
+            }
+
+            .label-card {
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 4px !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function generateSingleLabel(data) {
+                const qrEl = document.getElementById('qr-single');
+                const bcEl = document.getElementById('barcode-single');
+                if (!qrEl || !bcEl) return;
+
+                // Clear previous
+                qrEl.innerHTML = '';
+
+                // QR Code: JSON payload of asset info
+                new QRCode(qrEl, {
+                    text: JSON.stringify({
+                        code: data.code,
+                        name: data.name,
+                        category: data.category,
+                        unit: data.unit,
+                        location: data.location,
+                        serial: data.serial,
+                        acquisition: data.acquisition,
+                    }),
+                    width: 90,
+                    height: 90,
+                    colorDark: '#1e293b',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M,
+                });
+
+                // Barcode 1D Code128: only asset code
+                try {
+                    JsBarcode(bcEl, data.code, {
+                        format: 'CODE128',
+                        width: 1.8,
+                        height: 45,
+                        displayValue: true,
+                        fontSize: 11,
+                        textMargin: 3,
+                        margin: 4,
+                        background: '#ffffff',
+                        lineColor: '#1e293b',
+                    });
+                } catch (e) {
+                    console.warn('Barcode generation error:', e);
+                }
+            }
+
+            function generateBatchLabels(items) {
+                items.forEach(function (item, index) {
+                    const qrEl = document.getElementById('qr-batch-' + index);
+                    const bcEl = document.getElementById('barcode-batch-' + index);
+
+                    if (qrEl) {
+                        qrEl.innerHTML = '';
+                        new QRCode(qrEl, {
+                            text: JSON.stringify({
+                                code: item.code,
+                                name: item.name,
+                                category: item.category,
+                                location: item.location,
+                                serial: item.serial,
+                            }),
+                            width: 56,
+                            height: 56,
+                            colorDark: '#1e293b',
+                            colorLight: '#ffffff',
+                            correctLevel: QRCode.CorrectLevel.L,
+                        });
+                    }
+
+                    if (bcEl) {
+                        try {
+                            JsBarcode(bcEl, item.code, {
+                                format: 'CODE128',
+                                width: 1.2,
+                                height: 28,
+                                displayValue: true,
+                                fontSize: 8,
+                                textMargin: 2,
+                                margin: 2,
+                                background: '#ffffff',
+                                lineColor: '#1e293b',
+                            });
+                        } catch (e) {
+                            console.warn('Barcode error for', item.code, e);
+                        }
+                    }
+                });
+            }
+
+            // Livewire event listeners (wait for Livewire to boot)
+            document.addEventListener('livewire:initialized', function () {
+                Livewire.on('labelModalOpened', function (event) {
+                    const data = event.data ?? event[0]?.data ?? event;
+                    setTimeout(function () { generateSingleLabel(data); }, 250);
+                });
+
+                Livewire.on('batchLabelModalOpened', function (event) {
+                    const items = event.items ?? event[0]?.items ?? event;
+                    setTimeout(function () { generateBatchLabels(items); }, 300);
+                });
+            });
+        });
+    </script>
 </div>

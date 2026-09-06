@@ -327,3 +327,65 @@ test('prevents deletion of category that has registered assets', function () {
     // Category must still exist
     expect(AssetCategory::where('id', $category->id)->exists())->toBeTrue();
 });
+
+test('opens single label modal and populates label asset data correctly', function () {
+    $category = AssetCategory::where('code', 'KAT-KND')->firstOrFail();
+    $asset = FixedAsset::create([
+        'company_id' => $this->company->id,
+        'unit_id' => $this->unit->id,
+        'asset_category_id' => $category->id,
+        'asset_code' => 'AST-KP-2025-0050',
+        'name' => 'Motor Operasional',
+        'location' => 'Gudang Utara',
+        'serial_number' => 'SN-MT-001',
+        'acquisition_date' => '2025-01-15',
+        'acquisition_cost' => 20000000,
+        'salvage_value' => 2000000,
+        'useful_life_months' => 48,
+        'monthly_depreciation_amount' => 375000,
+        'book_value' => 20000000,
+        'status' => 'active',
+    ]);
+
+    $component = Livewire\Livewire::actingAs($this->user)
+        ->test(FixedAssetIndex::class)
+        ->call('openLabelModal', $asset->id)
+        ->assertSet('showLabelModal', true);
+
+    expect($component->get('labelAssetData'))->toMatchArray([
+        'code' => 'AST-KP-2025-0050',
+        'name' => 'Motor Operasional',
+        'location' => 'Gudang Utara',
+        'serial' => 'SN-MT-001',
+        'status' => 'Aktif',
+    ]);
+});
+
+test('opens batch label modal and populates all filtered assets', function () {
+    $category = AssetCategory::where('code', 'KAT-KND')->firstOrFail();
+
+    foreach (['AST-KP-2025-0060', 'AST-KP-2025-0061', 'AST-KP-2025-0062'] as $code) {
+        FixedAsset::create([
+            'company_id' => $this->company->id,
+            'unit_id' => $this->unit->id,
+            'asset_category_id' => $category->id,
+            'asset_code' => $code,
+            'name' => 'Aset Batch '.$code,
+            'acquisition_date' => '2025-02-01',
+            'acquisition_cost' => 5000000,
+            'salvage_value' => 0,
+            'useful_life_months' => 24,
+            'monthly_depreciation_amount' => 208333,
+            'book_value' => 5000000,
+            'status' => 'active',
+        ]);
+    }
+
+    $component = Livewire\Livewire::actingAs($this->user)
+        ->test(FixedAssetIndex::class)
+        ->call('openBatchLabelModal')
+        ->assertSet('showBatchLabelModal', true);
+
+    expect($component->get('batchLabelData'))->toHaveCount(3);
+    expect($component->get('batchLabelData.0'))->toHaveKeys(['code', 'name', 'category', 'unit', 'location', 'serial']);
+});

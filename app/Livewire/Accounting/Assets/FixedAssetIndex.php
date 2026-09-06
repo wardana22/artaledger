@@ -65,6 +65,18 @@ class FixedAssetIndex extends Component
 
     public array $scheduleData = [];
 
+    // Label / Barcode Modal
+    public bool $showLabelModal = false;
+
+    public ?int $labelAssetId = null;
+
+    public array $labelAssetData = [];
+
+    // Batch Label Modal
+    public bool $showBatchLabelModal = false;
+
+    public array $batchLabelData = [];
+
     // Category Management Modals
     public bool $showCategoryManagerModal = false;
 
@@ -280,6 +292,84 @@ class FixedAssetIndex extends Component
         $this->showScheduleModal = false;
         $this->selectedAssetForSchedule = null;
         $this->scheduleData = [];
+    }
+
+    public function openLabelModal(int $id): void
+    {
+        $asset = FixedAsset::with(['category', 'unit'])->findOrFail($id);
+        $this->labelAssetId = $id;
+        $this->labelAssetData = [
+            'code' => $asset->asset_code,
+            'name' => $asset->name,
+            'category' => $asset->category->name,
+            'unit' => $asset->unit->name,
+            'location' => $asset->location ?? '-',
+            'serial' => $asset->serial_number ?? '-',
+            'acquisition' => $asset->acquisition_date->format('d/m/Y'),
+            'cost' => 'Rp '.number_format((float) $asset->acquisition_cost, 0, ',', '.'),
+            'book_value' => 'Rp '.number_format((float) $asset->book_value, 0, ',', '.'),
+            'status' => match ($asset->status) {
+                'active' => 'Aktif',
+                'fully_depreciated' => 'Habis Disusutkan',
+                'disposed' => 'Dilepas',
+                default => $asset->status,
+            },
+        ];
+        $this->showLabelModal = true;
+        $this->dispatch('labelModalOpened', data: $this->labelAssetData);
+    }
+
+    public function closeLabelModal(): void
+    {
+        $this->showLabelModal = false;
+        $this->labelAssetId = null;
+        $this->labelAssetData = [];
+    }
+
+    public function openBatchLabelModal(): void
+    {
+        $query = FixedAsset::query()->with(['category', 'unit']);
+
+        if ($this->search) {
+            $search = '%'.$this->search.'%';
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', $search)
+                    ->orWhere('asset_code', 'like', $search)
+                    ->orWhere('location', 'like', $search);
+            });
+        }
+
+        if ($this->selectedCategoryId) {
+            $query->where('asset_category_id', $this->selectedCategoryId);
+        }
+
+        if ($this->selectedUnitId) {
+            $query->where('unit_id', $this->selectedUnitId);
+        }
+
+        if ($this->selectedStatus) {
+            $query->where('status', $this->selectedStatus);
+        }
+
+        $assets = $query->orderBy('asset_code')->get();
+
+        $this->batchLabelData = $assets->map(fn ($a) => [
+            'code' => $a->asset_code,
+            'name' => $a->name,
+            'category' => $a->category->name,
+            'unit' => $a->unit->name,
+            'location' => $a->location ?? '-',
+            'serial' => $a->serial_number ?? '-',
+        ])->toArray();
+
+        $this->showBatchLabelModal = true;
+        $this->dispatch('batchLabelModalOpened', items: $this->batchLabelData);
+    }
+
+    public function closeBatchLabelModal(): void
+    {
+        $this->showBatchLabelModal = false;
+        $this->batchLabelData = [];
     }
 
     public function openCategoryManagerModal(): void
