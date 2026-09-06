@@ -972,7 +972,7 @@
                         <div>
                             <h3 class="font-bold text-slate-900 dark:text-white text-sm">Batch Print Label Aset</h3>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                <span x-show="paper === 'a4'">{{ count($batchLabelData) }} label &bull; Layout Kertas A4 (Grid 4 kolom &bull; maks 20 label/lembar)</span>
+                                <span x-show="paper === 'a4'">{{ count($batchLabelData) }} label &bull; Layout Kertas A4 (Grid 2 kolom &bull; Stiker 80×50 mm &bull; maks 10 label/lembar)</span>
                                 <span x-show="paper === 'thermal'" x-cloak>{{ count($batchLabelData) }} label &bull; Roll Thermal (1 stiker 80×50mm beruntun)</span>
                             </p>
                         </div>
@@ -1015,28 +1015,43 @@
                             <p class="font-semibold">Tidak ada aset yang cocok dengan filter aktif.</p>
                         </div>
                     @else
-                        {{-- 1. Mode Kertas A4 (Grid 4 Kolom) --}}
-                        <div x-show="paper === 'a4'" id="print-batch-a4-labels" class="batch-label-grid grid grid-cols-4 gap-3">
+                        {{-- 1. Mode Kertas A4 (Grid 2 Kolom, Stiker 80x50 mm) --}}
+                        <div x-show="paper === 'a4'" id="print-batch-a4-labels" class="batch-label-grid grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
                             @foreach($batchLabelData as $idx => $item)
-                                <div class="batch-label-card border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-2 bg-white text-[10px] font-sans text-slate-900" style="box-sizing: border-box;">
-                                    {{-- Mini Header --}}
-                                    <div class="batch-header flex items-center justify-between pb-1 mb-1 border-b border-slate-200" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px; margin-bottom: 3px;">
-                                        <div class="flex items-center gap-1" style="display: flex; align-items: center; gap: 3px;">
-                                            <span class="bg-indigo-600 text-white font-black text-[7px] px-1 py-0.2 rounded" style="background-color: #4f46e5; color: #fff; font-weight: 900; font-size: 7px; padding: 1px 3px; border-radius: 2px;">ARTA</span>
-                                            <span class="font-black text-slate-900 text-[9px]" style="font-weight: 900; color: #0f172a; font-size: 7.5pt; font-family: sans-serif;">ArtaLedger</span>
+                                <div class="batch-label-card border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white text-slate-900 font-sans shadow-sm" style="box-sizing: border-box; width: 100%;">
+                                    {{-- Header Logo --}}
+                                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
+                                        <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px;">
+                                            <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px;">ARTA</span>
+                                            <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 10pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
                                         </div>
-                                        <span class="text-[7px] font-bold text-slate-500 font-mono" style="font-size: 5.5pt; font-weight: 700; color: #64748b; font-family: monospace;">ASET TETAP</span>
+                                        <span class="text-[9px] font-bold text-slate-700 font-mono tracking-wider bg-slate-100 px-2 py-0.5 rounded border border-slate-200" style="font-size: 6.5pt; font-weight: 700; color: #334155; font-family: monospace; background-color: #f1f5f9; padding: 1.5px 5px; border-radius: 2px; border: 1px solid #e2e8f0;">ASET TETAP</span>
                                     </div>
-                                    {{-- Code & Name --}}
-                                    <div class="batch-code font-mono font-black text-[10px] text-slate-900 mb-0.5 leading-tight" style="font-family: monospace; font-weight: 900; font-size: 8pt; color: #0f172a; line-height: 1.1;">{{ $item['code'] }}</div>
-                                    <div class="batch-name text-slate-800 font-bold text-[9px] leading-tight mb-0.5 truncate" style="font-weight: 700; font-size: 7pt; color: #1e293b; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['name'] }}</div>
-                                    <div class="batch-cat text-slate-500 text-[8px] mb-1 truncate" style="font-size: 6pt; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['category'] }}</div>
-                                    {{-- Barcodes --}}
-                                    <div class="flex items-end gap-1.5 pt-1 border-t border-slate-200 mt-auto" style="display: flex; align-items: flex-end; gap: 4px; border-top: 1px solid #e2e8f0; padding-top: 2px; margin-top: auto;">
-                                        <div id="qr-batch-a4-{{ $idx }}" class="w-[42px] h-[42px] flex-shrink-0" style="width: 42px; height: 42px; flex-shrink: 0;"></div>
-                                        <div class="flex-1 overflow-hidden" style="flex: 1; min-width: 0; overflow: hidden;">
-                                            <svg id="barcode-batch-a4-{{ $idx }}" style="width: 100%; max-height: 24px; display: block;"></svg>
+
+                                    {{-- Middle: QR Code on Left, Info on Right --}}
+                                    <div class="flex items-start gap-2.5 mb-2" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                        {{-- QR Code --}}
+                                        <div class="flex flex-col items-center flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                                            <div id="qr-batch-a4-{{ $idx }}" style="width: 58px; height: 58px;"></div>
+                                            <span class="text-[8px] font-bold text-slate-500 uppercase mt-0.5" style="font-size: 5.5pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
                                         </div>
+
+                                        {{-- Details --}}
+                                        <div class="flex-1 min-w-0" style="flex: 1; min-width: 0;">
+                                            <div class="font-mono font-black text-sm text-slate-900 tracking-wider leading-none" style="font-family: monospace; font-weight: 900; font-size: 10pt; color: #0f172a; line-height: 1.1; letter-spacing: 0.3px;">{{ $item['code'] }}</div>
+                                            <div class="font-bold text-slate-800 text-xs leading-tight mt-1 truncate" style="font-weight: 700; font-size: 8pt; color: #1e293b; line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['name'] }}</div>
+                                            <div class="text-[10px] text-slate-500 mt-0.5 truncate" style="font-size: 6.5pt; color: #64748b; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $item['category'] }} &bull; {{ $item['unit'] }}</div>
+
+                                            <div class="mt-1.5 pt-1 border-t border-slate-100 text-[10px] text-slate-600 leading-snug" style="margin-top: 3px; padding-top: 2px; border-top: 1px solid #f1f5f9; font-size: 6.5pt; line-height: 1.3; color: #334155;">
+                                                <div><span style="color: #94a3b8;">Lok:</span> <strong style="color: #1e293b;">{{ $item['location'] }}</strong> &bull; <span style="color: #94a3b8;">PIC:</span> <strong style="color: #1e293b;">{{ $item['pic'] ?? '-' }}</strong></div>
+                                                <div><span style="color: #94a3b8;">S/N:</span> <strong style="color: #1e293b;">{{ $item['serial'] }}</strong> &bull; <span style="color: #94a3b8;">Tgl:</span> <strong style="color: #1e293b;">{{ $item['acquisition'] ?? '-' }}</strong></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Bottom Section: Full Width 1D Barcode --}}
+                                    <div class="pt-1.5 border-t border-slate-200 text-center" style="border-top: 1px solid #cbd5e1; padding-top: 2px; margin-top: auto; text-align: center;">
+                                        <svg id="barcode-batch-a4-{{ $idx }}" style="width: 100%; max-height: 30px; display: block; margin: 0 auto;"></svg>
                                     </div>
                                 </div>
                             @endforeach
@@ -1047,7 +1062,7 @@
                             @foreach($batchLabelData as $idx => $item)
                                 <div class="thermal-batch-card w-full max-w-sm border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white text-slate-900 font-sans shadow-sm" style="box-sizing: border-box;">
                                     {{-- Header Logo --}}
-                                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
+                                    <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1 mb-2" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 3px; margin-bottom: 5px;">
                                         <div class="flex items-center gap-1.5" style="display: flex; align-items: center; gap: 5px;">
                                             <span class="bg-indigo-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded tracking-wider" style="background-color: #4f46e5; color: #ffffff; font-weight: 900; font-size: 7.5px; padding: 1px 3.5px; border-radius: 2px; letter-spacing: 0.5px;">ARTA</span>
                                             <span class="font-black text-slate-900 text-sm tracking-wide" style="font-weight: 900; color: #0f172a; font-size: 10pt; letter-spacing: 0.3px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">ArtaLedger</span>
@@ -1171,10 +1186,10 @@
                 pageRule = `
                     @page {
                         size: A4 portrait;
-                        margin: ${targetType === 'single' ? '10mm 12mm' : '8mm 6mm'};
+                        margin: ${targetType === 'single' ? '10mm 12mm' : '10mm 12mm'};
                     }
                     html, body {
-                        width: 195mm;
+                        width: 186mm;
                         margin: 0 auto;
                         padding: 0;
                         background: #fff;
@@ -1235,27 +1250,27 @@
                     overflow: visible !important;
                 }
 
-                /* Batch A4 Grid Layout */
+                /* Batch A4 Grid Layout (2 Kolom x 5 Baris, Stiker 80x50 mm) */
                 .batch-label-grid {
                     display: grid !important;
-                    grid-template-columns: repeat(4, 46.5mm) !important;
-                    grid-auto-rows: 52mm !important;
+                    grid-template-columns: repeat(2, 80mm) !important;
+                    grid-auto-rows: 50mm !important;
                     align-content: start !important;
                     align-items: start !important;
-                    justify-content: start !important;
-                    gap: 3mm !important;
-                    width: 195mm !important;
-                    margin: 0 !important;
+                    justify-content: center !important;
+                    column-gap: 8mm !important;
+                    row-gap: 4.5mm !important;
+                    width: 100% !important;
+                    margin: 0 auto !important;
                 }
                 .batch-label-card {
-                    width: 46.5mm !important;
-                    height: 52mm !important;
-                    max-width: 46.5mm !important;
-                    max-height: 52mm !important;
+                    width: 80mm !important;
+                    min-height: 50mm !important;
+                    max-width: 80mm !important;
                     box-sizing: border-box !important;
-                    border: 1px dashed #94a3b8 !important;
+                    border: 1.5px dashed #475569 !important;
                     border-radius: 4px !important;
-                    padding: 2mm 2.5mm !important;
+                    padding: 2.5mm 3.5mm !important;
                     background: #ffffff !important;
                     display: flex !important;
                     flex-direction: column !important;
@@ -1301,6 +1316,18 @@
                     max-height: 32px !important;
                     display: block !important;
                 }
+                /* Utility Classes for Iframe Print */
+                .flex { display: flex !important; }
+                .flex-col { flex-direction: column !important; }
+                .items-center { align-items: center !important; }
+                .items-start { align-items: flex-start !important; }
+                .justify-between { justify-content: space-between !important; }
+                .flex-1 { flex: 1 1 0% !important; }
+                .flex-shrink-0 { flex-shrink: 0 !important; }
+                .min-w-0 { min-width: 0px !important; }
+                .truncate { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+                .text-center { text-align: center !important; }
+
                 img { max-width: 100% !important; height: auto !important; }
             `;
 
@@ -1365,15 +1392,15 @@
             const tryRender = () => {
                 if (window.QRCode && window.JsBarcode) {
                     list.forEach(function (item, index) {
-                        // 1. A4 Barcodes
+                        // 1. A4 Barcodes (now 80x50mm size!)
                         const qrA4 = document.getElementById('qr-batch-a4-' + index);
                         const bcA4 = document.getElementById('barcode-batch-a4-' + index);
                         if (qrA4) {
                             qrA4.innerHTML = '';
                             new QRCode(qrA4, {
                                 text: item.scan_url || item.code,
-                                width: 42,
-                                height: 42,
+                                width: 58,
+                                height: 58,
                                 colorDark: '#0f172a',
                                 colorLight: '#ffffff',
                                 correctLevel: QRCode.CorrectLevel.M,
@@ -1383,10 +1410,10 @@
                             try {
                                 JsBarcode(bcA4, item.code, {
                                     format: 'CODE128',
-                                    width: 1.1,
-                                    height: 20,
+                                    width: 1.4,
+                                    height: 22,
                                     displayValue: true,
-                                    fontSize: 7,
+                                    fontSize: 8.5,
                                     textMargin: 1,
                                     margin: 1,
                                     background: '#ffffff',
@@ -1395,7 +1422,7 @@
                             } catch (e) {}
                         }
 
-                        // 2. Thermal Barcodes
+                        // 2. Thermal Barcodes (also 80x50mm size!)
                         const qrTh = document.getElementById('qr-batch-th-' + index);
                         const bcTh = document.getElementById('barcode-batch-th-' + index);
                         if (qrTh) {
