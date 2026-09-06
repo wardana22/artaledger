@@ -152,3 +152,59 @@ test('unreconciled journal from previous month automatically carries over to nex
     $febBankLine->refresh();
     expect($febBankLine->match_status)->toBe('manual_matched');
 });
+
+test('unreconciled journal from subsequent month appears with Periode Sesudah badge and can be filtered and matched', function () {
+    // 1. Rekening Koran Bulan Januari 2025
+    $janStatement = $this->statement; // 2025-01-01 to 2025-01-31
+
+    $janBankLine = BankStatementLine::create([
+        'bank_statement_id' => $janStatement->id,
+        'transaction_date' => '2025-01-31',
+        'description' => 'Transfer Masuk Akhir Bulan',
+        'debit' => 0.00,
+        'credit' => 15000000.00,
+        'balance' => 105000000.00,
+        'match_status' => 'unmatched',
+    ]);
+
+    // 2. Buat Jurnal yang dicatat di Bulan Februari 2025 (Periode Sesudah)
+    $febEntry = JournalEntry::create([
+        'company_id' => $this->company->id,
+        'entry_number' => 'JU-FEB-SUBSEQUENT',
+        'entry_date' => '2025-02-15',
+        'description' => 'Penerimaan Piutang Masuk Jan diinput Feb',
+        'status' => 'posted',
+    ]);
+
+    $febLine = JournalLine::create([
+        'journal_entry_id' => $febEntry->id,
+        'account_id' => $this->bankAccount->id,
+        'unit_id' => $this->unit->id,
+        'debit' => 15000000.00,
+        'credit' => 0,
+        'description' => 'Penerimaan Piutang Masuk Jan diinput Feb',
+    ]);
+
+    // 3. Uji tampilan lembar kerja Januari: Jurnal Februari HARUS muncul dengan badge 'Periode Sesudah'!
+    Livewire::actingAs($this->user)
+        ->test(BankReconciliationDetail::class, ['statement' => $janStatement])
+        ->assertSee('JU-FEB-SUBSEQUENT')
+        ->assertSee('Periode Sesudah')
+        // Uji filter tab
+        ->set('bookPeriodFilter', 'next')
+        ->assertSee('JU-FEB-SUBSEQUENT')
+        ->set('bookPeriodFilter', 'current')
+        ->assertDontSee('JU-FEB-SUBSEQUENT')
+        ->set('bookPeriodFilter', 'all')
+        ->assertSee('JU-FEB-SUBSEQUENT')
+        // Uji matching
+        ->call('toggleBankLine', $janBankLine->id)
+        ->call('toggleBookLine', $febLine->id)
+        ->assertSet('difference', 0.00)
+        ->assertSet('isMatchValid', true)
+        ->call('executeManualMatch')
+        ->assertSee('Transaksi berhasil dicocokkan secara sempurna');
+
+    $janBankLine->refresh();
+    expect($janBankLine->match_status)->toBe('manual_matched');
+});

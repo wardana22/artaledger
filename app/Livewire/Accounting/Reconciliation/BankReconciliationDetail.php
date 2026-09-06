@@ -7,7 +7,6 @@ use App\Models\Account;
 use App\Models\BankStatement;
 use App\Models\BankStatementLine;
 use App\Models\JournalLine;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +29,8 @@ class BankReconciliationDetail extends Component
 
     // Filter status di panel buku kas/bank
     public string $bookFilter = 'all'; // all, unmatched, matched
+
+    public string $bookPeriodFilter = 'all'; // all, current, prior, next
 
     public string $bookSearch = '';
 
@@ -289,32 +290,34 @@ class BankReconciliationDetail extends Component
             ->unique()
             ->values()
             ->toArray();
-        $minDate = Carbon::parse($this->statement->period_start)->subDays(7)->format('Y-m-d');
-        $maxDate = Carbon::parse($this->statement->period_end)->addDays(7)->format('Y-m-d');
 
-        // Kueri Buku Besar Lintas Periode: Muat transaksi periode ini ATAU transaksi lampau yang belum cocok (carryover)
-        $bookLinesQuery = JournalLine::with(['journalEntry', 'unit'])
+        $periodStart = $this->statement->period_start;
+        $periodEnd = $this->statement->period_end;
+
+        // Kueri Dasar Buku Besar: Jurnal posted untuk akun ini yang berada di periode berjalan ATAU belum direkonsiliasi (lintas periode sebelum & sesudah)
+        $baseBookQuery = JournalLine::with(['journalEntry', 'unit'])
             ->where('account_id', $this->statement->account_id)
-            ->whereHas('journalEntry', function ($q) use ($maxDate) {
-                $q->where('status', 'posted')
-                    ->where('entry_date', '<=', $maxDate);
+            ->whereHas('journalEntry', function ($q) {
+                $q->where('status', 'posted');
             })
-            ->where(function ($q) use ($minDate, $maxDate, $matchedIds) {
-                $q->whereHas('journalEntry', function ($sub) use ($minDate, $maxDate) {
-                    $sub->whereBetween('entry_date', [$minDate, $maxDate]);
+            ->where(function ($q) use ($periodStart, $periodEnd, $matchedIds) {
+                $q->whereHas('journalEntry', function ($sub) use ($periodStart, $periodEnd) {
+                    $sub->whereBetween('entry_date', [$periodStart, $periodEnd]);
                 })
-                    ->orWhereNotIn('id', $matchedIds);
+                    ->orWhereNotIn('journal_lines.id', $matchedIds);
             });
 
+        // Terapkan filter status cocok/belum cocok dan pencarian
+        $filterAppliedQuery = clone $baseBookQuery;
         if ($this->bookFilter === 'unmatched') {
-            $bookLinesQuery->whereNotIn('id', $matchedIds);
+            $filterAppliedQuery->whereNotIn('journal_lines.id', $matchedIds);
         } elseif ($this->bookFilter === 'matched') {
-            $bookLinesQuery->whereIn('id', $matchedIds);
+            $filterAppliedQuery->whereIn('journal_lines.id', $matchedIds);
         }
 
         if (! empty($this->bookSearch)) {
             $bs = '%'.$this->bookSearch.'%';
-            $bookLinesQuery->where(function ($q) use ($bs) {
+            $filterAppliedQuery->where(function ($q) use ($bs) {
                 $q->where('description', 'like', $bs)
                     ->orWhere('debit', 'like', $bs)
                     ->orWhere('credit', 'like', $bs)
@@ -326,7 +329,47 @@ class BankReconciliationDetail extends Component
             });
         }
 
-        $bookLines = $bookLinesQuery->orderBy('journal_entry_id', 'asc')->get();
+        // Hitung total untuk masing-masing tab periode
+        $allCount = (clone $filterAppliedQuery)->count();
+        $currentCount = (clone $filterAppliedQuery)->whereHas('journalEntry', function ($q) use ($periodStart, $periodEnd) {
+            $q->whereBetween('entry_date', [$periodStart, $periodEnd]);
+        })->count();
+        $priorCount = (clone $filterAppliedQuery)->whereHas('journalEntry', function ($q) use ($periodStart) {
+            $q->where('entry_date', '<', $periodStart);
+        })->count();
+        $nextCount = (clone $filterAppliedQuery)->whereHas('journalEntry', function ($q) use ($periodEnd) {
+            $q->where('entry_date', '>', $periodEnd);
+        })->count();
+
+        $periodCounts = [
+            'all' => $allCount,
+            'current' => $currentCount,
+            'prior' => $priorCount,
+            'next' => $nextCount,
+        ];
+
+        // Terapkan filter periode buku besar
+        $bookLinesQuery = clone $filterAppliedQuery;
+        if ($this->bookPeriodFilter === 'current') {
+            $bookLinesQuery->whereHas('journalEntry', function ($q) use ($periodStart, $periodEnd) {
+                $q->whereBetween('entry_date', [$periodStart, $periodEnd]);
+            });
+        } elseif ($this->bookPeriodFilter === 'prior') {
+            $bookLinesQuery->whereHas('journalEntry', function ($q) use ($periodStart) {
+                $q->where('entry_date', '<', $periodStart);
+            });
+        } elseif ($this->bookPeriodFilter === 'next') {
+            $bookLinesQuery->whereHas('journalEntry', function ($q) use ($periodEnd) {
+                $q->where('entry_date', '>', $periodEnd);
+            });
+        }
+
+        $bookLines = $bookLinesQuery
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->orderBy('journal_entries.entry_date', 'asc')
+            ->orderBy('journal_lines.id', 'asc')
+            ->select('journal_lines.*')
+            ->get();
 
         // 3. Ringkasan Rekonsiliasi
         $summary = $service->calculateSummary($this->statement);
@@ -338,6 +381,7 @@ class BankReconciliationDetail extends Component
             'bankLines' => $bankLines,
             'bookLines' => $bookLines,
             'matchedIds' => $matchedIds,
+            'periodCounts' => $periodCounts,
             'summary' => $summary,
             'allAccounts' => $allAccounts,
         ])->layout('layouts.app');

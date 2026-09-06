@@ -274,6 +274,30 @@
                         placeholder="Cari transaksi jurnal, nominal, atau no. bukti..." 
                         class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 </div>
+
+                <!-- Filter Periode Tab Bar -->
+                <div class="inline-flex rounded-lg bg-slate-200/60 dark:bg-slate-800 p-0.5 text-[10px] font-bold w-full">
+                    <button wire:click="$set('bookPeriodFilter', 'all')" type="button" 
+                            class="flex-1 text-center px-1.5 py-1 rounded-md transition-all {{ $bookPeriodFilter === 'all' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                        Semua ({{ $periodCounts['all'] ?? 0 }})
+                    </button>
+                    <button wire:click="$set('bookPeriodFilter', 'current')" type="button" 
+                            class="flex-1 text-center px-1.5 py-1 rounded-md transition-all {{ $bookPeriodFilter === 'current' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+                        Bulan Ini ({{ $periodCounts['current'] ?? 0 }})
+                    </button>
+                    <button wire:click="$set('bookPeriodFilter', 'prior')" type="button" 
+                            class="flex-1 text-center px-1.5 py-1 rounded-md transition-all flex items-center justify-center gap-1 {{ $bookPeriodFilter === 'prior' ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}"
+                            title="Transaksi buku besar sebelum awal rekening koran">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        Sebelum ({{ $periodCounts['prior'] ?? 0 }})
+                    </button>
+                    <button wire:click="$set('bookPeriodFilter', 'next')" type="button" 
+                            class="flex-1 text-center px-1.5 py-1 rounded-md transition-all flex items-center justify-center gap-1 {{ $bookPeriodFilter === 'next' ? 'bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}"
+                            title="Transaksi buku besar setelah akhir rekening koran">
+                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                        Sesudah ({{ $periodCounts['next'] ?? 0 }})
+                    </button>
+                </div>
             </div>
 
             <!-- LINES LIST (SCROLLABLE) -->
@@ -300,7 +324,9 @@
                                 <span class="font-mono text-[11px] font-bold text-slate-500">{{ \Carbon\Carbon::parse($jEntry?->entry_date)->format('d/m/Y') }}</span>
                                 <span class="font-mono text-[10px] text-slate-600 dark:text-slate-300 font-bold">{{ $jEntry?->entry_number }}</span>
                                 @if($jEntry && $jEntry->entry_date < $statement->period_start)
-                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60" title="Transaksi dari periode sebelumnya yang belum kliring">Periode Lalu</span>
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60" title="Transaksi dari periode sebelum rekening koran">Periode Lalu</span>
+                                @elseif($jEntry && $jEntry->entry_date > $statement->period_end)
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60" title="Transaksi dicatat pada periode setelah rekening koran">Periode Sesudah</span>
                                 @endif
                                 @if($isReconciled)
                                     <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">✓ Klop</span>
