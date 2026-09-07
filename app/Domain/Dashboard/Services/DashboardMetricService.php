@@ -50,8 +50,8 @@ class DashboardMetricService
         } elseif (str_contains($title, 'laba operasional')) {
             $rev = $this->getRevenue($startDate, $endDate, $unitId, $kpi->company_id);
             $cogs = $this->getCogs($startDate, $endDate, $unitId, $kpi->company_id);
-            $sga = $this->getSga($startDate, $endDate, $unitId, $kpi->company_id);
-            $val = $rev - ($cogs + $sga);
+            // Sesuai sistem akuntansi referensi: Pendapatan - Beban Pokok Pendapatan (Gross Operating Profit)
+            $val = $rev - $cogs;
         } elseif (str_contains($title, 'beban admin') || str_contains($title, 'sga')) {
             $val = $this->getSga($startDate, $endDate, $unitId, $kpi->company_id);
         } elseif (str_contains($title, 'sebelum pajak') || str_contains($title, 'ebt')) {
@@ -87,10 +87,7 @@ class DashboardMetricService
      */
     public function getRevenue(string $startDate, string $endDate, ?int $unitId = null, ?int $companyId = null): float
     {
-        $accounts = Account::where(function ($q) {
-            $q->where('code', 'like', '4%')
-                ->orWhereIn('type', ['PENDAPATAN', 'revenue']);
-        })
+        $accounts = Account::where('code', 'like', '4%')
             ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
             ->pluck('id')->toArray();
 
@@ -109,10 +106,7 @@ class DashboardMetricService
      */
     public function getCogs(string $startDate, string $endDate, ?int $unitId = null, ?int $companyId = null): float
     {
-        $accounts = Account::where(function ($q) {
-            $q->where('code', 'like', '5%')
-                ->orWhereIn('type', ['HPP', 'BEBAN POKOK PENDAPATAN']);
-        })
+        $accounts = Account::where('code', 'like', '5%')
             ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
             ->pluck('id')->toArray();
 
@@ -131,10 +125,7 @@ class DashboardMetricService
      */
     public function getSga(string $startDate, string $endDate, ?int $unitId = null, ?int $companyId = null): float
     {
-        $accounts = Account::where(function ($q) {
-            $q->where('code', 'like', '6%')
-                ->orWhereIn('type', ['BEBAN', 'BEBAN ADMINISTRASI & UMUM']);
-        })
+        $accounts = Account::where('code', 'like', '6%')
             ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
             ->pluck('id')->toArray();
 
@@ -160,8 +151,7 @@ class DashboardMetricService
                 ->orWhere('code', 'like', '6%')
                 ->orWhere('code', 'like', '7%')
                 ->orWhere('code', 'like', '8%')
-                ->orWhere('code', 'like', '9%')
-                ->orWhereIn('type', ['BEBAN', 'BEBAN LAIN-LAIN', 'HPP']);
+                ->orWhere('code', 'like', '9%');
         })
             ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
             ->pluck('id')->toArray();
@@ -180,11 +170,10 @@ class DashboardMetricService
     {
         $net = $this->getNetProfit($startDate, $endDate, $unitId, $companyId);
 
-        // Adjustments: Pajak 9, Bunga 80, Penyusutan 12.10, 58, 68
+        // Adjustments: Pajak (9), Bunga (80), Penyusutan/Amortisasi P&L (58, 68), Pos Non-Operasional (70)
         $adjAccounts = Account::where(function ($q) {
             $q->where('code', 'like', '9%')
                 ->orWhere('code', 'like', '80%')
-                ->orWhere('code', 'like', '12.10%')
                 ->orWhere('code', 'like', '58%')
                 ->orWhere('code', 'like', '68%')
                 ->orWhere('code', 'like', '70%');
@@ -194,7 +183,7 @@ class DashboardMetricService
 
         $debit = (float) $this->buildJournalLinesQuery($adjAccounts, $startDate, $endDate, $unitId)->sum('journal_lines.debit');
         $credit = (float) $this->buildJournalLinesQuery($adjAccounts, $startDate, $endDate, $unitId)->sum('journal_lines.credit');
-        $adjustments = abs($debit - $credit);
+        $adjustments = $debit - $credit;
 
         return $net + $adjustments;
     }
@@ -223,12 +212,29 @@ class DashboardMetricService
      */
     public function getInventoryCogs(string $startDate, string $endDate, ?int $unitId = null, ?int $companyId = null): float
     {
+        // First check custom account group DASH_COGS_INV
+        $group = AccountGroup::where('code', 'DASH_COGS_INV')
+            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+            ->first();
+
+        if ($group) {
+            $accountIds = DB::table('account_group_members')
+                ->where('account_group_id', $group->id)
+                ->pluck('account_id')
+                ->toArray();
+            if (! empty($accountIds)) {
+                $credit = (float) $this->buildJournalLinesQuery($accountIds, $startDate, $endDate, $unitId)->sum('journal_lines.credit');
+                $debit = (float) $this->buildJournalLinesQuery($accountIds, $startDate, $endDate, $unitId)->sum('journal_lines.debit');
+
+                return abs($credit - $debit);
+            }
+        }
+
         $accounts = Account::where(function ($q) {
-            $q->where('code', 'like', '52%')
-                ->orWhere('name', 'like', '%obat%')
-                ->orWhere('name', 'like', '%bhp%');
+            $q->where('code', 'like', '41.01.03%')
+                ->orWhere('code', 'like', '41.02.03%')
+                ->orWhere('code', 'like', '52%');
         })
-            ->where('code', 'like', '5%')
             ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
             ->pluck('id')->toArray();
 
@@ -236,10 +242,10 @@ class DashboardMetricService
             return $this->getCogs($startDate, $endDate, $unitId, $companyId);
         }
 
-        $debit = (float) $this->buildJournalLinesQuery($accounts, $startDate, $endDate, $unitId)->sum('journal_lines.debit');
         $credit = (float) $this->buildJournalLinesQuery($accounts, $startDate, $endDate, $unitId)->sum('journal_lines.credit');
+        $debit = (float) $this->buildJournalLinesQuery($accounts, $startDate, $endDate, $unitId)->sum('journal_lines.debit');
 
-        return max(0, $debit - $credit);
+        return abs($credit - $debit);
     }
 
     /**
@@ -255,21 +261,7 @@ class DashboardMetricService
             return 0.0;
         }
 
-        $masterOpening = (float) Account::whereIn('id', $accounts)->sum('opening_balance');
-
-        $query = DB::table('journal_lines')
-            ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
-            ->whereIn('journal_lines.account_id', $accounts)
-            ->where('journal_entries.status', 'posted')
-            ->whereDate('journal_entries.entry_date', '<=', $endDate);
-
-        if ($unitId) {
-            $query->where('journal_lines.unit_id', $unitId);
-        }
-
-        $mutation = (float) $query->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
-
-        return max(0, $masterOpening + $mutation);
+        return $this->calculateCumulativeBalance($accounts, $endDate, $unitId, true);
     }
 
     /**
@@ -695,7 +687,12 @@ class DashboardMetricService
             return 0.0;
         }
 
-        $masterOpening = (float) Account::whereIn('id', $accountIds)->sum('opening_balance');
+        $hasSaEntries = DB::table('journal_entries')
+            ->where('status', 'posted')
+            ->where('entry_number', 'like', 'SA%')
+            ->exists();
+
+        $masterOpening = $hasSaEntries ? 0.0 : (float) Account::whereIn('id', $accountIds)->sum('opening_balance');
 
         $query = DB::table('journal_lines')
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
