@@ -13,6 +13,16 @@
 
         <button 
             type="button" 
+            wire:click="$set('activeTab', 'charts')" 
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $activeTab === 'charts' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+            </svg>
+            <span>Pengaturan Grafik Tren</span>
+        </button>
+
+        <button 
+            type="button" 
             wire:click="$set('activeTab', 'account_groups')" 
             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $activeTab === 'account_groups' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,8 +219,103 @@
             </div>
         </form>
     </div>
-    @else
-        <!-- TAB 2: MANAJEMEN GRUP AKUN COA KUSTOM -->
+    @elseif ($activeTab === 'charts')
+        <!-- TAB 2: MANAJEMEN GRAFIK TREN APEXCHARTS -->
+        <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Pengaturan Grafik Tren Dasbor</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Kelola grafik multi-series tren bulanan (Area, Bar, Line), rentang bulan, dan pilihan metrik KPI yang divisualisasikan.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" wire:click="openCreateChartModal" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20 w-fit">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Tambah Grafik Baru</span>
+            </button>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            @forelse ($charts as $chart)
+                <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 relative group hover:border-indigo-500/30 transition-all">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider
+                                {{ $chart->type === 'area' ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20' : '' }}
+                                {{ $chart->type === 'bar' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : '' }}
+                                {{ $chart->type === 'line' ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20' : '' }}
+                            ">
+                                {{ $chart->type }}
+                            </span>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                {{ $chart->width === 'full' ? 'Lebar Penuh (2 Kolom)' : 'Setengah (1 Kolom)' }}
+                            </span>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                Urutan: #{{ $chart->order }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="toggleChartVisibility({{ $chart->id }})" class="px-2 py-1 rounded-lg text-xs font-bold transition-all {{ $chart->is_visible ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 hover:bg-slate-300' }}" title="Klik untuk Toggle Tampil/Sembunyi">
+                                {{ $chart->is_visible ? 'Tampil' : 'Tersembunyi' }}
+                            </button>
+
+                            <button type="button" wire:click="openEditChartModal({{ $chart->id }})" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white transition-all" title="Edit Grafik">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+
+                            <button type="button" wire:click="deleteChart({{ $chart->id }})" wire:confirm="Apakah Anda yakin ingin menghapus grafik '{{ $chart->name }}' ini?" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-rose-600 hover:text-white transition-all" title="Hapus Grafik">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-base font-bold text-slate-900 dark:text-white">{{ $chart->name }}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Rentang visualisasi: {{ $chart->months ?? 12 }} bulan kalender</p>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                        <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Metrik Terhubung ({{ count($chart->metric_ids ?? []) }} Metrik):</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            @php
+                                $metricMap = $kpis->keyBy('id');
+                            @endphp
+                            @forelse ($chart->metric_ids ?? [] as $mId)
+                                @if (isset($metricMap[$mId]))
+                                    <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 border border-slate-200 dark:border-slate-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                        {{ $metricMap[$mId]->title }}
+                                    </span>
+                                @endif
+                            @empty
+                                <span class="text-xs text-slate-400 italic">Belum ada metrik yang dipilih</span>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-span-full p-8 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold">Belum ada Grafik yang dikonfigurasi. Klik tombol "Tambah Grafik Baru" di atas untuk menambahkannya.</p>
+                </div>
+            @endforelse
+        </div>
+    @elseif ($activeTab === 'account_groups')
+        <!-- TAB 3: MANAJEMEN GRUP AKUN COA KUSTOM -->
         <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <div class="flex items-center gap-2.5">
@@ -594,6 +699,109 @@
                             </button>
                             <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20">
                                 Simpan Grup Akun
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Tambah / Edit Grafik Dashboard -->
+    @if ($showChartModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+            <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8 animate-scale-in">
+                <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                        <span>{{ $editingChartId ? 'Edit Grafik Tren' : 'Tambah Grafik Tren Baru' }}</span>
+                    </h3>
+                    <button type="button" wire:click="$set('showChartModal', false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <form wire:submit="saveChart" class="p-6 space-y-4">
+                    <div>
+                        <label for="chart_name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Judul Grafik *</label>
+                        <input type="text" id="chart_name" wire:model="chart_name" placeholder="Contoh: Tren Kinerja Finansial (12 Bulan)" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all" required />
+                        @error('chart_name') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="chart_type_val" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Tipe Visualisasi *</label>
+                            <select id="chart_type_val" wire:model="chart_type_val" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all">
+                                <option value="area">Area (Gradien Halus)</option>
+                                <option value="bar">Bar (Kolom Vertikal)</option>
+                                <option value="line">Line (Garis Dinamis)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="chart_width" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Lebar Kolom *</label>
+                            <select id="chart_width" wire:model="chart_width" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all">
+                                <option value="half">Setengah (1 Kolom / 50%)</option>
+                                <option value="full">Lebar Penuh (2 Kolom / 100%)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="chart_months" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Rentang Bulan *</label>
+                            <select id="chart_months" wire:model="chart_months" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all">
+                                <option value="3">3 Bulan Terakhir</option>
+                                <option value="6">6 Bulan Terakhir</option>
+                                <option value="12">12 Bulan Kalender Penuh</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="chart_order" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Nomor Urutan *</label>
+                            <input type="number" id="chart_order" wire:model="chart_order" min="0" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-indigo-500 transition-all" required />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Pilih Metrik yang Ditampilkan pada Grafik (Multi-Select) *</label>
+                        <div class="max-h-48 overflow-y-auto p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 space-y-2">
+                            @foreach ($kpis as $kpi)
+                                <label class="flex items-center gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
+                                    <input type="checkbox" value="{{ $kpi->id }}" wire:model="chart_metric_ids" class="size-4 rounded text-indigo-600 border-slate-300 dark:border-slate-700" />
+                                    <span>{{ $kpi->title }} ({{ $kpi->display_format }})</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('chart_metric_ids') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-2">
+                        <input type="checkbox" id="chart_is_visible" wire:model="chart_is_visible" class="size-4 rounded text-indigo-600 border-slate-300 dark:border-slate-700" />
+                        <label for="chart_is_visible" class="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">Tampilkan grafik ini di Dashboard Utama</label>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <div>
+                            @if ($editingChartId)
+                                <button type="button" wire:click="deleteChart({{ $editingChartId }})" wire:confirm="Apakah Anda yakin ingin menghapus grafik ini?" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white dark:text-rose-400 text-xs font-bold transition-all border border-rose-500/20 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    <span>Hapus</span>
+                                </button>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" wire:click="$set('showChartModal', false)" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all">
+                                Batal
+                            </button>
+                            <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20">
+                                Simpan Grafik
                             </button>
                         </div>
                     </div>

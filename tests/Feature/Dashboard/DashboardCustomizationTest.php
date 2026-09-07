@@ -98,9 +98,59 @@ test('super admin can toggle dashboard widget visibility settings', function () 
         ->assertHasNoErrors();
 
     $setting = DashboardSetting::where('company_id', $this->company->id)->first();
-    expect($setting->show_recent_journals)->toBeFalse();
-    expect($setting->show_quick_actions)->toBeFalse();
+    expect($setting->show_recent_journals)->toBeFalse()
+        ->and($setting->show_quick_actions)->toBeFalse();
 });
+
+test('super admin can manage dashboard charts in settings', function () {
+    $kpi = DashboardKpi::firstOrCreate(['id' => 1, 'company_id' => $this->company->id], [
+        'title' => 'Pendapatan',
+        'source_type' => 'formula',
+        'calculation_type' => 'period_mutation',
+        'color_theme' => 'emerald',
+        'display_format' => 'currency',
+        'order_index' => 1,
+    ]);
+
+    // Create chart
+    Livewire::actingAs($this->adminUser)
+        ->test(DashboardSettingsIndex::class)
+        ->set('chart_name', 'Grafik Uji Coba')
+        ->set('chart_type_val', 'area')
+        ->set('chart_width', 'half')
+        ->set('chart_months', 12)
+        ->set('chart_metric_ids', [$kpi->id])
+        ->set('chart_order', 1)
+        ->set('chart_is_visible', true)
+        ->call('saveChart')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('dashboard_charts', [
+        'company_id' => $this->company->id,
+        'name' => 'Grafik Uji Coba',
+        'type' => 'area',
+    ]);
+
+    $chart = \App\Models\DashboardChart::where('name', 'Grafik Uji Coba')->first();
+
+    // Toggle visibility
+    Livewire::actingAs($this->adminUser)
+        ->test(DashboardSettingsIndex::class)
+        ->call('toggleChartVisibility', $chart->id);
+
+    $chart->refresh();
+    expect($chart->is_visible)->toBeFalse();
+
+    // Delete chart
+    Livewire::actingAs($this->adminUser)
+        ->test(DashboardSettingsIndex::class)
+        ->call('deleteChart', $chart->id);
+
+    $this->assertDatabaseMissing('dashboard_charts', [
+        'id' => $chart->id,
+    ]);
+});
+
 
 test('unauthorized user without permission receives 403 on dashboard settings', function () {
     $regularUser = User::factory()->create();

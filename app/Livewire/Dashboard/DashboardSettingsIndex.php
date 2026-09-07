@@ -6,6 +6,7 @@ use App\Domain\Dashboard\Services\DashboardMetricService;
 use App\Models\Account;
 use App\Models\AccountGroup;
 use App\Models\Company;
+use App\Models\DashboardChart;
 use App\Models\DashboardKpi;
 use App\Models\DashboardSetting;
 use App\Services\AuditLogService;
@@ -93,6 +94,25 @@ class DashboardSettingsIndex extends Component
     public string $group_account_type = 'PENDAPATAN';
 
     public array $group_selected_account_ids = [];
+
+    // Dashboard Chart CRUD Modal State
+    public bool $showChartModal = false;
+
+    public ?int $editingChartId = null;
+
+    public string $chart_name = '';
+
+    public string $chart_type_val = 'area';
+
+    public string $chart_width = 'half';
+
+    public int $chart_months = 12;
+
+    public array $chart_metric_ids = [];
+
+    public int $chart_order = 1;
+
+    public bool $chart_is_visible = true;
 
     public function mount(): void
     {
@@ -409,6 +429,100 @@ class DashboardSettingsIndex extends Component
         $this->kpi_is_active = true;
     }
 
+    public function openCreateChartModal(): void
+    {
+        $this->resetChartForm();
+        $this->showChartModal = true;
+    }
+
+    public function openEditChartModal(int $id): void
+    {
+        $chart = DashboardChart::findOrFail($id);
+        $this->editingChartId = $chart->id;
+        $this->chart_name = $chart->name;
+        $this->chart_type_val = $chart->type;
+        $this->chart_width = $chart->width ?? 'half';
+        $this->chart_months = $chart->months ?? 12;
+        $this->chart_metric_ids = $chart->metric_ids ?? [];
+        $this->chart_order = $chart->order ?? 1;
+        $this->chart_is_visible = (bool) $chart->is_visible;
+        $this->showChartModal = true;
+    }
+
+    public function saveChart(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('dashboard.settings') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
+        $this->validate([
+            'chart_name' => 'required|string|max:150',
+            'chart_type_val' => 'required|in:area,bar,line',
+            'chart_width' => 'required|in:half,full',
+            'chart_months' => 'required|integer|min:1|max:12',
+            'chart_metric_ids' => 'required|array|min:1',
+            'chart_order' => 'required|integer|min:0',
+        ]);
+
+        DashboardChart::updateOrCreate(
+            ['id' => $this->editingChartId],
+            [
+                'company_id' => $this->company->id,
+                'name' => $this->chart_name,
+                'type' => $this->chart_type_val,
+                'width' => $this->chart_width,
+                'months' => $this->chart_months,
+                'metric_ids' => array_values(array_map('intval', $this->chart_metric_ids)),
+                'order' => $this->chart_order,
+                'is_visible' => $this->chart_is_visible,
+            ]
+        );
+
+        AuditLogService::record(
+            $this->editingChartId ? 'dashboard_chart.updated' : 'dashboard_chart.created',
+            ($this->editingChartId ? 'Memperbarui' : 'Membuat').' Grafik Dashboard ('.$this->chart_name.')'
+        );
+
+        session()->flash('message', $this->editingChartId ? 'Grafik berhasil diperbarui.' : 'Grafik baru berhasil ditambahkan.');
+        $this->showChartModal = false;
+        $this->resetChartForm();
+    }
+
+    public function toggleChartVisibility(int $id): void
+    {
+        $chart = DashboardChart::findOrFail($id);
+        $chart->is_visible = ! $chart->is_visible;
+        $chart->save();
+
+        session()->flash('message', 'Status visibilitas grafik "'.$chart->name.'" berhasil diubah.');
+    }
+
+    public function deleteChart(int $id): void
+    {
+        if (auth()->check() && ! auth()->user()->can('dashboard.settings') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
+        $chart = DashboardChart::findOrFail($id);
+        $name = $chart->name;
+        $chart->delete();
+
+        AuditLogService::record('dashboard_chart.deleted', 'Menghapus Grafik Dashboard ('.$name.')');
+        session()->flash('message', 'Grafik "'.$name.'" berhasil dihapus.');
+    }
+
+    private function resetChartForm(): void
+    {
+        $this->editingChartId = null;
+        $this->chart_name = '';
+        $this->chart_type_val = 'area';
+        $this->chart_width = 'half';
+        $this->chart_months = 12;
+        $this->chart_metric_ids = [];
+        $this->chart_order = 1;
+        $this->chart_is_visible = true;
+    }
+
     public function render()
     {
         $kpis = DashboardKpi::where('company_id', $this->company->id)
@@ -430,11 +544,17 @@ class DashboardSettingsIndex extends Component
             ->orderBy('id')
             ->get();
 
+        $charts = DashboardChart::where('company_id', $this->company->id)
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get();
+
         return view('livewire.dashboard.dashboard-settings-index', [
             'kpis' => $kpis,
             'accounts' => $accounts,
             'accountGroups' => $accountGroups,
             'groups' => $groups,
+            'charts' => $charts,
         ]);
     }
 }

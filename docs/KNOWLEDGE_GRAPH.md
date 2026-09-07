@@ -121,7 +121,7 @@ graph TD
   - **Tabel Transaksi Bernilai Signifikan**: Menampilkan 10 transaksi jurnal dengan nilai terbesar pada periode terpilih untuk kontrol eksekutif langsung.
   - **Filter Terpadu 4 Kolom**: Filter Unit Bisnis, Bulan Mulai, Bulan Selesai, dan Tahun Kalender.
 - **Pengaturan & Personalisasi Dasbor**: `/dashboard/settings` $\rightarrow$ [DashboardSettingsIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Dashboard/DashboardSettingsIndex.php) $\rightarrow$ [dashboard-settings-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/dashboard/dashboard-settings-index.blade.php)
-  - Urutan kartu, visibilitas (toggle on/off), pemilihan warna aksen kustom, format angka, dan penataan grafik dikontrol secara terpusat pada halaman pengaturan ini tanpa mengganggu tampilan dasbor utama.
+  - Dilengkapi 3 tab navigasi terpadu: **Pengaturan Tampilan & Kartu KPI**, **Pengaturan Grafik Tren** (CRUD Grafik, tipe Area/Bar/Line, lebar 1/2 kolom, rentang bulan, multi-select metrik terhubung), serta **Grup Akun COA Kustom**. Urutan dan visibilitas dikontrol secara terpusat tanpa mengganggu tampilan dasbor utama.
 - **Domain Service Layer**:
   - [DashboardMetricService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Dashboard/Services/DashboardMetricService.php): Engine kalkulasi 12 KPI dengan memoization transaksi, sinkronisasi 6 grup akun kustom (`DASH_COGS`, `DASH_SGA`, `DASH_EBITDA_ADJ`, `DASH_TAX`, `DASH_INVENTORY`, `DASH_COGS_INV`), kalkulasi rasio keuangan, dan pemrosesan multi-series grafik 12 bulan.
 - **Model Eloquent**:
