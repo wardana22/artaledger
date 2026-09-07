@@ -11,7 +11,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
-#[Title('Pengaturan Perusahaan & Branding - ArtaLedger')]
+#[Title('Pengaturan Perusahaan & Branding')]
 class CompanySettingsIndex extends Component
 {
     use WithFileUploads;

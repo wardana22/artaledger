@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Neraca Lajur (Worksheet) - ArtaLedger')]
+#[Title('Neraca Lajur (Worksheet)')]
 class Worksheet extends Component
 {
     public string $startDate = '';

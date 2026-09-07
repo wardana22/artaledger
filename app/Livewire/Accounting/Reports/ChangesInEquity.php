@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Laporan Perubahan Ekuitas - ArtaLedger')]
+#[Title('Laporan Perubahan Ekuitas')]
 class ChangesInEquity extends Component
 {
     public string $startDate = '';

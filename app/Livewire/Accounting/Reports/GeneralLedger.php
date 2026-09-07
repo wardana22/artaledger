@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Buku Besar (General Ledger) - Akun Header - ArtaLedger')]
+#[Title('Buku Besar (General Ledger) - Akun Header')]
 class GeneralLedger extends Component
 {
     public ?int $selectedAccountId = null;

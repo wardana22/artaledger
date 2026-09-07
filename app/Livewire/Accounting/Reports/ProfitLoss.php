@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Laporan Laba Rugi (Profit & Loss) - ArtaLedger')]
+#[Title('Laporan Laba Rugi (Profit & Loss)')]
 class ProfitLoss extends Component
 {
     public string $startDate = '';

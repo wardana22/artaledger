@@ -9,7 +9,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Master Unit Perusahaan - ArtaLedger')]
+#[Title('Master Unit Perusahaan')]
 class UnitIndex extends Component
 {
     use WithPagination;

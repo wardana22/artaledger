@@ -6,14 +6,16 @@
 @endsection
 
 @php
-    function formatCfAmount($amount) {
-        if (abs($amount) < 0.005) {
-            return '-';
+    if (!function_exists('formatCfAmount')) {
+        function formatCfAmount($amount) {
+            if (abs($amount) < 0.005) {
+                return '-';
+            }
+            if ($amount < 0) {
+                return '(' . number_format(abs($amount), 2, ',', '.') . ')';
+            }
+            return number_format($amount, 2, ',', '.');
         }
-        if ($amount < 0) {
-            return '(' . number_format(abs($amount), 2, ',', '.') . ')';
-        }
-        return number_format($amount, 2, ',', '.');
     }
 @endphp
 

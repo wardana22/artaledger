@@ -10,7 +10,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Master Chart of Accounts (COA) - ArtaLedger')]
+#[Title('Master Chart of Accounts (COA)')]
 class AccountIndex extends Component
 {
     use WithPagination;

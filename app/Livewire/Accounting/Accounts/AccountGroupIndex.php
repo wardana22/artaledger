@@ -11,7 +11,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Grup Akun COA Kustom - ArtaLedger')]
+#[Title('Grup Akun COA Kustom')]
 class AccountGroupIndex extends Component
 {
     public ?Company $company = null;

@@ -12,7 +12,7 @@ use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 
 #[Layout('layouts.app')]
-#[Title('Manajemen Pengguna & Penugasan Unit - ArtaLedger')]
+#[Title('Manajemen Pengguna & Penugasan Unit')]
 class UserIndex extends Component
 {
     use WithPagination;

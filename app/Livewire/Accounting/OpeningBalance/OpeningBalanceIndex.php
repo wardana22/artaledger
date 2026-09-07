@@ -14,7 +14,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Laporan Saldo Awal - ArtaLedger')]
+#[Title('Laporan Saldo Awal')]
 class OpeningBalanceIndex extends Component
 {
     use WithPagination;

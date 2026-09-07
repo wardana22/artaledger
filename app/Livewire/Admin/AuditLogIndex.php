@@ -11,7 +11,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Audit Log Aktivitas - ArtaLedger')]
+#[Title('Audit Log Aktivitas')]
 class AuditLogIndex extends Component
 {
     use WithPagination;

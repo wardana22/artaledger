@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Domain\Dashboard\Services\DashboardMetricService;
 use App\Models\Account;
 use App\Models\AccountGroup;
 use App\Models\Company;
+use App\Models\DashboardChart;
 use App\Models\DashboardKpi;
 use App\Models\DashboardSetting;
 use App\Services\AuditLogService;
@@ -14,7 +16,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Pengaturan Dashboard - ArtaLedger')]
+#[Title('Pengaturan Dashboard')]
 class DashboardSettingsIndex extends Component
 {
     public ?Company $company = null;
@@ -93,6 +95,25 @@ class DashboardSettingsIndex extends Component
 
     public array $group_selected_account_ids = [];
 
+    // Dashboard Chart CRUD Modal State
+    public bool $showChartModal = false;
+
+    public ?int $editingChartId = null;
+
+    public string $chart_name = '';
+
+    public string $chart_type_val = 'area';
+
+    public string $chart_width = 'half';
+
+    public int $chart_months = 12;
+
+    public array $chart_metric_ids = [];
+
+    public int $chart_order = 1;
+
+    public bool $chart_is_visible = true;
+
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('dashboard.settings') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
@@ -138,79 +159,14 @@ class DashboardSettingsIndex extends Component
 
     private function ensureDefaultKpisExist(): void
     {
-        if (DashboardKpi::where('company_id', $this->company->id)->count() === 0) {
-            DashboardKpi::create([
-                'company_id' => $this->company->id,
-                'title' => 'Total Pendapatan Usaha',
-                'source_type' => 'account_type',
-                'account_type' => 'revenue',
-                'calculation_type' => 'ending_balance',
-                'color_theme' => 'emerald',
-                'icon' => 'trending-up',
-                'order_index' => 1,
-                'is_active' => true,
-            ]);
-
-            DashboardKpi::create([
-                'company_id' => $this->company->id,
-                'title' => 'Total Beban Operasional',
-                'source_type' => 'account_type',
-                'account_type' => 'expense',
-                'calculation_type' => 'ending_balance',
-                'color_theme' => 'rose',
-                'icon' => 'credit-card',
-                'order_index' => 2,
-                'is_active' => true,
-            ]);
-
-            DashboardKpi::create([
-                'company_id' => $this->company->id,
-                'title' => 'Total Aktiva / Aset Perusahaan',
-                'source_type' => 'account_type',
-                'account_type' => 'asset',
-                'calculation_type' => 'ending_balance',
-                'color_theme' => 'indigo',
-                'icon' => 'wallet',
-                'order_index' => 3,
-                'is_active' => true,
-            ]);
+        if (DashboardKpi::where('company_id', $this->company->id)->count() < 12) {
+            app(DashboardMetricService::class)->seedDefaultKpisAndCharts($this->company->id);
         }
     }
 
     private function ensureSystemGroupsExist(): void
     {
-        if (AccountGroup::where('company_id', $this->company->id)->count() === 0) {
-            $g1 = AccountGroup::create([
-                'company_id' => $this->company->id,
-                'code' => 'REVENUE',
-                'name' => 'Pendapatan Usaha (Sales / Revenue)',
-                'description' => 'Seluruh akun pendapatan usaha (Kepala 4)',
-                'color_theme' => 'emerald',
-                'is_system' => true,
-            ]);
-            $g1->members()->create(['account_prefix' => '4']);
-
-            $g2 = AccountGroup::create([
-                'company_id' => $this->company->id,
-                'code' => 'COGS',
-                'name' => 'Beban Pokok Pendapatan (HPP / COGS)',
-                'description' => 'Seluruh akun beban pokok penjualan (Kepala 5)',
-                'color_theme' => 'rose',
-                'is_system' => true,
-            ]);
-            $g2->members()->create(['account_prefix' => '5']);
-
-            $g3 = AccountGroup::create([
-                'company_id' => $this->company->id,
-                'code' => 'OPEX',
-                'name' => 'Beban Operasional & Umum',
-                'description' => 'Seluruh beban operasional (Kepala 6 & 7)',
-                'color_theme' => 'amber',
-                'is_system' => true,
-            ]);
-            $g3->members()->create(['account_prefix' => '6']);
-            $g3->members()->create(['account_prefix' => '7']);
-        }
+        app(DashboardMetricService::class)->syncCustomAccountGroups($this->company->id);
     }
 
     public function openCreateGroupModal(): void
@@ -393,7 +349,7 @@ class DashboardSettingsIndex extends Component
             'kpi_calculation_type' => 'required|in:ending_balance,period_mutation,debit_sum,credit_sum',
             'kpi_display_format' => 'required|in:currency,percentage,days,number,times',
             'kpi_decimal_places' => 'required|integer|min:0|max:4',
-            'kpi_color_theme' => 'required|in:indigo,emerald,rose,amber,sky,violet',
+            'kpi_color_theme' => 'required|in:indigo,emerald,rose,amber,sky,violet,cyan,orange,teal,blue,yellow',
             'kpi_icon' => 'required|string',
             'kpi_order_index' => 'required|integer|min:0',
         ]);
@@ -473,6 +429,100 @@ class DashboardSettingsIndex extends Component
         $this->kpi_is_active = true;
     }
 
+    public function openCreateChartModal(): void
+    {
+        $this->resetChartForm();
+        $this->showChartModal = true;
+    }
+
+    public function openEditChartModal(int $id): void
+    {
+        $chart = DashboardChart::findOrFail($id);
+        $this->editingChartId = $chart->id;
+        $this->chart_name = $chart->name;
+        $this->chart_type_val = $chart->type;
+        $this->chart_width = $chart->width ?? 'half';
+        $this->chart_months = $chart->months ?? 12;
+        $this->chart_metric_ids = $chart->metric_ids ?? [];
+        $this->chart_order = $chart->order ?? 1;
+        $this->chart_is_visible = (bool) $chart->is_visible;
+        $this->showChartModal = true;
+    }
+
+    public function saveChart(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('dashboard.settings') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
+        $this->validate([
+            'chart_name' => 'required|string|max:150',
+            'chart_type_val' => 'required|in:area,bar,line',
+            'chart_width' => 'required|in:half,full',
+            'chart_months' => 'required|integer|min:1|max:12',
+            'chart_metric_ids' => 'required|array|min:1',
+            'chart_order' => 'required|integer|min:0',
+        ]);
+
+        DashboardChart::updateOrCreate(
+            ['id' => $this->editingChartId],
+            [
+                'company_id' => $this->company->id,
+                'name' => $this->chart_name,
+                'type' => $this->chart_type_val,
+                'width' => $this->chart_width,
+                'months' => $this->chart_months,
+                'metric_ids' => array_values(array_map('intval', $this->chart_metric_ids)),
+                'order' => $this->chart_order,
+                'is_visible' => $this->chart_is_visible,
+            ]
+        );
+
+        AuditLogService::record(
+            $this->editingChartId ? 'dashboard_chart.updated' : 'dashboard_chart.created',
+            ($this->editingChartId ? 'Memperbarui' : 'Membuat').' Grafik Dashboard ('.$this->chart_name.')'
+        );
+
+        session()->flash('message', $this->editingChartId ? 'Grafik berhasil diperbarui.' : 'Grafik baru berhasil ditambahkan.');
+        $this->showChartModal = false;
+        $this->resetChartForm();
+    }
+
+    public function toggleChartVisibility(int $id): void
+    {
+        $chart = DashboardChart::findOrFail($id);
+        $chart->is_visible = ! $chart->is_visible;
+        $chart->save();
+
+        session()->flash('message', 'Status visibilitas grafik "'.$chart->name.'" berhasil diubah.');
+    }
+
+    public function deleteChart(int $id): void
+    {
+        if (auth()->check() && ! auth()->user()->can('dashboard.settings') && ! auth()->user()->can('settings.manage') && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
+        $chart = DashboardChart::findOrFail($id);
+        $name = $chart->name;
+        $chart->delete();
+
+        AuditLogService::record('dashboard_chart.deleted', 'Menghapus Grafik Dashboard ('.$name.')');
+        session()->flash('message', 'Grafik "'.$name.'" berhasil dihapus.');
+    }
+
+    private function resetChartForm(): void
+    {
+        $this->editingChartId = null;
+        $this->chart_name = '';
+        $this->chart_type_val = 'area';
+        $this->chart_width = 'half';
+        $this->chart_months = 12;
+        $this->chart_metric_ids = [];
+        $this->chart_order = 1;
+        $this->chart_is_visible = true;
+    }
+
     public function render()
     {
         $kpis = DashboardKpi::where('company_id', $this->company->id)
@@ -494,11 +544,17 @@ class DashboardSettingsIndex extends Component
             ->orderBy('id')
             ->get();
 
+        $charts = DashboardChart::where('company_id', $this->company->id)
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get();
+
         return view('livewire.dashboard.dashboard-settings-index', [
             'kpis' => $kpis,
             'accounts' => $accounts,
             'accountGroups' => $accountGroups,
             'groups' => $groups,
+            'charts' => $charts,
         ]);
     }
 }

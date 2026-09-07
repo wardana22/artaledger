@@ -2,20 +2,20 @@
 
 namespace App\Livewire\Dashboard;
 
-use App\Models\Account;
+use App\Domain\Dashboard\Services\DashboardMetricService;
 use App\Models\AccountingPeriod;
 use App\Models\Company;
+use App\Models\DashboardChart;
 use App\Models\DashboardKpi;
 use App\Models\DashboardSetting;
 use App\Models\JournalEntry;
 use App\Models\Unit;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Dashboard Finansial Eksekutif - ArtaLedger')]
+#[Title('Dashboard Finansial Eksekutif')]
 class DashboardIndex extends Component
 {
     public ?Company $company = null;
@@ -24,9 +24,11 @@ class DashboardIndex extends Component
 
     public ?int $selectedUnitId = null;
 
-    public int $selectedMonth = 0;
+    public int $start_month = 1;
 
-    public int $selectedYear = 2026;
+    public int $end_month = 2;
+
+    public int $selectedYear = 2025;
 
     public function mount(): void
     {
@@ -54,8 +56,6 @@ class DashboardIndex extends Component
             ]
         );
 
-        $this->selectedYear = (int) date('Y');
-
         // Multi-Tenant Isolation unit assignment
         if (auth()->check() && ! auth()->user()->hasGlobalUnitAccess()) {
             $userUnitIds = auth()->user()->units->pluck('id')->toArray();
@@ -65,8 +65,37 @@ class DashboardIndex extends Component
         }
     }
 
-    public function render()
+    public function updatedStartMonth(): void
     {
+        if ($this->start_month > $this->end_month) {
+            $this->end_month = $this->start_month;
+        }
+    }
+
+    public function updatedEndMonth(): void
+    {
+        if ($this->end_month < $this->start_month) {
+            $this->start_month = $this->end_month;
+        }
+    }
+
+    public function refreshData(DashboardMetricService $metricService): void
+    {
+        $metricService->syncCustomAccountGroups($this->company->id);
+    }
+
+    public function render(DashboardMetricService $metricService)
+    {
+        $startDate = sprintf('%04d-%02d-01', $this->selectedYear, $this->start_month);
+        $endDate = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $this->selectedYear, $this->end_month)));
+
+        // 1. Ensure KPIs and default charts are seeded for company
+        $existingKpisCount = DashboardKpi::where('company_id', $this->company->id)->count();
+        if ($existingKpisCount < 12) {
+            $metricService->seedDefaultKpisAndCharts($this->company->id);
+        }
+
+        // 2. Fetch 12 active KPI Cards
         $kpiCards = [];
         if ($this->setting->show_kpi_cards) {
             $kpis = DashboardKpi::where('company_id', $this->company->id)
@@ -75,141 +104,65 @@ class DashboardIndex extends Component
                 ->get();
 
             foreach ($kpis as $kpi) {
-                $value = $kpi->calculateValue($this->selectedUnitId, $this->selectedMonth, $this->selectedYear);
+                $value = $metricService->calculateKpiValue($kpi, $startDate, $endDate, $this->selectedUnitId);
                 $kpiCards[] = [
+                    'id' => $kpi->id,
                     'title' => $kpi->title,
                     'value' => $value,
                     'formatted_value' => $kpi->formatDisplayValue($value),
                     'color_theme' => $kpi->color_theme,
                     'icon' => $kpi->icon,
-                    'calculation_type' => $kpi->calculation_type,
+                    'display_format' => $kpi->display_format,
                 ];
             }
         }
 
-        // Active Accounting Period matching filter
-        $activePeriodQuery = AccountingPeriod::where('company_id', $this->company->id)
-            ->where('year', $this->selectedYear);
+        // 3. Financial Ratios
+        $financialRatios = $metricService->calculateFinancialRatios($startDate, $endDate, $this->selectedUnitId, $this->company->id);
 
-        if ($this->selectedMonth > 0) {
-            $activePeriodQuery->where('month', $this->selectedMonth);
-        }
+        // 4. Dynamic Multi-Series Charts (ApexCharts)
+        $charts = DashboardChart::where('company_id', $this->company->id)
+            ->where('is_visible', true)
+            ->orderBy('order')
+            ->get();
 
-        $activePeriod = $activePeriodQuery->first() ?? AccountingPeriod::where('company_id', $this->company->id)->where('status', 'open')->latest('start_date')->first();
+        $chartData = $metricService->getMonthlyTrend($charts, $this->selectedYear, $this->selectedUnitId, $this->company->id);
 
-        // Cash & Bank Accounts
-        $cashBankAccounts = [];
-        if ($this->setting->show_cash_bank_summary) {
-            $cashAccounts = Account::where('company_id', $this->company->id)
-                ->where(function ($q) {
-                    $q->whereIn('type', ['KAS', 'BANK'])
-                        ->orWhere('code', 'like', '11%')
-                        ->orWhere('name', 'like', '%kas%')
-                        ->orWhere('name', 'like', '%bank%');
-                })
-                ->where('is_group', false)
-                ->get();
+        // 5. Top 10 High-Value Transactions
+        $topTransactions = $metricService->getTopTransactions($startDate, $endDate, $this->selectedUnitId, $this->company->id, 10);
 
-            foreach ($cashAccounts as $acc) {
-                $totalDebit = (float) DB::table('journal_lines')
-                    ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
-                    ->where('journal_lines.account_id', $acc->id)
-                    ->where('journal_entries.status', 'posted')
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
-                    ->sum('journal_lines.debit');
+        // 6. Active Accounting Period
+        $activePeriod = AccountingPeriod::where('company_id', $this->company->id)
+            ->where('year', $this->selectedYear)
+            ->where('month', $this->end_month)
+            ->first() ?? AccountingPeriod::where('company_id', $this->company->id)->where('status', 'open')->latest('start_date')->first();
 
-                $totalCredit = (float) DB::table('journal_lines')
-                    ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
-                    ->where('journal_lines.account_id', $acc->id)
-                    ->where('journal_entries.status', 'posted')
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
-                    ->sum('journal_lines.credit');
-
-                $cashBankAccounts[] = [
-                    'code' => $acc->code,
-                    'name' => $acc->name,
-                    'balance' => $totalDebit - $totalCredit,
-                ];
-            }
-        }
-
-        // Monthly Revenue vs Expense Data
-        $chartMonths = [];
-        if ($this->setting->show_revenue_expense_chart) {
-            for ($m = 1; $m <= 12; $m++) {
-                $monthName = date('M', mktime(0, 0, 0, $m, 1));
-                $startDate = sprintf('%04d-%02d-01', $this->selectedYear, $m);
-                $endDate = date('Y-m-t', strtotime($startDate));
-
-                $revenue = (float) DB::table('journal_lines')
-                    ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
-                    ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
-                    ->where('accounts.company_id', $this->company->id)
-                    ->where(function ($q) {
-                        $q->whereIn('accounts.type', ['PENDAPATAN', 'PENDAPATAN LAINNYA', 'revenue'])
-                            ->orWhere('accounts.code', 'like', '4%');
-                    })
-                    ->where('journal_entries.status', 'posted')
-                    ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
-                    ->sum(DB::raw('journal_lines.credit - journal_lines.debit'));
-
-                $expense = (float) DB::table('journal_lines')
-                    ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
-                    ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
-                    ->where('accounts.company_id', $this->company->id)
-                    ->where(function ($q) {
-                        $q->whereIn('accounts.type', ['BEBAN', 'BEBAN LAIN-LAIN', 'HPP', 'expense'])
-                            ->orWhere('accounts.code', 'like', '5%')
-                            ->orWhere('accounts.code', 'like', '6%')
-                            ->orWhere('accounts.code', 'like', '7%')
-                            ->orWhere('accounts.code', 'like', '8%')
-                            ->orWhere('accounts.code', 'like', '9%');
-                    })
-                    ->where('journal_entries.status', 'posted')
-                    ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
-                    ->when($this->selectedUnitId, fn ($q) => $q->where('journal_lines.unit_id', $this->selectedUnitId))
-                    ->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
-
-                $chartMonths[] = [
-                    'month' => $monthName,
-                    'revenue' => max(0, $revenue),
-                    'expense' => max(0, $expense),
-                    'profit' => $revenue - $expense,
-                ];
-            }
-        }
-
-        // Recent Journal Entries
+        // 7. Recent Journal Entries (Audit Trail)
         $recentJournals = [];
         if ($this->setting->show_recent_journals) {
-            $query = JournalEntry::with(['journalType', 'lines.unit'])
+            $recentJournals = JournalEntry::with(['journalType', 'lines.unit'])
+                ->where('entry_number', 'not like', 'SA%')
+                ->whereBetween('entry_date', [$startDate, $endDate])
+                ->when($this->selectedUnitId, fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->where('unit_id', $this->selectedUnitId)))
                 ->latest('entry_date')
-                ->latest('id');
-
-            if ($this->selectedYear > 0) {
-                $query->whereYear('entry_date', $this->selectedYear);
-            }
-            if ($this->selectedMonth > 0) {
-                $query->whereMonth('entry_date', $this->selectedMonth);
-            }
-
-            if ($this->selectedUnitId) {
-                $query->whereHas('lines', fn ($q) => $q->where('unit_id', $this->selectedUnitId));
-            }
-
-            $recentJournals = $query->take($this->setting->recent_journals_count)->get();
+                ->latest('id')
+                ->take($this->setting->recent_journals_count)
+                ->get();
         }
 
         $units = Unit::all();
 
         return view('livewire.dashboard.dashboard-index', [
             'kpiCards' => $kpiCards,
+            'financialRatios' => $financialRatios,
+            'charts' => $charts,
+            'chartData' => $chartData,
+            'topTransactions' => $topTransactions,
             'activePeriod' => $activePeriod,
-            'cashBankAccounts' => $cashBankAccounts,
-            'chartMonths' => $chartMonths,
             'recentJournals' => $recentJournals,
             'units' => $units,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
     }
 }

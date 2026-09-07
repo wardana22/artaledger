@@ -15,7 +15,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Template Jurnal Transaksi - ArtaLedger')]
+#[Title('Template Jurnal Transaksi')]
 class JournalTemplateIndex extends Component
 {
     use WithPagination;

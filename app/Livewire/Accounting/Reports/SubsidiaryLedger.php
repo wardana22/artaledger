@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Buku Besar Pembantu (Subsidiary Ledger) - ArtaLedger')]
+#[Title('Buku Besar Pembantu (Subsidiary Ledger)')]
 class SubsidiaryLedger extends Component
 {
     public ?int $selectedAccountId = null;

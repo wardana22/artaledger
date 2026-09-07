@@ -13,7 +13,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Laporan Arus Kas (Cash Flow Statement) - ArtaLedger')]
+#[Title('Laporan Arus Kas (Cash Flow Statement)')]
 class CashFlow extends Component
 {
     public string $startDate = '';

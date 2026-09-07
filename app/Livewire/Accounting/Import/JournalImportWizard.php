@@ -16,7 +16,7 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Import Jurnal Transaksi Excel - ArtaLedger')]
+#[Title('Import Jurnal Transaksi Excel')]
 class JournalImportWizard extends Component
 {
     use WithFileUploads;
