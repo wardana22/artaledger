@@ -21,7 +21,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- 1. Unit -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">🏢 Unit Bisnis</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Unit Perusahaan</label>
                 <select wire:model.live="selectedUnitId" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
                     @if (auth()->user()?->hasGlobalUnitAccess())
                         <option value="">🌐 Konsolidasi (Semua Unit)</option>
@@ -41,7 +41,7 @@
                 ];
             @endphp
             <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">📅 Dari Bulan</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Dari Bulan</label>
                 <select wire:model.live="start_month" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
                     @foreach ($monthNames as $mNum => $mLabel)
                         <option value="{{ $mNum }}">{{ $mNum }} - {{ $mLabel }}</option>
@@ -51,7 +51,7 @@
 
             <!-- 3. s/d Bulan -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">📅 Sampai Bulan</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Sampai Bulan</label>
                 <select wire:model.live="end_month" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
                     @foreach ($monthNames as $mNum => $mLabel)
                         <option value="{{ $mNum }}">{{ $mNum }} - {{ $mLabel }}</option>
@@ -61,7 +61,7 @@
 
             <!-- 4. Tahun -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">📆 Tahun Buku</label>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tahun Buku</label>
                 <select wire:model.live="selectedYear" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
                     @for ($y = 2026; $y >= 2022; $y--)
                         <option value="{{ $y }}">Tahun {{ $y }}</option>
