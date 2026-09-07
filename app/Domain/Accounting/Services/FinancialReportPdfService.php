@@ -772,52 +772,25 @@ class FinancialReportPdfService
     public function getCashFlowData(string $startDate, string $endDate, string $unitFilter = 'all', ?User $user = null): array
     {
         $user = $user ?? auth()->user();
-        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
-
-        $cashAccounts = Account::where('type', 'KAS')
-            ->orWhere('type', 'BANK')
-            ->orWhere('code', 'like', '11.01%')
-            ->orWhere('code', 'like', '11.02%')
-            ->pluck('id')
-            ->toArray();
-
-        $opQuery = JournalLine::whereIn('account_id', $cashAccounts)
-            ->whereHas('journalEntry', function ($q) use ($startDate, $endDate) {
-                $q->where('status', 'posted')->whereBetween('entry_date', [$startDate, $endDate]);
-            })
-            ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
-                $q->whereIn('unit_id', $allowedUnitIds);
-            });
-
-        if ($unitFilter !== 'all') {
-            $opQuery->where('unit_id', $unitFilter);
-        }
-
-        $operatingLines = $opQuery->get();
-        $operatingIn = (float) $operatingLines->sum('debit');
-        $operatingOut = (float) $operatingLines->sum('credit');
-        $netOperatingCash = $operatingIn - $operatingOut;
-
-        $openingCash = (float) Account::whereIn('id', $cashAccounts)->sum('opening_balance');
-        $endingCash = $openingCash + $netOperatingCash;
+        $service = app(CashFlowService::class);
+        $statement = $service->calculateStatement($startDate, $endDate, $unitFilter);
 
         $company = Company::first();
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
 
-        return [
+        return array_merge($statement, [
             'company' => $company,
             'unitName' => $unitName,
-            'startDate' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
-            'endDate' => Carbon::parse($endDate)->isoFormat('D MMMM Y'),
+            'startDateFormatted' => Carbon::parse($startDate)->isoFormat('D MMMM Y'),
+            'endDateFormatted' => Carbon::parse($endDate)->isoFormat('D MMMM Y'),
             'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
             'printedBy' => $user ? $user->name : 'Administrator',
-            'openingCash' => $openingCash,
-            'operatingIn' => $operatingIn,
-            'operatingOut' => $operatingOut,
-            'netOperatingCash' => $netOperatingCash,
-            'endingCash' => $endingCash,
-        ];
+            // Maintain backward compatibility keys
+            'operatingIn' => $statement['totalOperating'] >= 0 ? $statement['totalOperating'] : 0.0,
+            'operatingOut' => $statement['totalOperating'] < 0 ? abs($statement['totalOperating']) : 0.0,
+            'netOperatingCash' => $statement['totalOperating'],
+        ]);
     }
 
     /**

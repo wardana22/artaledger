@@ -78,8 +78,16 @@ graph TD
         A_EXP_PDF["Route: .../reports/export/pdf/{type}"] --> C_PDF["Controller: FinancialReportPdfController"]
         A_EXP_XLS["Route: .../reports/export/excel/{type}"] --> C_XLS["Controller: FinancialReportExcelController"]
         
+        B_REP_CF --> S_CF["Service: CashFlowService"]
         C_PDF --> S_RPDF["Service: FinancialReportPdfService"]
         C_XLS --> S_RXLS["Service: FinancialReportExcelService"]
+        S_RPDF --> S_CF
+        S_RXLS --> S_CF
+        
+        S_CF --> M_CFR["Model: CashFlowRow"]
+        S_CF --> M_AGRP
+        S_CF --> M_ACC
+        S_CF --> M_JL
         
         B_REP_TB --> M_ACC
         B_REP_TB --> M_JL
@@ -139,13 +147,23 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 4. **Neraca Saldo (Trial Balance)**: `/accounting/reports/trial-balance` ([TrialBalance.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/TrialBalance.php))
 5. **Laba Rugi (Profit & Loss)**: `/accounting/reports/profit-loss` ([ProfitLoss.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/ProfitLoss.php))
 6. **Neraca (Balance Sheet)**: `/accounting/reports/balance-sheet` ([BalanceSheet.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/BalanceSheet.php))
-7. **Arus Kas (Cash Flow)**: `/accounting/reports/cash-flow` ([CashFlow.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/CashFlow.php))
+7. **Arus Kas (Cash Flow - Direct Method)**: `/accounting/reports/cash-flow` ([CashFlow.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/CashFlow.php))
+   - Menggunakan [CashFlowService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/CashFlowService.php) dan entitas dinamis [CashFlowRow.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/CashFlowRow.php).
+   - Format 3 aktivitas utama (*Operasi*, *Investasi*, *Pembiayaan*) dengan rekonsiliasi Kenaikan Bersih Kas, Saldo Kas Awal, dan Saldo Kas Akhir.
+   - Perhitungan otomatis Metode Langsung tersinkronisasi 100% dengan standar referensi akuntansi:
+     - **Penerimaan Pelanggan**: Pendapatan neto dikurangi kenaikan piutang usaha.
+     - **Pembayaran Karyawan**: Mutasi netto beban gaji & tunjangan operasional (`51.01`, `61.01` s/d `61.05`).
+     - **Pembayaran Pemasok**: Rekonsiliasi modal kerja terpadu (Beban Operasional non-gaji + Akumulasi Penyusutan + Mutasi Persediaan + Beban Dibayar Dimuka + Aset Lancar Lainnya + Mutasi Hutang).
+     - **Bunga & Pajak**: Mutasi akun beban bunga/administrasi dan panjar PPh 25.
+   - Fitur drilldown accordion interaktif per baris menampilkan rincian akun-akun pembentuk nilai (Debit, Kredit, Netto).
+   - Modal kustomisasi CRUD baris, urutan (*order index*), penentuan grup akun sumber, akun spesifik, atau rumus kalkulasi kustom (*formula expression*).
 8. **Perubahan Ekuitas (Changes in Equity)**: `/accounting/reports/changes-in-equity` ([ChangesInEquity.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/ChangesInEquity.php))
 9. **Saldo Awal**: `/accounting/reports/opening-balance` ([OpeningBalanceIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/OpeningBalance/OpeningBalanceIndex.php))
-- **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 cetak siap tanda tangan dan toleransi sub-rupiah `< 1.0`)
-- **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Format `.xlsx` dengan formula dan format mata uang akuntansi)
+- **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 cetak siap tanda tangan dan format Metode Langsung)
+- **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Format `.xlsx` multi-bagian Metode Langsung dengan formula dan format mata uang akuntansi)
 
 ### 7. Suite Pengujian Otomatis Pest PHP
+- [tests/Feature/Accounting/CashFlowDirectMethodTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/CashFlowDirectMethodTest.php) (Perhitungan Metode Langsung, Drilldown Akun Pembentuk, CRUD Baris & Rumus, serta Ekspor PDF/Excel)
 - [tests/Feature/Accounting/TrialBalanceBalanceVerificationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/TrialBalanceBalanceVerificationTest.php) (Verifikasi Neraca Saldo Seimbang)
 - [tests/Feature/Accounting/FinancialReportPdfTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportPdfTest.php) (Validasi Cetak PDF Laporan Keuangan)
 - [tests/Feature/Accounting/FinancialReportExcelTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportExcelTest.php) (Validasi Ekspor Excel Laporan Keuangan)

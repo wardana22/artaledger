@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             SaldoAwalSeeder::class,
             UserAndUnitSeeder::class,
             JournalTemplateSeeder::class,
+            CashFlowRowSeeder::class,
         ]);
     }
 }

@@ -501,56 +501,103 @@ class FinancialReportExcelService
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Arus Kas');
 
-        $periodStr = $data['startDate'].' - '.$data['endDate'];
-        $row = $this->applyReportHeader($spreadsheet, $data['company'], 'Laporan Arus Kas (Cash Flow)', $periodStr, $data['unitName'], 'C');
+        $periodStr = ($data['startDateFormatted'] ?? $data['startDate']).' - '.($data['endDateFormatted'] ?? $data['endDate']);
+        $row = $this->applyReportHeader($spreadsheet, $data['company'], 'Laporan Arus Kas (Metode Langsung)', $periodStr, $data['unitName'], 'B');
 
-        $sheet->setCellValue("A{$row}", 'Uraian Arus Kas');
-        $sheet->setCellValue("B{$row}", 'Rincian');
-        $sheet->setCellValue("C{$row}", 'Total');
+        $sheet->setCellValue("A{$row}", 'URAIAN / KETERANGAN');
+        $sheet->setCellValue("B{$row}", 'REALISASI (RP)');
 
-        $sheet->getStyle("A{$row}:C{$row}")->getFont()->setBold(true);
-        $sheet->getStyle("A{$row}:C{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+        $sheet->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+        $sheet->getStyle("B{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
         $row++;
 
         $currencyFormat = '#,##0.00;(#,##0.00);"-"';
 
-        $sheet->setCellValue("A{$row}", 'Saldo Kas & Bank Awal Periode');
-        $sheet->setCellValue("C{$row}", $data['openingCash']);
-        $sheet->getStyle("C{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
-        $sheet->getStyle("A{$row}:C{$row}")->getFont()->setBold(true);
-        $row += 2;
-
-        $sheet->setCellValue("A{$row}", 'Arus Kas dari Aktivitas Operasional');
+        // SECTION A: OPERASI
+        $sheet->setCellValue("A{$row}", 'A. ARUS KAS DARI KEGIATAN OPERASI');
         $sheet->getStyle("A{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F8FAFC');
         $row++;
 
-        $sheet->setCellValue("A{$row}", '    Penerimaan Kas Operasional');
-        $sheet->setCellValue("B{$row}", $data['operatingIn']);
+        foreach ($data['sections']['operating']['rows'] as $r) {
+            $sheet->setCellValue("A{$row}", '    '.$r['label']);
+            $sheet->setCellValue("B{$row}", $r['value']);
+            $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+            $row++;
+        }
+
+        $sheet->setCellValue("A{$row}", 'Jumlah Arus Kas dari Kegiatan Operasi');
+        $sheet->setCellValue("B{$row}", $data['totalOperating']);
         $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
-        $row++;
-
-        $sheet->setCellValue("A{$row}", '    Pengeluaran Kas Operasional');
-        $sheet->setCellValue("B{$row}", -$data['operatingOut']);
-        $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
-        $row++;
-
-        $sheet->setCellValue("A{$row}", 'Arus Kas Bersih dari Aktivitas Operasional');
-        $sheet->setCellValue("C{$row}", $data['netOperatingCash']);
-        $sheet->getStyle("C{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
-        $sheet->getStyle("A{$row}:C{$row}")->getFont()->setBold(true);
-        $sheet->getStyle("A{$row}:C{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
         $row += 2;
 
-        $sheet->setCellValue("A{$row}", 'Saldo Kas & Bank Akhir Periode');
-        $sheet->setCellValue("C{$row}", $data['endingCash']);
-        $sheet->getStyle("C{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
-        $sheet->getStyle("A{$row}:C{$row}")->getFont()->setBold(true);
-        $sheet->getStyle("A{$row}:C{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getStyle("A{$row}:C{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_DOUBLE);
+        // SECTION B: INVESTASI
+        $sheet->setCellValue("A{$row}", 'B. ARUS KAS UNTUK KEGIATAN INVESTASI');
+        $sheet->getStyle("A{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F8FAFC');
         $row++;
 
-        $this->applySignatures($spreadsheet, $data['company'], $row, 'A', 'B', 'C');
-        $this->autoSizeColumns($spreadsheet, ['A', 'B', 'C']);
+        foreach ($data['sections']['investing']['rows'] as $r) {
+            $sheet->setCellValue("A{$row}", '    '.$r['label']);
+            $sheet->setCellValue("B{$row}", $r['value']);
+            $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+            $row++;
+        }
+
+        $sheet->setCellValue("A{$row}", 'Jumlah Arus Kas untuk Kegiatan Investasi');
+        $sheet->setCellValue("B{$row}", $data['totalInvesting']);
+        $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
+        $row += 2;
+
+        // SECTION C: PEMBIAYAAN
+        $sheet->setCellValue("A{$row}", 'C. ARUS KAS PEMBIAYAAN');
+        $sheet->getStyle("A{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F8FAFC');
+        $row++;
+
+        foreach ($data['sections']['financing']['rows'] as $r) {
+            $sheet->setCellValue("A{$row}", '    '.$r['label']);
+            $sheet->setCellValue("B{$row}", $r['value']);
+            $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+            $row++;
+        }
+
+        $sheet->setCellValue("A{$row}", 'Jumlah Arus Kas Pembiayaan');
+        $sheet->setCellValue("B{$row}", $data['totalFinancing']);
+        $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
+        $row += 2;
+
+        // RECONCILIATION SUMMARY
+        $sheet->setCellValue("A{$row}", 'KENAIKAN BERSIH KAS (A + B + C)');
+        $sheet->setCellValue("B{$row}", $data['netCashFlow']);
+        $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
+        $row++;
+
+        $sheet->setCellValue("A{$row}", 'Saldo Kas Awal Periode');
+        $sheet->setCellValue("B{$row}", $data['openingCash']);
+        $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $row++;
+
+        $sheet->setCellValue("A{$row}", 'SALDO KAS, AKHIR PERIODE');
+        $sheet->setCellValue("B{$row}", $data['endingCash']);
+        $sheet->getStyle("B{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle("A{$row}:B{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle("A{$row}:B{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_DOUBLE);
+        $row += 2;
+
+        $this->applySignatures($spreadsheet, $data['company'], $row, 'A', 'A', 'B');
+        $this->autoSizeColumns($spreadsheet, ['A', 'B']);
 
         return $spreadsheet;
     }
