@@ -4,6 +4,19 @@ Dokumen ini memetakan keterhubungan antarmodul dalam sistem **ArtaLedger** (*Dir
 
 ```mermaid
 graph TD
+    subgraph SG_Dashboard["0. Dasbor Finansial Eksekutif"]
+        A_DASH["Route: /dashboard"] --> B_DASH["Livewire: DashboardIndex"]
+        A_DASH_SET["Route: /dashboard/settings"] --> B_DASH_SET["Livewire: DashboardSettingsIndex"]
+        
+        B_DASH --> S_DMS["Service: DashboardMetricService"]
+        B_DASH_SET --> S_DMS
+        S_DMS --> M_DKPI["Model: DashboardKpi (12 Metrik Baku)"]
+        S_DMS --> M_DCH["Model: DashboardChart (ApexCharts Multi-Series)"]
+        S_DMS --> M_AGRP["Model: AccountGroup (6 Grup Khusus Dasbor)"]
+        S_DMS --> M_JE["Model: JournalEntry"]
+        S_DMS --> M_JL["Model: JournalLine"]
+    end
+
     subgraph SG_Core["1. Master Data & Pengaturan"]
         A_COA["Route: /accounting/accounts"] --> B_COA["Livewire: AccountIndex"]
         A_GRP["Route: /accounting/account-groups"] --> B_GRP["Livewire: AccountGroupIndex"]
@@ -100,6 +113,21 @@ graph TD
 
 ## 📂 Peta Modul & Keterhubungan File
 
+### 0. Dasbor Finansial Eksekutif (`/dashboard` & `/dashboard/settings`)
+- **Tampilan Utama Dasbor**: `/dashboard` $\rightarrow$ [DashboardIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Dashboard/DashboardIndex.php) $\rightarrow$ [dashboard-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/dashboard/dashboard-index.blade.php)
+  - **12 Kartu Metrik Baku Eksekutif**: Pendapatan, HPP/COGS, Laba Bersih, EBITDA, SGA to Sales, COGS to Sales, Laba Operasional, Beban SGA, EBT, NPM, ITO (Inventory Turnover), dan DSI (Days Sales of Inventory).
+  - **3 Rasio Finansial Utama**: Current Ratio (Rasio Lancar), Net Profit Margin (Marjin Laba Bersih), dan Debt to Equity Ratio (DER).
+  - **Visualisasi Tren Interaktif ApexCharts**: Tren Pendapatan vs Beban vs Laba 12 Bulan dan Tren Metrik Finansial multi-series.
+  - **Tabel Transaksi Bernilai Signifikan**: Menampilkan 10 transaksi jurnal dengan nilai terbesar pada periode terpilih untuk kontrol eksekutif langsung.
+  - **Filter Terpadu 4 Kolom**: Filter Unit Bisnis, Bulan Mulai, Bulan Selesai, dan Tahun Kalender.
+- **Pengaturan & Personalisasi Dasbor**: `/dashboard/settings` $\rightarrow$ [DashboardSettingsIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Dashboard/DashboardSettingsIndex.php) $\rightarrow$ [dashboard-settings-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/dashboard/dashboard-settings-index.blade.php)
+  - Urutan kartu, visibilitas (toggle on/off), pemilihan warna aksen kustom, format angka, dan penataan grafik dikontrol secara terpusat pada halaman pengaturan ini tanpa mengganggu tampilan dasbor utama.
+- **Domain Service Layer**:
+  - [DashboardMetricService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Dashboard/Services/DashboardMetricService.php): Engine kalkulasi 12 KPI dengan memoization transaksi, sinkronisasi 6 grup akun kustom (`DASH_COGS`, `DASH_SGA`, `DASH_EBITDA_ADJ`, `DASH_TAX`, `DASH_INVENTORY`, `DASH_COGS_INV`), kalkulasi rasio keuangan, dan pemrosesan multi-series grafik 12 bulan.
+- **Model Eloquent**:
+  - [DashboardKpi.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/DashboardKpi.php) (Evaluasi rumus formula dinamis, urutan `order_index`, dan status visibilitas).
+  - [DashboardChart.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/DashboardChart.php) (Konfigurasi grafik ApexCharts dan pemetaan metrik).
+
 ### 1. Master Data & Pengaturan Perusahaan
 - **Chart of Accounts (COA)**: [routes/web.php](file:///d:/Belajar%20Laravel/artaledger/routes/web.php) (`/accounting/accounts`) $\rightarrow$ [AccountIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Accounts/AccountIndex.php) $\rightarrow$ [Account.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/Account.php)
 - **Account Groups**: `/accounting/account-groups` $\rightarrow$ [AccountGroupIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Accounts/AccountGroupIndex.php) $\rightarrow$ [AccountGroup.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/AccountGroup.php)
@@ -163,6 +191,8 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Format `.xlsx` multi-bagian Metode Langsung dengan formula dan format mata uang akuntansi)
 
 ### 7. Suite Pengujian Otomatis Pest PHP
+- [tests/Feature/Dashboard/DashboardMetricEngineTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Dashboard/DashboardMetricEngineTest.php) (Validasi Engine 12 Metrik Eksekutif, Rasio Finansial, Multi-series Tren 12 Bulan, dan Seeder Grup Akun Kustom)
+- [tests/Feature/Dashboard/DashboardSettingsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Dashboard/DashboardSettingsTest.php) (Validasi Pengaturan Kartu KPI, Visibilitas, Urutan, dan Aksen Warna)
 - [tests/Feature/Accounting/CashFlowDirectMethodTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/CashFlowDirectMethodTest.php) (Perhitungan Metode Langsung, Drilldown Akun Pembentuk, CRUD Baris & Rumus, serta Ekspor PDF/Excel)
 - [tests/Feature/Accounting/TrialBalanceBalanceVerificationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/TrialBalanceBalanceVerificationTest.php) (Verifikasi Neraca Saldo Seimbang)
 - [tests/Feature/Accounting/FinancialReportPdfTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportPdfTest.php) (Validasi Cetak PDF Laporan Keuangan)

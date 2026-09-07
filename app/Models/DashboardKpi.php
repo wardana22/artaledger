@@ -209,6 +209,66 @@ class DashboardKpi extends Model
     }
 
     /**
+     * Safely evaluate formula across a specific date range.
+     */
+    public function evaluateDateRangeFormula(string $startDate, string $endDate, ?int $unitId = null): float
+    {
+        if (empty($this->formula_expression)) {
+            return 0.0;
+        }
+
+        $expr = $this->formula_expression;
+
+        $expr = preg_replace_callback('/\[([A-Z0-9_\.-]+)\]/i', function ($matches) use ($startDate, $endDate, $unitId) {
+            $key = $matches[1];
+
+            $group = AccountGroup::where('company_id', $this->company_id)
+                ->where('code', $key)
+                ->first();
+
+            if ($group) {
+                $accountIds = DB::table('account_group_members')
+                    ->where('account_group_id', $group->id)
+                    ->pluck('account_id')->toArray();
+
+                $debit = (float) DB::table('journal_lines')
+                    ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+                    ->whereIn('journal_lines.account_id', $accountIds)
+                    ->where('journal_entries.status', 'posted')
+                    ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
+                    ->when($unitId, fn ($q) => $q->where('journal_lines.unit_id', $unitId))
+                    ->sum('journal_lines.debit');
+
+                $credit = (float) DB::table('journal_lines')
+                    ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+                    ->whereIn('journal_lines.account_id', $accountIds)
+                    ->where('journal_entries.status', 'posted')
+                    ->whereBetween('journal_entries.entry_date', [$startDate, $endDate])
+                    ->when($unitId, fn ($q) => $q->where('journal_lines.unit_id', $unitId))
+                    ->sum('journal_lines.credit');
+
+                return (string) ($debit - $credit);
+            }
+
+            return '0';
+        }, $expr);
+
+        $cleanedExpr = preg_replace('/[^0-9\+\-\*\/\(\)\.\s]/', '', $expr);
+        if (empty(trim($cleanedExpr))) {
+            return 0.0;
+        }
+
+        try {
+            $executor = new MathExecutor;
+            $result = $executor->execute($cleanedExpr);
+
+            return is_numeric($result) && is_finite((float) $result) ? (float) $result : 0.0;
+        } catch (\Throwable) {
+            return 0.0;
+        }
+    }
+
+    /**
      * Format output string based on display_format setting.
      */
     public function formatDisplayValue(float $value): string

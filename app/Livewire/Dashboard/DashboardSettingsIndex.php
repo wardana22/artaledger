@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Domain\Dashboard\Services\DashboardMetricService;
 use App\Models\Account;
 use App\Models\AccountGroup;
 use App\Models\Company;
@@ -138,79 +139,14 @@ class DashboardSettingsIndex extends Component
 
     private function ensureDefaultKpisExist(): void
     {
-        if (DashboardKpi::where('company_id', $this->company->id)->count() === 0) {
-            DashboardKpi::create([
-                'company_id' => $this->company->id,
-                'title' => 'Total Pendapatan Usaha',
-                'source_type' => 'account_type',
-                'account_type' => 'revenue',
-                'calculation_type' => 'ending_balance',
-                'color_theme' => 'emerald',
-                'icon' => 'trending-up',
-                'order_index' => 1,
-                'is_active' => true,
-            ]);
-
-            DashboardKpi::create([
-                'company_id' => $this->company->id,
-                'title' => 'Total Beban Operasional',
-                'source_type' => 'account_type',
-                'account_type' => 'expense',
-                'calculation_type' => 'ending_balance',
-                'color_theme' => 'rose',
-                'icon' => 'credit-card',
-                'order_index' => 2,
-                'is_active' => true,
-            ]);
-
-            DashboardKpi::create([
-                'company_id' => $this->company->id,
-                'title' => 'Total Aktiva / Aset Perusahaan',
-                'source_type' => 'account_type',
-                'account_type' => 'asset',
-                'calculation_type' => 'ending_balance',
-                'color_theme' => 'indigo',
-                'icon' => 'wallet',
-                'order_index' => 3,
-                'is_active' => true,
-            ]);
+        if (DashboardKpi::where('company_id', $this->company->id)->count() < 12) {
+            app(DashboardMetricService::class)->seedDefaultKpisAndCharts($this->company->id);
         }
     }
 
     private function ensureSystemGroupsExist(): void
     {
-        if (AccountGroup::where('company_id', $this->company->id)->count() === 0) {
-            $g1 = AccountGroup::create([
-                'company_id' => $this->company->id,
-                'code' => 'REVENUE',
-                'name' => 'Pendapatan Usaha (Sales / Revenue)',
-                'description' => 'Seluruh akun pendapatan usaha (Kepala 4)',
-                'color_theme' => 'emerald',
-                'is_system' => true,
-            ]);
-            $g1->members()->create(['account_prefix' => '4']);
-
-            $g2 = AccountGroup::create([
-                'company_id' => $this->company->id,
-                'code' => 'COGS',
-                'name' => 'Beban Pokok Pendapatan (HPP / COGS)',
-                'description' => 'Seluruh akun beban pokok penjualan (Kepala 5)',
-                'color_theme' => 'rose',
-                'is_system' => true,
-            ]);
-            $g2->members()->create(['account_prefix' => '5']);
-
-            $g3 = AccountGroup::create([
-                'company_id' => $this->company->id,
-                'code' => 'OPEX',
-                'name' => 'Beban Operasional & Umum',
-                'description' => 'Seluruh beban operasional (Kepala 6 & 7)',
-                'color_theme' => 'amber',
-                'is_system' => true,
-            ]);
-            $g3->members()->create(['account_prefix' => '6']);
-            $g3->members()->create(['account_prefix' => '7']);
-        }
+        app(DashboardMetricService::class)->syncCustomAccountGroups($this->company->id);
     }
 
     public function openCreateGroupModal(): void
@@ -393,7 +329,7 @@ class DashboardSettingsIndex extends Component
             'kpi_calculation_type' => 'required|in:ending_balance,period_mutation,debit_sum,credit_sum',
             'kpi_display_format' => 'required|in:currency,percentage,days,number,times',
             'kpi_decimal_places' => 'required|integer|min:0|max:4',
-            'kpi_color_theme' => 'required|in:indigo,emerald,rose,amber,sky,violet',
+            'kpi_color_theme' => 'required|in:indigo,emerald,rose,amber,sky,violet,cyan,orange,teal,blue,yellow',
             'kpi_icon' => 'required|string',
             'kpi_order_index' => 'required|integer|min:0',
         ]);
