@@ -9,7 +9,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Master Jenis Jurnal - ArtaLedger')]
+#[Title('Master Jenis Jurnal')]
 class JournalTypeIndex extends Component
 {
     use WithPagination;

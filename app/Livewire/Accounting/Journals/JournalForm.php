@@ -14,7 +14,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Buat Jurnal Umum Manual - ArtaLedger')]
+#[Title('Buat Jurnal Umum Manual')]
 class JournalForm extends Component
 {
     public string $entry_date = '';

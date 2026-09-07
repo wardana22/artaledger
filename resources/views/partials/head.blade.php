@@ -5,10 +5,11 @@
     $headCompany = \App\Models\Company::first();
     $headAppName = $headCompany?->app_name ?? config('app.name', 'E-counting');
     $headFaviconUrl = $headCompany?->logo_url ?? asset('favicon.png');
+    $headPageTitle = filled($title ?? null) ? trim(preg_replace('/\s*-\s*ArtaLedger\b/i', '', $title)) : null;
 @endphp
 
 <title>
-    {{ filled($title ?? null) ? $title.' - '.$headAppName : $headAppName }}
+    {{ filled($headPageTitle) ? $headPageTitle.' - '.$headAppName : $headAppName }}
 </title>
 
 <link rel="icon" href="{{ $headFaviconUrl }}">

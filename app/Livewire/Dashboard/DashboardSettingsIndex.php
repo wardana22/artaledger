@@ -16,7 +16,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Pengaturan Dashboard - ArtaLedger')]
+#[Title('Pengaturan Dashboard')]
 class DashboardSettingsIndex extends Component
 {
     public ?Company $company = null;

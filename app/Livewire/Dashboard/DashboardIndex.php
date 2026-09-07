@@ -15,7 +15,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Dashboard Finansial Eksekutif - ArtaLedger')]
+#[Title('Dashboard Finansial Eksekutif')]
 class DashboardIndex extends Component
 {
     public ?Company $company = null;

@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 #[Layout('layouts.app')]
-#[Title('Kelola Peran & Hak Akses (RBAC) - ArtaLedger')]
+#[Title('Kelola Peran & Hak Akses (RBAC)')]
 class RoleIndex extends Component
 {
     use WithPagination;

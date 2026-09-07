@@ -13,7 +13,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts.app')]
-#[Title('Jurnal Umum (General Journal) - ArtaLedger')]
+#[Title('Jurnal Umum (General Journal)')]
 class JournalIndex extends Component
 {
     use WithPagination;

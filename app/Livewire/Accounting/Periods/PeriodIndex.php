@@ -12,7 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Periode Akuntansi - ArtaLedger')]
+#[Title('Periode Akuntansi')]
 class PeriodIndex extends Component
 {
     public int $selectedYear;

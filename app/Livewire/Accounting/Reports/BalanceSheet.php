@@ -10,7 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Laporan Neraca (Balance Sheet) - ArtaLedger')]
+#[Title('Laporan Neraca (Balance Sheet)')]
 class BalanceSheet extends Component
 {
     public string $asOfDate = '';

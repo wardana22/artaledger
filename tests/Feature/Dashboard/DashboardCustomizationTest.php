@@ -4,6 +4,7 @@ use App\Livewire\Dashboard\DashboardIndex;
 use App\Livewire\Dashboard\DashboardSettingsIndex;
 use App\Models\Account;
 use App\Models\Company;
+use App\Models\DashboardChart;
 use App\Models\DashboardKpi;
 use App\Models\DashboardSetting;
 use App\Models\User;
@@ -131,7 +132,7 @@ test('super admin can manage dashboard charts in settings', function () {
         'type' => 'area',
     ]);
 
-    $chart = \App\Models\DashboardChart::where('name', 'Grafik Uji Coba')->first();
+    $chart = DashboardChart::where('name', 'Grafik Uji Coba')->first();
 
     // Toggle visibility
     Livewire::actingAs($this->adminUser)
@@ -150,7 +151,6 @@ test('super admin can manage dashboard charts in settings', function () {
         'id' => $chart->id,
     ]);
 });
-
 
 test('unauthorized user without permission receives 403 on dashboard settings', function () {
     $regularUser = User::factory()->create();
