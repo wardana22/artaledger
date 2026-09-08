@@ -133,11 +133,13 @@ class ProfitLoss extends Component
         $otherRevenue = 0.0;
         $otherExpense = 0.0;
         $taxExpense = 0.0;
+        $comprehensiveIncome = 0.0;
 
         foreach ($accountData as $id => $item) {
             $acc = $item['account'];
             if ($item['level'] === 1) {
-                $codePrefix = substr($acc->code, 0, 1);
+                $code = (string) $acc->code;
+                $codePrefix = substr($code, 0, 1);
                 if ($codePrefix === '4') {
                     $totalRevenue += $item['amount'];
                 } elseif ($codePrefix === '5') {
@@ -148,8 +150,10 @@ class ProfitLoss extends Component
                     $otherRevenue += $item['amount'];
                 } elseif ($codePrefix === '8') {
                     $otherExpense += $item['amount'];
-                } elseif ($codePrefix === '9') {
+                } elseif ($code === '9' || str_starts_with($code, '90')) {
                     $taxExpense += $item['amount'];
+                } elseif ($code === '91' || str_starts_with($code, '91')) {
+                    $comprehensiveIncome += $item['amount'];
                 }
             }
         }
@@ -157,7 +161,8 @@ class ProfitLoss extends Component
         $grossProfit = $totalRevenue - $totalHpp;
         $operatingProfit = $grossProfit - $totalOperatingExpenses;
         $profitBeforeTax = $operatingProfit + $otherRevenue - $otherExpense;
-        $netProfit = $profitBeforeTax - $taxExpense;
+        $netProfitAfterTax = $profitBeforeTax - $taxExpense;
+        $totalComprehensiveIncome = $netProfitAfterTax + $comprehensiveIncome;
 
         // 4. Build Filtered Rows with 4-Column Layout Payload
         $rows = [];
@@ -199,7 +204,10 @@ class ProfitLoss extends Component
             'otherExpense' => $otherExpense,
             'profitBeforeTax' => $profitBeforeTax,
             'taxExpense' => $taxExpense,
-            'netProfit' => $netProfit,
+            'netProfitAfterTax' => $netProfitAfterTax,
+            'netProfit' => $netProfitAfterTax, // maintain backward compatibility
+            'comprehensiveIncome' => $comprehensiveIncome,
+            'totalComprehensiveIncome' => $totalComprehensiveIncome,
             'units' => $allowedUnits,
         ]);
     }

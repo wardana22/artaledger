@@ -84,7 +84,8 @@
                             $isLevel3 = $level === 3;
                             $isHeader = $row['has_children'];
 
-                            $currPrefix = substr($acc->code, 0, 1);
+                            $currCode = (string) $acc->code;
+                            $currPrefix = substr($currCode, 0, 1);
                             $nextRow = $rows[$index + 1] ?? null;
                             $nextPrefix = $nextRow ? substr($nextRow['account']->code, 0, 1) : null;
                         @endphp
@@ -213,12 +214,32 @@
                                     </div>
                                 </td>
                             </tr>
-                        @elseif ($currPrefix === '9' && $nextPrefix !== '9')
+                        @elseif ((str_starts_with($currCode, '90') || $currCode === '9') && (! $nextRow || (! str_starts_with($nextRow['account']->code, '90') && $nextRow['account']->code !== '9')))
                             <tr class="bg-rose-500/5 dark:bg-slate-950/80 border-y border-rose-500/20 dark:border-slate-800">
-                                <td colspan="4" class="p-3">
+                                <td colspan="4" class="p-3 space-y-3">
                                     <div class="flex items-center justify-between p-3.5 rounded-xl bg-rose-50/80 dark:bg-slate-800/60 border border-rose-200 dark:border-slate-700/50">
-                                        <span class="text-xs font-extrabold uppercase tracking-wider text-rose-900 dark:text-slate-300">BEBAN PAJAK PENGHASILAN (INCOME TAX)</span>
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-rose-900 dark:text-slate-300">TOTAL BEBAN PAJAK PENGHASILAN</span>
                                         <span class="text-base font-mono font-extrabold text-rose-600 dark:text-rose-400">Rp {{ number_format($taxExpense, 2, ',', '.') }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-500/30 shadow-md">
+                                        <div>
+                                            <span class="text-xs font-black uppercase tracking-widest text-indigo-800 dark:text-indigo-300 block">LABA / RUGI SETELAH PAJAK (NET PROFIT AFTER TAX)</span>
+                                            <span class="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">Laba Sebelum Pajak dikurangi Beban Pajak Penghasilan</span>
+                                        </div>
+                                        <span class="text-xl font-mono font-black {{ $netProfitAfterTax >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                                            Rp {{ number_format($netProfitAfterTax, 2, ',', '.') }}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @elseif (str_starts_with($currCode, '91') && (! $nextRow || ! str_starts_with($nextRow['account']->code, '91')))
+                            <tr class="bg-purple-500/5 dark:bg-slate-950/80 border-y border-purple-500/20 dark:border-slate-800">
+                                <td colspan="4" class="p-3">
+                                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-purple-50/80 dark:bg-slate-800/60 border border-purple-200 dark:border-slate-700/50">
+                                        <span class="text-xs font-extrabold uppercase tracking-wider text-purple-900 dark:text-purple-300">TOTAL PENDAPATAN / (BEBAN) KOMPREHENSIF LAIN</span>
+                                        <span class="text-base font-mono font-extrabold {{ $comprehensiveIncome >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                                            Rp {{ number_format($comprehensiveIncome, 2, ',', '.') }}
+                                        </span>
                                     </div>
                                 </td>
                             </tr>
@@ -236,22 +257,22 @@
 
         <!-- FINANCIAL SUMMARY SECTION BANNERS -->
         <div class="bg-slate-50 dark:bg-slate-900 border-t-2 border-slate-200 dark:border-slate-800 p-6 space-y-4 text-slate-800 dark:text-slate-100 font-mono">
-            <!-- FINAL LABA BERSIH PERIODE BERJALAN (NET PROFIT) GLOWING CARD -->
-            <div class="p-6 rounded-3xl bg-gradient-to-r {{ $netProfit >= 0 ? 'from-emerald-500/10 via-emerald-500/5 to-indigo-500/10 dark:from-emerald-950 dark:via-slate-900 dark:to-indigo-950 border-2 border-emerald-500/40 dark:border-emerald-500/50 shadow-2xl shadow-emerald-500/10' : 'from-rose-500/10 via-rose-500/5 to-amber-500/10 dark:from-rose-950 dark:via-slate-900 dark:to-amber-950 border-2 border-rose-500/40 dark:border-rose-500/50 shadow-2xl shadow-rose-500/10' }} flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <!-- FINAL LABA BERSIH KOMPREHENSIF PERIODE BERJALAN GLOWING CARD -->
+            <div class="p-6 rounded-3xl bg-gradient-to-r {{ $totalComprehensiveIncome >= 0 ? 'from-emerald-500/10 via-emerald-500/5 to-indigo-500/10 dark:from-emerald-950 dark:via-slate-900 dark:to-indigo-950 border-2 border-emerald-500/40 dark:border-emerald-500/50 shadow-2xl shadow-emerald-500/10' : 'from-rose-500/10 via-rose-500/5 to-amber-500/10 dark:from-rose-950 dark:via-slate-900 dark:to-amber-950 border-2 border-rose-500/40 dark:border-rose-500/50 shadow-2xl shadow-rose-500/10' }} flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase {{ $netProfit >= 0 ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30' }}">
-                        {{ $netProfit >= 0 ? '🟢 LABA BERSIH (NET PROFIT)' : '🔴 RUGI BERSIH (NET LOSS)' }}
+                    <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase {{ $totalComprehensiveIncome >= 0 ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30' }}">
+                        {{ $totalComprehensiveIncome >= 0 ? '🟢 LABA KOMPREHENSIF (TOTAL COMPREHENSIVE INCOME)' : '🔴 RUGI KOMPREHENSIF (TOTAL COMPREHENSIVE LOSS)' }}
                     </span>
                     <h3 class="text-lg font-black text-slate-900 dark:text-white mt-2">
-                        LABA (RUGI) BERSIH PERIODE BERJALAN
+                        TOTAL LABA (RUGI) KOMPREHENSIF PERIODE BERJALAN
                     </h3>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Hasil akhir akumulasi Laporan Laba Rugi Audited per tanggal {{ $startDate }} s/d {{ $endDate }}
+                        Hasil akhir Laba Setelah Pajak ditambah Pendapatan Komprehensif Lain per {{ $startDate }} s/d {{ $endDate }}
                     </p>
                 </div>
 
-                <div class="text-right font-mono text-3xl font-black tracking-tight {{ $netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
-                    Rp {{ number_format($netProfit, 2, ',', '.') }}
+                <div class="text-right font-mono text-3xl font-black tracking-tight {{ $totalComprehensiveIncome >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+                    Rp {{ number_format($totalComprehensiveIncome, 2, ',', '.') }}
                 </div>
             </div>
         </div>

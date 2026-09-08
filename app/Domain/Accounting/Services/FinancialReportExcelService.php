@@ -158,8 +158,13 @@ class FinancialReportExcelService
             ['Laba / (Rugi) Kotor', $data['grossProfit']],
             ['Laba / (Rugi) Operasional', $data['operatingProfit']],
             ['Laba / (Rugi) Sebelum Pajak', $data['profitBeforeTax']],
-            ['Laba / (Rugi) Bersih', $data['netProfit']],
+            ['Laba / (Rugi) Setelah Pajak', $data['netProfitAfterTax'] ?? $data['netProfit']],
         ];
+
+        if (abs($data['comprehensiveIncome'] ?? 0) > 0.001) {
+            $summaries[] = ['Pendapatan / (Beban) Komprehensif Lain', $data['comprehensiveIncome']];
+            $summaries[] = ['Total Laba / (Rugi) Komprehensif Periode Berjalan', $data['totalComprehensiveIncome']];
+        }
 
         $row++;
         foreach ($summaries as $sum) {

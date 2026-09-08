@@ -62,3 +62,13 @@ test('worksheet strictly places negative balance in normal balance column', func
     // Verify worksheet renders successfully with the new strict column logic
     expect($component)->not->toBeNull();
 });
+
+test('profit and loss calculates net profit after tax and comprehensive income', function () {
+    $component = Livewire::actingAs($this->user)
+        ->test(ProfitLoss::class)
+        ->assertOk()
+        ->assertViewHas('netProfitAfterTax')
+        ->assertViewHas('totalComprehensiveIncome');
+
+    expect($component)->not->toBeNull();
+});

@@ -106,12 +106,14 @@ class FinancialReportPdfService
         $otherRevenue = 0.0;
         $otherExpense = 0.0;
         $taxExpense = 0.0;
+        $comprehensiveIncome = 0.0;
 
         foreach ($accountData as $id => $item) {
             $acc = $item['account'];
             $amt = $amounts[$id] ?? 0.0;
             if ($item['level'] === 1) {
-                $codePrefix = substr($acc->code, 0, 1);
+                $code = (string) $acc->code;
+                $codePrefix = substr($code, 0, 1);
                 if ($codePrefix === '4') {
                     $totalRevenue += $amt;
                 } elseif ($codePrefix === '5') {
@@ -122,8 +124,10 @@ class FinancialReportPdfService
                     $otherRevenue += $amt;
                 } elseif ($codePrefix === '8') {
                     $otherExpense += $amt;
-                } elseif ($codePrefix === '9') {
+                } elseif ($code === '9' || str_starts_with($code, '90')) {
                     $taxExpense += $amt;
+                } elseif ($code === '91' || str_starts_with($code, '91')) {
+                    $comprehensiveIncome += $amt;
                 }
             }
         }
@@ -131,7 +135,8 @@ class FinancialReportPdfService
         $grossProfit = $totalRevenue - $totalHpp;
         $operatingProfit = $grossProfit - $totalOperatingExpenses;
         $profitBeforeTax = $operatingProfit + $otherRevenue - $otherExpense;
-        $netProfit = $profitBeforeTax - $taxExpense;
+        $netProfitAfterTax = $profitBeforeTax - $taxExpense;
+        $totalComprehensiveIncome = $netProfitAfterTax + $comprehensiveIncome;
 
         $rows = [];
         foreach ($accountData as $id => $item) {
@@ -174,7 +179,10 @@ class FinancialReportPdfService
             'otherExpense' => $otherExpense,
             'profitBeforeTax' => $profitBeforeTax,
             'taxExpense' => $taxExpense,
-            'netProfit' => $netProfit,
+            'netProfitAfterTax' => $netProfitAfterTax,
+            'netProfit' => $netProfitAfterTax, // backward compatibility
+            'comprehensiveIncome' => $comprehensiveIncome,
+            'totalComprehensiveIncome' => $totalComprehensiveIncome,
         ];
     }
 

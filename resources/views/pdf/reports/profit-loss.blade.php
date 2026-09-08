@@ -93,10 +93,22 @@
                 </tr>
             @endif
             <tr class="grand-total-row" style="font-size: 10.5px;">
-                <td colspan="2" class="text-left font-bold" style="padding-left: 10px;">LABA / (RUGI) BERSIH TAHUN BERJALAN (NET PROFIT)</td>
+                <td colspan="2" class="text-left font-bold" style="padding-left: 10px;">LABA / (RUGI) SETELAH PAJAK (NET PROFIT AFTER TAX)</td>
                 <td class="font-mono text-right font-bold">-</td>
-                <td class="font-mono text-right font-bold">{{ number_format($netProfit, 2, ',', '.') }}</td>
+                <td class="font-mono text-right font-bold">{{ number_format($netProfitAfterTax ?? $netProfit, 2, ',', '.') }}</td>
             </tr>
+            @if(abs($comprehensiveIncome ?? 0) > 0.001)
+                <tr class="total-row">
+                    <td colspan="2" class="text-left font-bold" style="padding-left: 10px;">PENDAPATAN / (BEBAN) KOMPREHENSIF LAIN</td>
+                    <td class="font-mono text-right font-bold">-</td>
+                    <td class="font-mono text-right font-bold">{{ number_format($comprehensiveIncome, 2, ',', '.') }}</td>
+                </tr>
+                <tr class="grand-total-row" style="font-size: 11px; background-color: #e0e7ff;">
+                    <td colspan="2" class="text-left font-bold" style="padding-left: 10px; color: #1e1b4b;">TOTAL LABA / (RUGI) KOMPREHENSIF PERIODE BERJALAN</td>
+                    <td class="font-mono text-right font-bold">-</td>
+                    <td class="font-mono text-right font-bold" style="color: #1e1b4b;">{{ number_format($totalComprehensiveIncome ?? ($netProfitAfterTax + $comprehensiveIncome), 2, ',', '.') }}</td>
+                </tr>
+            @endif
         </tbody>
     </table>
 @endsection
