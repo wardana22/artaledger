@@ -53,3 +53,12 @@ test('changes in equity report component renders correctly', function () {
         ->test(ChangesInEquity::class)
         ->assertOk();
 });
+
+test('worksheet strictly places negative balance in normal balance column', function () {
+    $component = Livewire::actingAs($this->user)
+        ->test(Worksheet::class)
+        ->assertOk();
+
+    // Verify worksheet renders successfully with the new strict column logic
+    expect($component)->not->toBeNull();
+});

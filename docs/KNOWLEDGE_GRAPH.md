@@ -184,6 +184,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 1. **Buku Besar (General Ledger)**: `/accounting/reports/general-ledger` ([GeneralLedger.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/GeneralLedger.php))
 2. **Buku Besar Pembantu (Subsidiary Ledger)**: `/accounting/reports/subsidiary-ledger` ([SubsidiaryLedger.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/SubsidiaryLedger.php))
 3. **Neraca Lajur (Worksheet)**: `/accounting/reports/worksheet` ([Worksheet.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/Worksheet.php))
+   - Menggunakan prinsip *Strict Normal Balance Placement*: saldo akun (NS, ATB, Laba Rugi, Neraca) secara konsisten ditempatkan pada kolom saldo normalnya (debit/kredit) meskipun bernilai negatif/minus, tanpa otomatis dilempar ke kolom lawannya, sehingga total dan tata letak kolom sinkron sempurna dengan kertas kerja Excel.
 4. **Neraca Saldo (Trial Balance)**: `/accounting/reports/trial-balance` ([TrialBalance.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/TrialBalance.php))
 5. **Laba Rugi (Profit & Loss)**: `/accounting/reports/profit-loss` ([ProfitLoss.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/ProfitLoss.php))
 6. **Neraca (Balance Sheet)**: `/accounting/reports/balance-sheet` ([BalanceSheet.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/BalanceSheet.php))
@@ -228,5 +229,6 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Banking/BankReconciliationCrossPeriodTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Banking/BankReconciliationCrossPeriodTest.php) (Pencatatan Lintas Periode)
 - [tests/Feature/Asset/FixedAssetTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Asset/FixedAssetTest.php) (Depresiasi & Label Aset Tetap)
 - [tests/Feature/Accounting/CompanySettingsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/CompanySettingsTest.php) (Pengaturan Branding & Signers)
+- [tests/Feature/Accounting/FinancialReportsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportsTest.php) (Pengujian Komponen Laporan Keuangan & Validasi Penempatan Kolom Strict Neraca Lajur)
 - [tests/Feature/Accounting/OpeningBalanceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/OpeningBalanceTest.php)
 - [tests/Feature/Accounting/ImportJournalTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/ImportJournalTest.php)

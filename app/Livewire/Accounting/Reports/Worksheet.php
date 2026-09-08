@@ -204,20 +204,20 @@ class Worksheet extends Component
 
             if ($acc->normal_balance === 'debit') {
                 $tbBal = $opBal + ($debMut - $credMut);
-                $tbDebit = $tbBal > 0 ? $tbBal : 0.0;
-                $tbCredit = $tbBal < 0 ? abs($tbBal) : 0.0;
+                $tbDebit = $tbBal;
+                $tbCredit = 0.0;
 
                 $atbBal = $tbBal + ($adjDeb - $adjCred);
-                $atbDebit = $atbBal > 0 ? $atbBal : 0.0;
-                $atbCredit = $atbBal < 0 ? abs($atbBal) : 0.0;
+                $atbDebit = $atbBal;
+                $atbCredit = 0.0;
             } else {
                 $tbBal = $opBal + ($credMut - $debMut);
-                $tbCredit = $tbBal > 0 ? $tbBal : 0.0;
-                $tbDebit = $tbBal < 0 ? abs($tbBal) : 0.0;
+                $tbCredit = $tbBal;
+                $tbDebit = 0.0;
 
                 $atbBal = $tbBal + ($adjCred - $adjDeb);
-                $atbCredit = $atbBal > 0 ? $atbBal : 0.0;
-                $atbDebit = $atbBal < 0 ? abs($atbBal) : 0.0;
+                $atbCredit = $atbBal;
+                $atbDebit = 0.0;
             }
 
             $isDebit = $acc->report_type === 'laba_rugi' ? $atbDebit : 0.0;

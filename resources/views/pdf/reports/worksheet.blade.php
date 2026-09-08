@@ -72,20 +72,20 @@
                         {{ $row['account']->name }}
                     </td>
                     <!-- TB -->
-                    <td class="font-mono text-right">{{ $row['tb_debit'] > 0 ? number_format($row['tb_debit'], 2, ',', '.') : '-' }}</td>
-                    <td class="font-mono text-right">{{ $row['tb_credit'] > 0 ? number_format($row['tb_credit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['tb_debit']) > 0.001 ? number_format($row['tb_debit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['tb_credit']) > 0.001 ? number_format($row['tb_credit'], 2, ',', '.') : '-' }}</td>
                     <!-- ADJ -->
-                    <td class="font-mono text-right">{{ $row['adj_debit'] > 0 ? number_format($row['adj_debit'], 2, ',', '.') : '-' }}</td>
-                    <td class="font-mono text-right">{{ $row['adj_credit'] > 0 ? number_format($row['adj_credit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['adj_debit']) > 0.001 ? number_format($row['adj_debit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['adj_credit']) > 0.001 ? number_format($row['adj_credit'], 2, ',', '.') : '-' }}</td>
                     <!-- ATB -->
-                    <td class="font-mono text-right">{{ $row['atb_debit'] > 0 ? number_format($row['atb_debit'], 2, ',', '.') : '-' }}</td>
-                    <td class="font-mono text-right">{{ $row['atb_credit'] > 0 ? number_format($row['atb_credit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['atb_debit']) > 0.001 ? number_format($row['atb_debit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['atb_credit']) > 0.001 ? number_format($row['atb_credit'], 2, ',', '.') : '-' }}</td>
                     <!-- IS -->
-                    <td class="font-mono text-right">{{ $row['is_debit'] > 0 ? number_format($row['is_debit'], 2, ',', '.') : '-' }}</td>
-                    <td class="font-mono text-right">{{ $row['is_credit'] > 0 ? number_format($row['is_credit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['is_debit']) > 0.001 ? number_format($row['is_debit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['is_credit']) > 0.001 ? number_format($row['is_credit'], 2, ',', '.') : '-' }}</td>
                     <!-- BS -->
-                    <td class="font-mono text-right">{{ $row['bs_debit'] > 0 ? number_format($row['bs_debit'], 2, ',', '.') : '-' }}</td>
-                    <td class="font-mono text-right">{{ $row['bs_credit'] > 0 ? number_format($row['bs_credit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['bs_debit']) > 0.001 ? number_format($row['bs_debit'], 2, ',', '.') : '-' }}</td>
+                    <td class="font-mono text-right">{{ abs($row['bs_credit']) > 0.001 ? number_format($row['bs_credit'], 2, ',', '.') : '-' }}</td>
                 </tr>
             @empty
                 <tr>
