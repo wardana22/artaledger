@@ -279,14 +279,40 @@
                                 cancelButton: 'px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-all text-xs cursor-pointer'
                             },
                             buttonsStyling: false,
-                            background: document.documentElement.classList.contains('dark') ? '#0f172a' : '#ffffff',
-                            color: document.documentElement.classList.contains('dark') ? '#f8fafc' : '#0f172a',
-                            backdrop: `rgba(15, 23, 42, 0.75)`
+                            background: document.documentElement.classList.contains('dark') ? '#101014' : '#ffffff',
+                            color: document.documentElement.classList.contains('dark') ? '#f4f4f5' : '#101014',
+                            backdrop: `rgba(9, 9, 11, 0.75)`
                         }).then((result) => {
                             if (result.isConfirmed) {
+                                // 1. Attempt direct Livewire action call if wire:click is present
+                                let wireClick = target.getAttribute('wire:click');
+                                let componentEl = target.closest('[wire\\:id]');
+                                if (componentEl && window.Livewire && wireClick) {
+                                    let component = window.Livewire.find(componentEl.getAttribute('wire:id'));
+                                    if (component) {
+                                        let match = wireClick.match(/^([a-zA-Z0-9_]+)(?:\((.*)\))?$/);
+                                        if (match) {
+                                            let method = match[1];
+                                            let rawArgs = match[2];
+                                            let args = [];
+                                            if (rawArgs !== undefined && rawArgs.trim() !== '') {
+                                                args = rawArgs.split(',').map(arg => {
+                                                    arg = arg.trim().replace(/^['"]|['"]$/g, '');
+                                                    return isNaN(arg) || arg === '' ? arg : Number(arg);
+                                                });
+                                            }
+                                            component.call(method, ...args);
+                                            return;
+                                        }
+                                    }
+                                }
+
+                                // 2. Fallback to synthetic click event with temporary bypass
                                 isBypassingConfirm = true;
-                                target.click();
-                                isBypassingConfirm = false;
+                                target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                                setTimeout(() => {
+                                    isBypassingConfirm = false;
+                                }, 300);
                             }
                         });
                     }, true);

@@ -63,6 +63,9 @@ class JournalImportWizard extends Component
 
     public function deleteBatch(int $batchId): void
     {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
         $batch = ImportBatch::find($batchId);
         if (! $batch) {
             return;
@@ -143,6 +146,9 @@ class JournalImportWizard extends Component
 
     public function commitPosting(ImportCommitService $commitService)
     {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
         if (! $this->activeBatch) {
             return;
         }
