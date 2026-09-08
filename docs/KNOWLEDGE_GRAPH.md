@@ -87,15 +87,25 @@ graph TD
         A_REP_BS["Route: .../reports/balance-sheet"] --> B_REP_BS["Livewire: BalanceSheet"]
         A_REP_CF["Route: .../reports/cash-flow"] --> B_REP_CF["Livewire: CashFlow"]
         A_REP_EQ["Route: .../reports/changes-in-equity"] --> B_REP_EQ["Livewire: ChangesInEquity"]
+        A_REP_AG["Route: .../reports/aging"] --> B_REP_AG["Livewire: AgingReport"]
         
         A_EXP_PDF["Route: .../reports/export/pdf/{type}"] --> C_PDF["Controller: FinancialReportPdfController"]
         A_EXP_XLS["Route: .../reports/export/excel/{type}"] --> C_XLS["Controller: FinancialReportExcelController"]
         
         B_REP_CF --> S_CF["Service: CashFlowService"]
+        B_REP_AG --> S_AG["Service: AgingReportService"]
+        B_REP_AG --> S_AGM["Service: AgingInvoiceManagerService"]
         C_PDF --> S_RPDF["Service: FinancialReportPdfService"]
         C_XLS --> S_RXLS["Service: FinancialReportExcelService"]
         S_RPDF --> S_CF
         S_RXLS --> S_CF
+        S_RPDF --> S_AG
+        S_RXLS --> S_AG
+        
+        S_AG --> M_INV["Model: ApArInvoice"]
+        S_AG --> M_SET["Model: ApArSettlement"]
+        S_AGM --> M_INV
+        S_AGM --> M_SET
         
         S_CF --> M_CFR["Model: CashFlowRow"]
         S_CF --> M_AGRP
@@ -187,10 +197,22 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
    - Modal kustomisasi CRUD baris, urutan (*order index*), penentuan grup akun sumber, akun spesifik, atau rumus kalkulasi kustom (*formula expression*).
 8. **Perubahan Ekuitas (Changes in Equity)**: `/accounting/reports/changes-in-equity` ([ChangesInEquity.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/ChangesInEquity.php))
 9. **Saldo Awal**: `/accounting/reports/opening-balance` ([OpeningBalanceIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/OpeningBalance/OpeningBalanceIndex.php))
-- **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 cetak siap tanda tangan dan format Metode Langsung)
-- **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Format `.xlsx` multi-bagian Metode Langsung dengan formula dan format mata uang akuntansi)
+10. **Laporan Umur Piutang & Hutang (Aging AR/AP)**: `/accounting/reports/aging` ([AgingReport.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/AgingReport.php))
+    - Menggunakan [AgingReportService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/AgingReportService.php) dan [AgingInvoiceManagerService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/AgingInvoiceManagerService.php).
+    - Model pendukung: [ApArInvoice.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ApArInvoice.php) dan [ApArSettlement.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ApArSettlement.php).
+    - Fitur canggih:
+      - **Specific Invoice Matching**: Menghindari salah sasaran pelunasan FIFO; pembayaran ditargetkan secara presisi ke faktur spesifik.
+      - **Post-Period Invoice Assignment**: Menginput/menugaskan nomor faktur fisik yang terbit menyusul tanpa merusak kunci periode tutup buku akuntansi.
+      - **Split Invoicing (1 Jurnal Banyak Invoice)**: Memecah 1 baris pengakuan jurnal menjadi banyak nomor invoice dengan kalkulator validasi nominal real-time.
+      - **Dual-Tab Controller**: Beralih instan antara Piutang Usaha (AR) dan Hutang Usaha (AP).
+      - **Executive KPI Cards & Bucket Umur**: Total Saldo Terbuka, Lancar/Current, Overdue 1-30, 31-60, 61-90, dan >90 hari.
+      - **Drill-down Accordion**: Menampilkan rincian invoice per akun dan riwayat pelunasannya.
+- **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 landscape cetak siap tanda tangan)
+- **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Spreadsheet multi-kolom bucket dengan format akuntansi)
 
 ### 7. Suite Pengujian Otomatis Pest PHP
+- [tests/Feature/Accounting/AgingReportServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportServiceTest.php) (Validasi Single Assign, Split Invoicing 1-ke-Banyak, Specific Invoice Settlement, dan Akurasi Bucket Umur)
+- [tests/Feature/Accounting/AgingReportLivewireTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportLivewireTest.php) (Uji UI Livewire AgingReport, Tab Switcher, Modal Penugasan Invoice, serta Ekspor PDF & Excel)
 - [tests/Feature/Dashboard/DashboardMetricEngineTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Dashboard/DashboardMetricEngineTest.php) (Validasi Engine 12 Metrik Eksekutif, Rasio Finansial, Multi-series Tren 12 Bulan, dan Seeder Grup Akun Kustom)
 - [tests/Feature/Dashboard/DashboardSettingsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Dashboard/DashboardSettingsTest.php) (Validasi Pengaturan Kartu KPI, Visibilitas, Urutan, dan Aksen Warna)
 - [tests/Feature/Accounting/CashFlowDirectMethodTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/CashFlowDirectMethodTest.php) (Perhitungan Metode Langsung, Drilldown Akun Pembentuk, CRUD Baris & Rumus, serta Ekspor PDF/Excel)

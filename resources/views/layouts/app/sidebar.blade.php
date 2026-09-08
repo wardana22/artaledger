@@ -104,6 +104,11 @@
                                 {{ __('Perubahan Ekuitas') }}
                             </flux:sidebar.item>
                         @endif
+                        @if (auth()->user()?->can('reports.view'))
+                            <flux:sidebar.item icon="clock" :href="route('accounting.reports.aging')" :current="request()->routeIs('accounting.reports.aging')" wire:navigate>
+                                {{ __('Aging Hutang / Piutang') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
 
                     <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />

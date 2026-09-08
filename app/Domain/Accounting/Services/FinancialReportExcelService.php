@@ -2,6 +2,8 @@
 
 namespace App\Domain\Accounting\Services;
 
+use App\Models\Company;
+use App\Models\Unit;
 use App\Models\User;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -801,6 +803,103 @@ class FinancialReportExcelService
 
         $this->applySignatures($spreadsheet, $data['company'], $row, 'A', 'B', 'D');
         $this->autoSizeColumns($spreadsheet, ['A', 'B', 'C', 'D']);
+
+        return $spreadsheet;
+    }
+
+    /**
+     * Export Laporan Aging Hutang / Piutang ke Spreadsheet Excel.
+     */
+    public function exportAging(string $type, string $asOfDate, string $unitFilter = 'all', ?User $user = null): Spreadsheet
+    {
+        $reportService = new AgingReportService;
+        $reportData = $reportService->getAgingReport($type, $asOfDate, $unitFilter, true);
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $titleLabel = $type === 'receivable' ? 'PIUTANG USAHA (AR AGING)' : 'HUTANG USAHA (AP AGING)';
+        $sheet->setTitle('Aging Report');
+
+        $row = $this->applyReportHeader($spreadsheet, $company, 'LAPORAN UMUR '.$titleLabel, $asOfDate, $unitName, 'I');
+
+        // Headers
+        $headers = [
+            'A' => 'NO. INVOICE / DOKUMEN',
+            'B' => 'REKANAN / DESKRIPSI',
+            'C' => 'JATUH TEMPO',
+            'D' => 'SALDO TERBUKA',
+            'E' => 'LANCAR',
+            'F' => '1-30 HARI',
+            'G' => '31-60 HARI',
+            'H' => '61-90 HARI',
+            'I' => '> 90 HARI',
+        ];
+
+        foreach ($headers as $col => $lbl) {
+            $sheet->setCellValue("{$col}{$row}", $lbl);
+        }
+
+        $sheet->getStyle("A{$row}:I{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:I{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E2E8F0');
+        $sheet->getStyle("A{$row}:I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $row++;
+        $currencyFormat = '#,##0.00;(#,##0.00);"-"';
+
+        foreach ($reportData['accounts'] as $accItem) {
+            // Account header row
+            $sheet->setCellValue("A{$row}", $accItem['account']['code'].' - '.$accItem['account']['name']);
+            $sheet->setCellValue("D{$row}", $accItem['subtotal']['total_outstanding']);
+            $sheet->setCellValue("E{$row}", $accItem['subtotal']['current']);
+            $sheet->setCellValue("F{$row}", $accItem['subtotal']['overdue_1_30']);
+            $sheet->setCellValue("G{$row}", $accItem['subtotal']['overdue_31_60']);
+            $sheet->setCellValue("H{$row}", $accItem['subtotal']['overdue_61_90']);
+            $sheet->setCellValue("I{$row}", $accItem['subtotal']['overdue_over_90']);
+
+            $sheet->getStyle("A{$row}:I{$row}")->getFont()->setBold(true);
+            $sheet->getStyle("A{$row}:I{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+            $sheet->getStyle("D{$row}:I{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+            $row++;
+
+            // Invoices row
+            foreach ($accItem['invoices'] as $inv) {
+                $sheet->setCellValue("A{$row}", '   '.$inv['invoice_number']);
+                $sheet->setCellValue("B{$row}", $inv['partner_name']);
+                $sheet->setCellValue("C{$row}", $inv['due_date']);
+                $sheet->setCellValue("D{$row}", $inv['remaining_amount']);
+                $sheet->setCellValue("E{$row}", $inv['buckets']['current']);
+                $sheet->setCellValue("F{$row}", $inv['buckets']['overdue_1_30']);
+                $sheet->setCellValue("G{$row}", $inv['buckets']['overdue_31_60']);
+                $sheet->setCellValue("H{$row}", $inv['buckets']['overdue_61_90']);
+                $sheet->setCellValue("I{$row}", $inv['buckets']['overdue_over_90']);
+
+                $sheet->getStyle("C{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("D{$row}:I{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+                $row++;
+            }
+        }
+
+        // Grand Total
+        $sheet->setCellValue("A{$row}", 'TOTAL KESELURUHAN (GRAND TOTAL)');
+        $sheet->setCellValue("D{$row}", $reportData['kpi']['total_outstanding']);
+        $sheet->setCellValue("E{$row}", $reportData['kpi']['current']);
+        $sheet->setCellValue("F{$row}", $reportData['kpi']['overdue_1_30']);
+        $sheet->setCellValue("G{$row}", $reportData['kpi']['overdue_31_60']);
+        $sheet->setCellValue("H{$row}", $reportData['kpi']['overdue_61_90']);
+        $sheet->setCellValue("I{$row}", $reportData['kpi']['overdue_over_90']);
+
+        $sheet->getStyle("A{$row}:I{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("D{$row}:I{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle("A{$row}:I{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle("A{$row}:I{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_DOUBLE);
+        $row++;
+
+        $this->applySignatures($spreadsheet, $company, $row, 'A', 'C', 'I');
+        $this->autoSizeColumns($spreadsheet, ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']);
 
         return $spreadsheet;
     }

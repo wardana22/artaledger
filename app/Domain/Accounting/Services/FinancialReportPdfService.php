@@ -1233,4 +1233,29 @@ class FinancialReportPdfService
             ->setPaper('a4', 'portrait')
             ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
     }
+
+    /**
+     * Render Laporan Aging Hutang / Piutang ke format PDF (Landscape).
+     */
+    public function renderAgingPdf(string $type, string $asOfDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    {
+        $reportService = new AgingReportService;
+        $reportData = $reportService->getAgingReport($type, $asOfDate, $unitFilter, true);
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+
+        $viewData = array_merge($reportData, [
+            'asOfDate' => $asOfDate,
+            'company' => $company,
+            'unitName' => $unitName,
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Administrator',
+        ]);
+
+        return Pdf::loadView('pdf.reports.aging', $viewData)
+            ->setPaper('a4', 'landscape')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
 }

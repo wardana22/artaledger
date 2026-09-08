@@ -6,6 +6,7 @@ use App\Livewire\Accounting\Journals\AdjustmentIndex;
 use App\Livewire\Accounting\Journals\JournalForm;
 use App\Livewire\Accounting\Journals\JournalIndex;
 use App\Livewire\Accounting\Periods\PeriodIndex;
+use App\Livewire\Accounting\Reports\AgingReport;
 use App\Livewire\Accounting\Reports\BalanceSheet;
 use App\Livewire\Accounting\Reports\CashFlow;
 use App\Livewire\Accounting\Reports\ChangesInEquity;
@@ -95,6 +96,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/accounting/reports/balance-sheet', BalanceSheet::class)->name('accounting.reports.balance-sheet');
     Route::get('/accounting/reports/cash-flow', CashFlow::class)->name('accounting.reports.cash-flow');
     Route::get('/accounting/reports/changes-in-equity', ChangesInEquity::class)->name('accounting.reports.changes-in-equity');
+    Route::get('/accounting/reports/aging', AgingReport::class)->name('accounting.reports.aging');
     Route::get('/accounting/reports/export/pdf/{type}', FinancialReportPdfController::class.'@export')->name('accounting.reports.export.pdf');
     Route::get('/accounting/reports/export/excel/{type}', FinancialReportExcelController::class.'@export')->name('accounting.reports.export.excel');
 });

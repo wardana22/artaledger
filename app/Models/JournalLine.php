@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JournalLine extends Model
 {
@@ -54,5 +55,15 @@ class JournalLine extends Model
             'journal_line_id',
             'match_group_id'
         )->withTimestamps();
+    }
+
+    public function apArInvoices(): HasMany
+    {
+        return $this->hasMany(ApArInvoice::class, 'journal_line_id');
+    }
+
+    public function apArSettlements(): HasMany
+    {
+        return $this->hasMany(ApArSettlement::class, 'payment_journal_line_id');
     }
 }

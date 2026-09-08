@@ -107,6 +107,17 @@ class FinancialReportExcelController extends Controller
                 $filename = 'Laporan-Saldo-Awal'.($periodId ? "-Periode-{$periodId}" : '').'.xlsx';
                 break;
 
+            case 'aging-receivable':
+            case 'aging-payable':
+                if ($user && ! $user->can('reports.view')) {
+                    abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat Laporan Aging.');
+                }
+                $agingType = $type === 'aging-receivable' ? 'receivable' : 'payable';
+                $spreadsheet = $this->excelService->exportAging($agingType, $asOfDate, $unitFilter, $user);
+                $label = $agingType === 'receivable' ? 'Piutang' : 'Hutang';
+                $filename = "Laporan-Aging-{$label}-per-{$asOfDate}.xlsx";
+                break;
+
             default:
                 abort(404, "Jenis laporan '{$type}' tidak ditemukan.");
         }
