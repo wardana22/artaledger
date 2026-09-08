@@ -244,9 +244,9 @@
                 </div>
 
                 @if ($activePeriod)
-                    <div class="p-3.5 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/60 space-y-1">
+                    <div class="p-3.5 rounded-xl bg-indigo-50/50 dark:bg-slate-800/80 border border-indigo-200/60 dark:border-slate-700/80 space-y-1">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm font-black text-indigo-950 dark:text-indigo-200">{{ date('F Y', mktime(0,0,0, $activePeriod->month, 1, $activePeriod->year)) }}</span>
+                            <span class="text-sm font-black text-indigo-950 dark:text-slate-100">{{ date('F Y', mktime(0,0,0, $activePeriod->month, 1, $activePeriod->year)) }}</span>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">TERBUKA</span>
                         </div>
                         <p class="text-[11px] text-slate-500 dark:text-slate-400">Rentang filter: {{ $startDate }} s/d {{ $endDate }}</p>
@@ -261,7 +261,7 @@
                 <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">⚡ Pintasan Akses Cepat</h4>
                 <div class="grid grid-cols-2 gap-2.5">
                     @can('journals.create')
-                        <a href="{{ route('accounting.journals.create') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/50 transition-all text-center">
+                        <a href="{{ route('accounting.journals.create') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-indigo-50 dark:bg-slate-800/80 hover:bg-indigo-100 dark:hover:bg-slate-700/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-slate-700/80 transition-all text-center">
                             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
@@ -270,7 +270,7 @@
                     @endcan
 
                     @can('accounts.view')
-                        <a href="{{ route('accounting.accounts.index') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all text-center">
+                        <a href="{{ route('accounting.accounts.index') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 transition-all text-center">
                             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6M3 7l9-6 9 6"></path>
                             </svg>
@@ -279,7 +279,7 @@
                     @endcan
 
                     @can('reports.profit_loss')
-                        <a href="{{ route('accounting.reports.profit-loss') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50 transition-all text-center">
+                        <a href="{{ route('accounting.reports.profit-loss') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-emerald-50 dark:bg-slate-800/80 hover:bg-emerald-100 dark:hover:bg-slate-700/80 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-slate-700/80 transition-all text-center">
                             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
@@ -288,7 +288,7 @@
                     @endcan
 
                     @can('reports.cash_flow')
-                        <a href="{{ route('accounting.reports.cash-flow') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400 border border-cyan-200/50 dark:border-cyan-800/50 transition-all text-center">
+                        <a href="{{ route('accounting.reports.cash-flow') }}" wire:navigate class="flex flex-col items-center justify-center p-3 rounded-xl bg-cyan-50 dark:bg-slate-800/80 hover:bg-cyan-100 dark:hover:bg-slate-700/80 text-cyan-600 dark:text-cyan-400 border border-cyan-200/50 dark:border-slate-700/80 transition-all text-center">
                             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -332,7 +332,7 @@
                         toolbar: { show: false },
                         background: 'transparent',
                         fontFamily: 'Inter, system-ui, sans-serif',
-                        foreColor: isDark ? '#94a3b8' : '#64748b'
+                        foreColor: isDark ? '#a1a1aa' : '#64748b'
                     },
                     colors: (cData.series || []).map(s => s.color || '#6366f1'),
                     dataLabels: { enabled: false },
@@ -341,20 +341,20 @@
                         width: 2.5
                     },
                     grid: {
-                        borderColor: isDark ? '#1e293b' : '#f1f5f9',
+                        borderColor: isDark ? '#27272a' : '#f1f5f9',
                         strokeDashArray: 3
                     },
                     xaxis: {
                         categories: cData.categories || [],
                         labels: {
-                            style: { colors: isDark ? '#94a3b8' : '#64748b', fontSize: '11px', fontWeight: 600 }
+                            style: { colors: isDark ? '#a1a1aa' : '#64748b', fontSize: '11px', fontWeight: 600 }
                         },
                         axisBorder: { show: false },
                         axisTicks: { show: false }
                     },
                     yaxis: {
                         labels: {
-                            style: { colors: isDark ? '#94a3b8' : '#64748b', fontSize: '11px' },
+                            style: { colors: isDark ? '#a1a1aa' : '#64748b', fontSize: '11px' },
                             formatter: function (val) {
                                 if (Math.abs(val) >= 1e9) return (val / 1e9).toFixed(1) + 'M';
                                 if (Math.abs(val) >= 1e6) return (val / 1e6).toFixed(1) + 'Jt';
@@ -374,7 +374,7 @@
                     legend: {
                         position: 'top',
                         horizontalAlign: 'right',
-                        labels: { colors: isDark ? '#cbd5e1' : '#334155' }
+                        labels: { colors: isDark ? '#d4d4d8' : '#334155' }
                     }
                 };
 

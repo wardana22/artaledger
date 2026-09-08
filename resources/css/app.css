@@ -23,6 +23,19 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
+    /* Pure Black & Charcoal Elevation (Replaces cool-blue slate undertones) */
+    --color-slate-50: #fafafa;
+    --color-slate-100: #f4f4f5;
+    --color-slate-200: #e4e4e7;
+    --color-slate-300: #d4d4d8;
+    --color-slate-400: #a1a1aa;
+    --color-slate-500: #71717a;
+    --color-slate-600: #52525b;
+    --color-slate-700: #27272a;
+    --color-slate-800: #18181b;
+    --color-slate-900: #101014;
+    --color-slate-950: #09090b;
+
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
