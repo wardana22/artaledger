@@ -104,8 +104,10 @@ graph TD
         
         S_AG --> M_INV["Model: ApArInvoice"]
         S_AG --> M_SET["Model: ApArSettlement"]
+        S_AG --> M_PIV["Model: ApArInvoiceJournalLine (Pivot M:N)"]
         S_AGM --> M_INV
         S_AGM --> M_SET
+        S_AGM --> M_PIV
         
         S_CF --> M_CFR["Model: CashFlowRow"]
         S_CF --> M_AGRP
@@ -199,14 +201,16 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 9. **Saldo Awal**: `/accounting/reports/opening-balance` ([OpeningBalanceIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/OpeningBalance/OpeningBalanceIndex.php))
 10. **Laporan Umur Piutang & Hutang (Aging AR/AP)**: `/accounting/reports/aging` ([AgingReport.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/AgingReport.php))
     - Menggunakan [AgingReportService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/AgingReportService.php) dan [AgingInvoiceManagerService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/AgingInvoiceManagerService.php).
-    - Model pendukung: [ApArInvoice.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ApArInvoice.php) dan [ApArSettlement.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ApArSettlement.php).
+    - Model pendukung: [ApArInvoice.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ApArInvoice.php), [ApArSettlement.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ApArSettlement.php), dan [ApArInvoiceJournalLine.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ApArInvoiceJournalLine.php).
     - Fitur canggih:
       - **Specific Invoice Matching**: Menghindari salah sasaran pelunasan FIFO; pembayaran ditargetkan secara presisi ke faktur spesifik.
+      - **Many-to-Many Relational Flexibility**:
+        - *Split Invoicing (1 Jurnal Banyak Invoice)*: Memecah 1 baris pengakuan jurnal menjadi banyak nomor invoice dengan kalkulator validasi nominal real-time.
+        - *Multi-Journal Consolidation (Banyak Jurnal 1 Invoice)*: Menggabungkan 2 atau lebih jurnal pengiriman/pekerjaan bertahap menjadi 1 lembar faktur fisik gabungan via seleksi checkbox.
       - **Post-Period Invoice Assignment**: Menginput/menugaskan nomor faktur fisik yang terbit menyusul tanpa merusak kunci periode tutup buku akuntansi.
-      - **Split Invoicing (1 Jurnal Banyak Invoice)**: Memecah 1 baris pengakuan jurnal menjadi banyak nomor invoice dengan kalkulator validasi nominal real-time.
       - **Dual-Tab Controller**: Beralih instan antara Piutang Usaha (AR) dan Hutang Usaha (AP).
       - **Executive KPI Cards & Bucket Umur**: Total Saldo Terbuka, Lancar/Current, Overdue 1-30, 31-60, 61-90, dan >90 hari.
-      - **Drill-down Accordion**: Menampilkan rincian invoice per akun dan riwayat pelunasannya.
+      - **Drill-down Accordion**: Menampilkan rincian invoice per akun, nomor jurnal pembentuk, dan riwayat pelunasannya.
 - **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 landscape cetak siap tanda tangan)
 - **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Spreadsheet multi-kolom bucket dengan format akuntansi)
 

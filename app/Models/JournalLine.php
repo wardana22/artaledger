@@ -57,9 +57,19 @@ class JournalLine extends Model
         )->withTimestamps();
     }
 
-    public function apArInvoices(): HasMany
+    public function apArInvoices(): BelongsToMany
     {
-        return $this->hasMany(ApArInvoice::class, 'journal_line_id');
+        return $this->belongsToMany(
+            ApArInvoice::class,
+            'ap_ar_invoice_journal_lines',
+            'journal_line_id',
+            'ap_ar_invoice_id'
+        )->withPivot('allocated_amount')->withTimestamps();
+    }
+
+    public function apArInvoiceAllocations(): HasMany
+    {
+        return $this->hasMany(ApArInvoiceJournalLine::class, 'journal_line_id');
     }
 
     public function apArSettlements(): HasMany

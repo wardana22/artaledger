@@ -51,6 +51,10 @@ class AgingInvoiceManagerService
                 'created_by' => $userId,
             ]);
 
+            $invoice->journalLines()->attach($line->id, [
+                'allocated_amount' => $originalAmount,
+            ]);
+
             AuditLogService::record(
                 'aging.invoice.assign',
                 "Menugaskan Invoice {$invoice->invoice_number} senilai Rp ".number_format($originalAmount, 2)." pada Jurnal {$line->journalEntry->entry_number}",
@@ -116,7 +120,7 @@ class AgingInvoiceManagerService
 
             $created = [];
             foreach ($invoicesData as $inv) {
-                $created[] = ApArInvoice::create([
+                $invoice = ApArInvoice::create([
                     'company_id' => $line->journalEntry->company_id,
                     'unit_id' => $line->unit_id,
                     'account_id' => $line->account_id,
@@ -131,6 +135,12 @@ class AgingInvoiceManagerService
                     'status' => 'open',
                     'created_by' => $userId,
                 ]);
+
+                $invoice->journalLines()->attach($line->id, [
+                    'allocated_amount' => (float) $inv['original_amount'],
+                ]);
+
+                $created[] = $invoice;
             }
 
             AuditLogService::record(
@@ -143,6 +153,90 @@ class AgingInvoiceManagerService
             );
 
             return $created;
+        });
+    }
+
+    /**
+     * Gabungkan banyak baris jurnal menjadi 1 Invoice Fisik (Many to 1 / Multi-Journal Consolidation).
+     *
+     * @param  array<int, int>  $journalLineIds
+     * @param  array<string, mixed>  $invoiceData  ['invoice_number', 'invoice_date', 'due_date', 'partner_name', 'notes']
+     *
+     * @throws Exception
+     */
+    public function consolidateJournalLinesIntoInvoice(array $journalLineIds, array $invoiceData, ?int $userId = null): ApArInvoice
+    {
+        if (count($journalLineIds) < 2) {
+            throw new Exception('Penggabungan invoice memerlukan minimal 2 baris jurnal.');
+        }
+
+        $lines = JournalLine::with(['account', 'journalEntry'])->whereIn('id', $journalLineIds)->get();
+
+        if ($lines->count() !== count($journalLineIds)) {
+            throw new Exception('Sebagian baris jurnal yang dipilih tidak ditemukan.');
+        }
+
+        $firstLine = $lines->first();
+        $accountId = $firstLine->account_id;
+        $companyId = $firstLine->journalEntry->company_id;
+        $accountType = strtoupper((string) $firstLine->account?->type);
+        $type = str_contains($accountType, 'HUTANG') ? 'payable' : 'receivable';
+
+        $totalConsolidated = 0.0;
+        $allocations = [];
+
+        foreach ($lines as $line) {
+            if ($line->account_id !== $accountId) {
+                throw new Exception("Seluruh baris jurnal yang digabung harus berasal dari Akun COA yang sama ({$firstLine->account?->code}).");
+            }
+
+            if ($line->apArInvoices()->exists()) {
+                throw new Exception("Baris jurnal pada Jurnal {$line->journalEntry->entry_number} sudah terikat pada invoice lain.");
+            }
+
+            $lineAmt = $type === 'receivable' ? (float) $line->debit : (float) $line->credit;
+            if ($lineAmt <= 0) {
+                throw new Exception("Baris jurnal {$line->id} memiliki nominal tidak valid.");
+            }
+
+            $totalConsolidated += $lineAmt;
+            $allocations[$line->id] = ['allocated_amount' => $lineAmt];
+        }
+
+        return DB::transaction(function () use ($firstLine, $companyId, $accountId, $type, $totalConsolidated, $allocations, $invoiceData, $userId, $lines) {
+            $invoice = ApArInvoice::create([
+                'company_id' => $companyId,
+                'unit_id' => $firstLine->unit_id,
+                'account_id' => $accountId,
+                'journal_line_id' => $firstLine->id, // Fallback backward compatibility
+                'type' => $type,
+                'invoice_number' => trim((string) $invoiceData['invoice_number']),
+                'invoice_date' => $invoiceData['invoice_date'] ?? date('Y-m-d'),
+                'due_date' => $invoiceData['due_date'] ?? $invoiceData['invoice_date'] ?? date('Y-m-d'),
+                'original_amount' => $totalConsolidated,
+                'partner_name' => $invoiceData['partner_name'] ?? null,
+                'notes' => $invoiceData['notes'] ?? null,
+                'status' => 'open',
+                'created_by' => $userId,
+            ]);
+
+            $invoice->journalLines()->attach($allocations);
+
+            AuditLogService::record(
+                'aging.invoice.consolidate',
+                "Menggabungkan {$lines->count()} baris jurnal menjadi Invoice {$invoice->invoice_number} senilai Rp ".number_format($totalConsolidated, 2),
+                $invoice,
+                null,
+                [
+                    'invoice_id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'journal_line_ids' => array_keys($allocations),
+                    'total_amount' => $totalConsolidated,
+                ],
+                $userId
+            );
+
+            return $invoice;
         });
     }
 

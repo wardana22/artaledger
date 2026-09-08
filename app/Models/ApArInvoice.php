@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ApArInvoice extends Model
@@ -52,6 +53,21 @@ class ApArInvoice extends Model
     public function journalLine(): BelongsTo
     {
         return $this->belongsTo(JournalLine::class, 'journal_line_id');
+    }
+
+    public function journalLines(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            JournalLine::class,
+            'ap_ar_invoice_journal_lines',
+            'ap_ar_invoice_id',
+            'journal_line_id'
+        )->withPivot('allocated_amount')->withTimestamps();
+    }
+
+    public function journalLineAllocations(): HasMany
+    {
+        return $this->hasMany(ApArInvoiceJournalLine::class, 'ap_ar_invoice_id');
     }
 
     public function settlements(): HasMany

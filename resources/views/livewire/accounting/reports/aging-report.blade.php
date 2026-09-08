@@ -58,11 +58,27 @@
                 </button>
             </div>
 
-            <!-- Toggle Filter Saldo Nol -->
-            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 dark:text-slate-400">
-                <input type="checkbox" wire:model.live="hideZeroBalances" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500">
-                Sembunyikan Akun Saldo Nol
-            </label>
+            <!-- Toggle Filter Saldo Nol & Tombol Gabung Multi-Jurnal -->
+            <div class="flex items-center gap-3">
+                @php
+                    $countSelected = count(array_filter($selectedLineIds));
+                @endphp
+                @if ($countSelected >= 2)
+                    <button 
+                        type="button" 
+                        wire:click="openMergeModal"
+                        class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 animate-pulse"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                        <span>Gabung {{ $countSelected }} Jurnal Menjadi 1 Invoice</span>
+                    </button>
+                @endif
+
+                <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <input type="checkbox" wire:model.live="hideZeroBalances" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                    Sembunyikan Akun Saldo Nol
+                </label>
+            </div>
         </div>
 
         <!-- Filter Inputs -->
@@ -207,9 +223,17 @@
                                                 {{ $inv['invoice_number'] }}
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 text-slate-400 italic">
-                                                <span>{{ $inv['entry_number'] }} (Belum Bernomor Invoice)</span>
-                                            </span>
+                                            <div class="flex items-center gap-2">
+                                                <input 
+                                                    type="checkbox" 
+                                                    wire:model.live="selectedLineIds.{{ $inv['id'] }}"
+                                                    class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
+                                                    title="Centang untuk menggabungkan beberapa jurnal menjadi 1 invoice"
+                                                >
+                                                <span class="inline-flex items-center gap-1 text-slate-400 italic">
+                                                    <span>{{ $inv['entry_number'] }} (Belum Bernomor Invoice)</span>
+                                                </span>
+                                            </div>
                                         @endif
                                     </td>
                                     <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">
@@ -341,7 +365,7 @@
                             <button type="button" wire:click="closeAssignModal" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200">Batal</button>
                             <button type="button" wire:click="saveSingleInvoice" class="px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500">Simpan Invoice</button>
                         </div>
-                    @else
+                    @elseif ($modalMode === 'split')
                         <!-- SPLIT MODE FORM -->
                         <div class="space-y-3">
                             @php
@@ -403,6 +427,46 @@
                                 >
                                     Simpan Hasil Pemecahan
                                 </button>
+                            </div>
+                        </div>
+                    @elseif ($modalMode === 'merge')
+                        <!-- MERGE MODE FORM -->
+                        <div class="space-y-3">
+                            <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-700 dark:text-indigo-300">
+                                <strong>Penggabungan Multi-Jurnal:</strong> Anda sedang menggabungkan <strong>{{ count(array_filter($selectedLineIds)) }}</strong> transaksi jurnal pengakuan menjadi 1 nomor invoice fisik gabungan.
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Nomor Invoice Gabungan *</label>
+                                    <input type="text" wire:model="mergeInvoiceNumber" placeholder="contoh: INV-2026-GABUNGAN" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                                    @error('mergeInvoiceNumber') <span class="text-[11px] text-rose-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Nama Rekanan</label>
+                                    <input type="text" wire:model="mergePartnerName" placeholder="contoh: PT Multi Transaksi" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Tanggal Invoice *</label>
+                                    <input type="date" wire:model="mergeInvoiceDate" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Tanggal Jatuh Tempo *</label>
+                                    <input type="date" wire:model="mergeDueDate" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Catatan / Keterangan</label>
+                                    <textarea wire:model="mergeNotes" rows="2" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                                <button type="button" wire:click="closeAssignModal" class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200">Batal</button>
+                                <button type="button" wire:click="saveMergedInvoice" class="px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500">Simpan Invoice Gabungan</button>
                             </div>
                         </div>
                     @endif

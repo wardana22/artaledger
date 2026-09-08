@@ -106,7 +106,7 @@ class AgingReportService
         // 1. Ambil invoice terdaftar yang dibuat pada/sebelum cutoff date
         $invoicesQuery = ApArInvoice::with(['settlements' => function ($q) use ($cutoffDate) {
             $q->where('settled_date', '<=', $cutoffDate->format('Y-m-d'));
-        }, 'journalLine.journalEntry', 'unit'])
+        }, 'journalLines.journalEntry', 'unit'])
             ->where('account_id', $account->id)
             ->where('type', $type)
             ->where('invoice_date', '<=', $cutoffDate->format('Y-m-d'));
@@ -120,7 +120,12 @@ class AgingReportService
         $rows = [];
 
         foreach ($invoices as $invoice) {
-            $processedLineIds[] = $invoice->journal_line_id;
+            foreach ($invoice->journalLines as $jl) {
+                $processedLineIds[] = $jl->id;
+            }
+            if ($invoice->journal_line_id) {
+                $processedLineIds[] = $invoice->journal_line_id;
+            }
 
             $settledSoFar = (float) $invoice->settlements->sum('settled_amount');
             $remaining = max(0.0, (float) $invoice->original_amount - $settledSoFar);
@@ -135,12 +140,17 @@ class AgingReportService
 
             $buckets = $this->classifyIntoBuckets($remaining, $daysOverdue);
 
+            $entryNumbers = $invoice->journalLines->map(fn ($jl) => $jl->journalEntry?->entry_number)->filter()->unique()->implode(', ');
+            if (empty($entryNumbers)) {
+                $entryNumbers = $invoice->journalLine?->journalEntry?->entry_number ?: '-';
+            }
+
             $rows[] = [
                 'id' => $invoice->id,
                 'is_registered_invoice' => true,
                 'invoice_number' => $invoice->invoice_number,
                 'partner_name' => $invoice->partner_name ?: '-',
-                'entry_number' => $invoice->journalLine?->journalEntry?->entry_number ?: '-',
+                'entry_number' => $entryNumbers,
                 'invoice_date' => $invoice->invoice_date->format('Y-m-d'),
                 'due_date' => $invoice->due_date->format('Y-m-d'),
                 'unit_code' => $invoice->unit?->code ?: '-',

@@ -126,3 +126,66 @@ test('can split single journal line into multiple invoices and settle specific i
     expect($activeInvoices)->toContain('INV-2026-A');
     expect($activeInvoices)->not->toContain('INV-2026-B');
 });
+
+test('can consolidate multiple journal lines into single invoice (Many to 1)', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+
+    // Jurnal 1: DO Tahap 1 (Rp 300.000)
+    $journal1 = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-10',
+        'document_number' => 'DO-01',
+        'description' => 'Pengiriman Tahap 1',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang DO 1', 'debit' => 300000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 300000],
+    ], $this->user->id);
+
+    // Jurnal 2: DO Tahap 2 (Rp 200.000)
+    $journal2 = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-25',
+        'document_number' => 'DO-02',
+        'description' => 'Pengiriman Tahap 2',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang DO 2', 'debit' => 200000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 200000],
+    ], $this->user->id);
+
+    $line1 = $journal1->lines()->where('account_id', $piutangAccount->id)->first();
+    $line2 = $journal2->lines()->where('account_id', $piutangAccount->id)->first();
+
+    // Gabungkan kedua jurnal menjadi 1 Invoice Fisik (Rp 500.000)
+    $managerService = new AgingInvoiceManagerService;
+    $consolidatedInvoice = $managerService->consolidateJournalLinesIntoInvoice(
+        [$line1->id, $line2->id],
+        [
+            'invoice_number' => 'INV-2026-GABUNGAN',
+            'invoice_date' => '2026-02-02',
+            'due_date' => '2026-02-28',
+            'partner_name' => 'Klien Konsolidasi',
+            'notes' => 'Gabungan DO-01 & DO-02',
+        ],
+        $this->user->id
+    );
+
+    expect((float) $consolidatedInvoice->original_amount)->toBe(500000.0);
+    expect($consolidatedInvoice->journalLines()->count())->toBe(2);
+
+    // Verifikasi laporan aging
+    $reportService = new AgingReportService;
+    $report = $reportService->getAgingReport('receivable', '2026-03-01');
+
+    expect($report['kpi']['total_outstanding'])->toBe(500000.0);
+
+    $accData = collect($report['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    $invoices = collect($accData['invoices']);
+    $item = $invoices->firstWhere('invoice_number', 'INV-2026-GABUNGAN');
+
+    expect($item)->not->toBeNull();
+    expect($item['remaining_amount'])->toBe(500000.0);
+    expect($item['entry_number'])->toContain('JU-'); // Memuat nomor jurnal terkait
+});

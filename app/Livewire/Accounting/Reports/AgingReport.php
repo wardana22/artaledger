@@ -50,6 +50,20 @@ class AgingReport extends Component
     /** @var array<int, array<string, mixed>> */
     public array $splitRows = [];
 
+    // Multi-Journal Consolidation State
+    /** @var array<int, bool> */
+    public array $selectedLineIds = [];
+
+    public string $mergeInvoiceNumber = '';
+
+    public string $mergeInvoiceDate = '';
+
+    public string $mergeDueDate = '';
+
+    public string $mergePartnerName = '';
+
+    public string $mergeNotes = '';
+
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('reports.view')) {
@@ -199,6 +213,56 @@ class AgingReport extends Component
             $service->splitJournalLineIntoInvoices($this->selectedJournalLine, $this->splitRows, auth()->id());
 
             session()->flash('message', 'Baris jurnal berhasil dipecah menjadi '.count($this->splitRows).' invoice!');
+            $this->closeAssignModal();
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function openMergeModal(): void
+    {
+        $activeLineIds = array_keys(array_filter($this->selectedLineIds));
+        if (count($activeLineIds) < 2) {
+            session()->flash('error', 'Pilih minimal 2 baris jurnal untuk digabungkan menjadi 1 invoice.');
+
+            return;
+        }
+
+        $this->modalMode = 'merge';
+        $this->mergeInvoiceNumber = '';
+        $this->mergeInvoiceDate = date('Y-m-d');
+        $this->mergeDueDate = date('Y-m-d');
+        $this->mergePartnerName = '';
+        $this->mergeNotes = '';
+        $this->selectedJournalLine = JournalLine::with('account')->find($activeLineIds[0]);
+
+        $this->showAssignModal = true;
+    }
+
+    public function saveMergedInvoice(): void
+    {
+        $this->validate([
+            'mergeInvoiceNumber' => 'required|string|max:100',
+            'mergeInvoiceDate' => 'required|date',
+            'mergeDueDate' => 'required|date',
+            'mergePartnerName' => 'nullable|string|max:255',
+            'mergeNotes' => 'nullable|string|max:500',
+        ]);
+
+        $activeLineIds = array_keys(array_filter($this->selectedLineIds));
+
+        try {
+            $service = new AgingInvoiceManagerService;
+            $invoice = $service->consolidateJournalLinesIntoInvoice($activeLineIds, [
+                'invoice_number' => $this->mergeInvoiceNumber,
+                'invoice_date' => $this->mergeInvoiceDate,
+                'due_date' => $this->mergeDueDate,
+                'partner_name' => $this->mergePartnerName,
+                'notes' => $this->mergeNotes,
+            ], auth()->id());
+
+            session()->flash('message', 'Berhasil menggabungkan '.count($activeLineIds)." baris jurnal menjadi Invoice {$invoice->invoice_number}!");
+            $this->selectedLineIds = [];
             $this->closeAssignModal();
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());

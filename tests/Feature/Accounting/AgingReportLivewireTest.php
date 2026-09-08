@@ -63,6 +63,53 @@ test('can assign single invoice from modal and view in table', function () {
         ->assertSee('Client XYZ Mega');
 });
 
+test('can merge multiple journal lines into single invoice from livewire modal', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+    $j1 = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-10',
+        'document_number' => 'DOC-MERGE-1',
+        'description' => 'Tagihan 1',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Jurnal 1', 'debit' => 100000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 100000],
+    ], $this->user->id);
+
+    $j2 = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-15',
+        'document_number' => 'DOC-MERGE-2',
+        'description' => 'Tagihan 2',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Jurnal 2', 'debit' => 200000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 200000],
+    ], $this->user->id);
+
+    $line1 = $j1->lines()->where('account_id', $piutangAccount->id)->first();
+    $line2 = $j2->lines()->where('account_id', $piutangAccount->id)->first();
+
+    Livewire::actingAs($this->user)
+        ->test(AgingReport::class)
+        ->set("selectedLineIds.{$line1->id}", true)
+        ->set("selectedLineIds.{$line2->id}", true)
+        ->call('openMergeModal')
+        ->assertSet('showAssignModal', true)
+        ->assertSet('modalMode', 'merge')
+        ->set('mergeInvoiceNumber', 'INV-MERGE-888')
+        ->set('mergeInvoiceDate', '2026-02-01')
+        ->set('mergeDueDate', '2026-02-28')
+        ->set('mergePartnerName', 'Client Konsolidasi Livewire')
+        ->call('saveMergedInvoice')
+        ->assertHasNoErrors()
+        ->assertSet('showAssignModal', false)
+        ->call('toggleAccount', $piutangAccount->id)
+        ->assertSee('INV-MERGE-888')
+        ->assertSee('Client Konsolidasi Livewire');
+});
+
 test('can export aging report to pdf and excel', function () {
     $this->actingAs($this->user);
 
