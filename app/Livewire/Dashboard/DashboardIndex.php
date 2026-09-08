@@ -24,11 +24,9 @@ class DashboardIndex extends Component
 
     public ?int $selectedUnitId = null;
 
-    public int $start_month = 1;
+    public string $startDate = '';
 
-    public int $end_month = 2;
-
-    public int $selectedYear = 0; // di-set dinamis di mount()
+    public string $endDate = '';
 
     public function mount(): void
     {
@@ -64,29 +62,17 @@ class DashboardIndex extends Component
             }
         }
 
-        // Set selectedYear dinamis: dari periode open, atau tahun terbaru, atau tahun ini
-        $this->selectedYear = AccountingPeriod::where('company_id', $this->company->id)
+        // Set startDate/endDate dari periode aktif, atau default awal-akhir tahun ini
+        $activePeriod = AccountingPeriod::where('company_id', $this->company->id)
             ->where('status', 'open')
-            ->orderByDesc('year')
-            ->value('year')
-            ?? AccountingPeriod::where('company_id', $this->company->id)
-                ->orderByDesc('year')
-                ->value('year')
-            ?? now()->year;
-    }
+            ->orderByDesc('start_date')
+            ->first();
 
-    public function updatedStartMonth(): void
-    {
-        if ($this->start_month > $this->end_month) {
-            $this->end_month = $this->start_month;
-        }
-    }
+        $this->startDate = $activePeriod?->start_date?->format('Y-m-d')
+            ?? now()->startOfYear()->format('Y-m-d');
 
-    public function updatedEndMonth(): void
-    {
-        if ($this->end_month < $this->start_month) {
-            $this->start_month = $this->end_month;
-        }
+        $this->endDate = $activePeriod?->end_date?->format('Y-m-d')
+            ?? now()->format('Y-m-d');
     }
 
     public function refreshData(DashboardMetricService $metricService): void
@@ -96,14 +82,8 @@ class DashboardIndex extends Component
 
     public function render(DashboardMetricService $metricService)
     {
-        $startDate = sprintf('%04d-%02d-01', $this->selectedYear, $this->start_month);
-        $endDate = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $this->selectedYear, $this->end_month)));
-
-        // Daftar tahun dinamis berdasarkan AccountingPeriod yang tersedia
-        $availableYears = AccountingPeriod::where('company_id', $this->company->id)
-            ->distinct()
-            ->orderByDesc('year')
-            ->pluck('year');
+        // Derive year for monthly trend chart from startDate (Opsi A — 12 bulan penuh)
+        $trendYear = (int) date('Y', strtotime($this->startDate ?: now()->format('Y-m-d')));
 
         // 1. Ensure KPIs and default charts are seeded for company
         $existingKpisCount = DashboardKpi::where('company_id', $this->company->id)->count();
@@ -120,7 +100,7 @@ class DashboardIndex extends Component
                 ->get();
 
             foreach ($kpis as $kpi) {
-                $value = $metricService->calculateKpiValue($kpi, $startDate, $endDate, $this->selectedUnitId);
+                $value = $metricService->calculateKpiValue($kpi, $this->startDate, $this->endDate, $this->selectedUnitId);
                 $kpiCards[] = [
                     'id' => $kpi->id,
                     'title' => $kpi->title,
@@ -134,31 +114,32 @@ class DashboardIndex extends Component
         }
 
         // 3. Financial Ratios
-        $financialRatios = $metricService->calculateFinancialRatios($startDate, $endDate, $this->selectedUnitId, $this->company->id);
+        $financialRatios = $metricService->calculateFinancialRatios($this->startDate, $this->endDate, $this->selectedUnitId, $this->company->id);
 
-        // 4. Dynamic Multi-Series Charts (ApexCharts)
+        // 4. Dynamic Multi-Series Charts (ApexCharts) — 12 bulan penuh tahun dari startDate
         $charts = DashboardChart::where('company_id', $this->company->id)
             ->where('is_visible', true)
             ->orderBy('order')
             ->get();
 
-        $chartData = $metricService->getMonthlyTrend($charts, $this->selectedYear, $this->selectedUnitId, $this->company->id);
+        $chartData = $metricService->getMonthlyTrend($charts, $trendYear, $this->selectedUnitId, $this->company->id);
 
         // 5. Top 10 High-Value Transactions
-        $topTransactions = $metricService->getTopTransactions($startDate, $endDate, $this->selectedUnitId, $this->company->id, 10);
+        $topTransactions = $metricService->getTopTransactions($this->startDate, $this->endDate, $this->selectedUnitId, $this->company->id, 10);
 
-        // 6. Active Accounting Period
+        // 6. Active Accounting Period — berdasarkan rentang endDate
         $activePeriod = AccountingPeriod::where('company_id', $this->company->id)
-            ->where('year', $this->selectedYear)
-            ->where('month', $this->end_month)
-            ->first() ?? AccountingPeriod::where('company_id', $this->company->id)->where('status', 'open')->latest('start_date')->first();
+            ->where('start_date', '<=', $this->endDate)
+            ->where('end_date', '>=', $this->endDate)
+            ->first()
+            ?? AccountingPeriod::where('company_id', $this->company->id)->where('status', 'open')->latest('start_date')->first();
 
         // 7. Recent Journal Entries (Audit Trail)
         $recentJournals = [];
         if ($this->setting->show_recent_journals) {
             $recentJournals = JournalEntry::with(['journalType', 'lines.unit'])
                 ->where('entry_number', 'not like', 'SA%')
-                ->whereBetween('entry_date', [$startDate, $endDate])
+                ->whereBetween('entry_date', [$this->startDate, $this->endDate])
                 ->when($this->selectedUnitId, fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->where('unit_id', $this->selectedUnitId)))
                 ->latest('entry_date')
                 ->latest('id')
@@ -177,9 +158,6 @@ class DashboardIndex extends Component
             'activePeriod' => $activePeriod,
             'recentJournals' => $recentJournals,
             'units' => $units,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'availableYears' => $availableYears,
         ]);
     }
 }

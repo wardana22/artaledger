@@ -16,9 +16,9 @@
         </div>
     </div>
 
-    <!-- Filter Bar: 4 Kolom Simetris (Unit, Dari Bulan, s/d Bulan, Tahun) -->
+    <!-- Filter Bar: 3 Kolom (Unit, Dari Tanggal, Sampai Tanggal) -->
     <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <!-- 1. Unit -->
             <div>
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Unit Perusahaan</label>
@@ -32,43 +32,16 @@
                 </select>
             </div>
 
-            <!-- 2. Dari Bulan -->
-            @php
-                $monthNames = [
-                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-                ];
-            @endphp
+            <!-- 2. Dari Tanggal -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Dari Bulan</label>
-                <select wire:model.live="start_month" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
-                    @foreach ($monthNames as $mNum => $mLabel)
-                        <option value="{{ $mNum }}">{{ $mNum }} - {{ $mLabel }}</option>
-                    @endforeach
-                </select>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Dari Tanggal</label>
+                <input wire:model.live="startDate" type="date" aria-label="Dari Tanggal" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all" />
             </div>
 
-            <!-- 3. s/d Bulan -->
+            <!-- 3. Sampai Tanggal -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Sampai Bulan</label>
-                <select wire:model.live="end_month" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
-                    @foreach ($monthNames as $mNum => $mLabel)
-                        <option value="{{ $mNum }}">{{ $mNum }} - {{ $mLabel }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- 4. Tahun -->
-            <div>
-                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tahun Buku</label>
-                <select wire:model.live="selectedYear" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
-                    @forelse ($availableYears as $y)
-                        <option value="{{ $y }}">Tahun {{ $y }}</option>
-                    @empty
-                        <option value="{{ now()->year }}">Tahun {{ now()->year }}</option>
-                    @endforelse
-                </select>
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Sampai Tanggal</label>
+                <input wire:model.live="endDate" type="date" aria-label="Sampai Tanggal" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all" />
             </div>
         </div>
     </div>
@@ -79,7 +52,7 @@
             <div class="flex items-center justify-between mb-3 px-1">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
                     <span class="size-2 rounded-full bg-indigo-500"></span>
-                    12 Indikator Finansial & Operasional Utama (Periode {{ $monthNames[$start_month] }} - {{ $monthNames[$end_month] }} {{ $selectedYear }})
+                    12 Indikator Finansial & Operasional Utama (Periode {{ $startDate }} s/d {{ $endDate }})
                 </h3>
                 <span class="text-[11px] font-semibold text-slate-400">Terurut baku dari Pendapatan s/d DSI</span>
             </div>
@@ -199,7 +172,7 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-slate-900 dark:text-white">{{ $chart->name }}</h4>
-                                <p class="text-[11px] text-slate-400">Tren multi-series bulanan tahun {{ $selectedYear }}</p>
+                                <p class="text-[11px] text-slate-400">Tren multi-series bulanan tahun {{ date('Y', strtotime($startDate)) }}</p>
                             </div>
                         </div>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
