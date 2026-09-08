@@ -66,6 +66,12 @@ class AgingReport extends Component
 
     public float $mergeTotalAmount = 0.0;
 
+    // Multi-Journal Sub-Mode: 'single' (1 Invoice Gabungan) | 'multiple' (Banyak Invoice)
+    public string $mergeSubMode = 'single';
+
+    /** @var array<int, array<string, mixed>> */
+    public array $mergeInvoiceRows = [];
+
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('reports.view')) {
@@ -236,6 +242,7 @@ class AgingReport extends Component
             : (float) $lines->sum('credit');
 
         $this->modalMode = 'merge';
+        $this->mergeSubMode = 'single';
         $this->mergeInvoiceNumber = '';
         $this->mergeInvoiceDate = date('Y-m-d');
         $this->mergeDueDate = date('Y-m-d');
@@ -243,36 +250,119 @@ class AgingReport extends Component
         $this->mergeNotes = '';
         $this->selectedJournalLine = JournalLine::with('account')->find($activeLineIds[0]);
 
+        $this->mergeInvoiceRows = [
+            [
+                'invoice_number' => '',
+                'original_amount' => round($this->mergeTotalAmount / 2, 2),
+                'invoice_date' => date('Y-m-d'),
+                'due_date' => date('Y-m-d'),
+                'partner_name' => '',
+                'notes' => '',
+            ],
+            [
+                'invoice_number' => '',
+                'original_amount' => round($this->mergeTotalAmount - round($this->mergeTotalAmount / 2, 2), 2),
+                'invoice_date' => date('Y-m-d'),
+                'due_date' => date('Y-m-d'),
+                'partner_name' => '',
+                'notes' => '',
+            ],
+        ];
+
         $this->showAssignModal = true;
+    }
+
+    public function setMergeSubMode(string $mode): void
+    {
+        if (in_array($mode, ['single', 'multiple'])) {
+            $this->mergeSubMode = $mode;
+        }
+    }
+
+    public function addMergeInvoiceRow(): void
+    {
+        $currentSum = (float) collect($this->mergeInvoiceRows)->sum('original_amount');
+        $remainder = max(0, $this->mergeTotalAmount - $currentSum);
+
+        $this->mergeInvoiceRows[] = [
+            'invoice_number' => '',
+            'original_amount' => round($remainder, 2),
+            'invoice_date' => date('Y-m-d'),
+            'due_date' => date('Y-m-d'),
+            'partner_name' => '',
+            'notes' => '',
+        ];
+    }
+
+    public function removeMergeInvoiceRow(int $index): void
+    {
+        if (count($this->mergeInvoiceRows) > 1) {
+            unset($this->mergeInvoiceRows[$index]);
+            $this->mergeInvoiceRows = array_values($this->mergeInvoiceRows);
+        }
     }
 
     public function saveMergedInvoice(): void
     {
-        $this->validate([
-            'mergeInvoiceNumber' => 'required|string|max:100',
-            'mergeInvoiceDate' => 'required|date',
-            'mergeDueDate' => 'required|date',
-            'mergePartnerName' => 'nullable|string|max:255',
-            'mergeNotes' => 'nullable|string|max:500',
-        ]);
-
         $activeLineIds = array_keys(array_filter($this->selectedLineIds));
+        $service = new AgingInvoiceManagerService;
 
-        try {
-            $service = new AgingInvoiceManagerService;
-            $invoice = $service->consolidateJournalLinesIntoInvoice($activeLineIds, [
-                'invoice_number' => $this->mergeInvoiceNumber,
-                'invoice_date' => $this->mergeInvoiceDate,
-                'due_date' => $this->mergeDueDate,
-                'partner_name' => $this->mergePartnerName,
-                'notes' => $this->mergeNotes,
-            ], auth()->id());
+        if ($this->mergeSubMode === 'single') {
+            $this->validate([
+                'mergeInvoiceNumber' => 'required|string|max:100',
+                'mergeInvoiceDate' => 'required|date',
+                'mergeDueDate' => 'required|date',
+                'mergePartnerName' => 'nullable|string|max:255',
+                'mergeNotes' => 'nullable|string|max:500',
+            ]);
 
-            session()->flash('message', 'Berhasil menggabungkan '.count($activeLineIds)." baris jurnal menjadi Invoice {$invoice->invoice_number}!");
-            $this->selectedLineIds = [];
-            $this->closeAssignModal();
-        } catch (Exception $e) {
-            session()->flash('error', $e->getMessage());
+            try {
+                $invoice = $service->consolidateJournalLinesIntoInvoice($activeLineIds, [
+                    'invoice_number' => $this->mergeInvoiceNumber,
+                    'invoice_date' => $this->mergeInvoiceDate,
+                    'due_date' => $this->mergeDueDate,
+                    'partner_name' => $this->mergePartnerName,
+                    'notes' => $this->mergeNotes,
+                ], auth()->id());
+
+                session()->flash('message', 'Berhasil menggabungkan '.count($activeLineIds)." baris jurnal menjadi Invoice {$invoice->invoice_number}!");
+                $this->selectedLineIds = [];
+                $this->closeAssignModal();
+            } catch (Exception $e) {
+                session()->flash('error', $e->getMessage());
+            }
+        } else {
+            // Multiple Invoices Sub-Mode
+            $this->validate([
+                'mergeInvoiceRows' => 'required|array|min:1',
+                'mergeInvoiceRows.*.invoice_number' => 'required|string|max:100',
+                'mergeInvoiceRows.*.original_amount' => 'required|numeric|min:0.01',
+                'mergeInvoiceRows.*.due_date' => 'required|date',
+                'mergeInvoiceRows.*.partner_name' => 'nullable|string|max:255',
+                'mergeInvoiceRows.*.notes' => 'nullable|string|max:500',
+            ], [
+                'mergeInvoiceRows.*.invoice_number.required' => 'Nomor invoice wajib diisi pada setiap baris.',
+                'mergeInvoiceRows.*.original_amount.required' => 'Nominal invoice wajib diisi.',
+                'mergeInvoiceRows.*.original_amount.min' => 'Nominal invoice harus lebih besar dari 0.',
+                'mergeInvoiceRows.*.due_date.required' => 'Tanggal jatuh tempo wajib diisi.',
+            ]);
+
+            $totalInvoices = (float) collect($this->mergeInvoiceRows)->sum('original_amount');
+            if (abs($totalInvoices - $this->mergeTotalAmount) > 0.01) {
+                session()->flash('error', 'Total invoice (Rp '.number_format($totalInvoices, 2, ',', '.').') harus sama dengan total akumulasi jurnal (Rp '.number_format($this->mergeTotalAmount, 2, ',', '.').').');
+
+                return;
+            }
+
+            try {
+                $invoices = $service->consolidateJournalLinesIntoMultipleInvoices($activeLineIds, $this->mergeInvoiceRows, auth()->id());
+
+                session()->flash('message', 'Berhasil menggabungkan '.count($activeLineIds).' baris jurnal menjadi '.count($invoices).' lembar invoice!');
+                $this->selectedLineIds = [];
+                $this->closeAssignModal();
+            } catch (Exception $e) {
+                session()->flash('error', $e->getMessage());
+            }
         }
     }
 

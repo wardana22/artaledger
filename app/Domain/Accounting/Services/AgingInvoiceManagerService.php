@@ -241,6 +241,144 @@ class AgingInvoiceManagerService
     }
 
     /**
+     * Gabungkan banyak baris jurnal menjadi banyak Invoice Fisik (Many to Many / M:N Invoicing).
+     *
+     * @param  array<int, int>  $journalLineIds
+     * @param  array<int, array<string, mixed>>  $invoicesData
+     * @return array<int, ApArInvoice>
+     *
+     * @throws Exception
+     */
+    public function consolidateJournalLinesIntoMultipleInvoices(array $journalLineIds, array $invoicesData, ?int $userId = null): array
+    {
+        if (count($journalLineIds) < 2) {
+            throw new Exception('Penggabungan multi-jurnal memerlukan minimal 2 baris jurnal.');
+        }
+
+        if (empty($invoicesData)) {
+            throw new Exception('Daftar invoice hasil pemecahan tidak boleh kosong.');
+        }
+
+        $lines = JournalLine::with(['account', 'journalEntry'])->whereIn('id', $journalLineIds)->get();
+
+        if ($lines->count() !== count($journalLineIds)) {
+            throw new Exception('Sebagian baris jurnal yang dipilih tidak ditemukan.');
+        }
+
+        $firstLine = $lines->first();
+        $accountId = $firstLine->account_id;
+        $companyId = $firstLine->journalEntry->company_id;
+        $accountType = strtoupper((string) $firstLine->account?->type);
+        $type = str_contains($accountType, 'HUTANG') ? 'payable' : 'receivable';
+
+        $totalJournalsAmount = 0.0;
+        $lineCapacities = []; // [line_id => remaining_capacity]
+
+        foreach ($lines as $line) {
+            if ($line->account_id !== $accountId) {
+                throw new Exception("Seluruh baris jurnal yang digabung harus berasal dari Akun COA yang sama ({$firstLine->account?->code}).");
+            }
+
+            if ($line->apArInvoices()->exists()) {
+                throw new Exception("Baris jurnal pada Jurnal {$line->journalEntry->entry_number} sudah terikat pada invoice lain.");
+            }
+
+            $lineAmt = $type === 'receivable' ? (float) $line->debit : (float) $line->credit;
+            if ($lineAmt <= 0) {
+                throw new Exception("Baris jurnal {$line->id} memiliki nominal tidak valid.");
+            }
+
+            $totalJournalsAmount += $lineAmt;
+            $lineCapacities[$line->id] = $lineAmt;
+        }
+
+        $totalInvoicesAmount = 0.0;
+        foreach ($invoicesData as $inv) {
+            $amt = (float) ($inv['original_amount'] ?? 0);
+            if ($amt <= 0) {
+                throw new Exception('Nominal invoice harus lebih besar dari 0.');
+            }
+            if (empty(trim((string) ($inv['invoice_number'] ?? '')))) {
+                throw new Exception('Nomor invoice tidak boleh kosong.');
+            }
+            $totalInvoicesAmount += $amt;
+        }
+
+        if (abs($totalInvoicesAmount - $totalJournalsAmount) > 0.01) {
+            throw new Exception('Total invoice (Rp '.number_format($totalInvoicesAmount, 2, ',', '.').') tidak sama dengan total baris jurnal terpilih (Rp '.number_format($totalJournalsAmount, 2, ',', '.').').');
+        }
+
+        return DB::transaction(function () use ($firstLine, $companyId, $accountId, $type, $lines, $lineCapacities, $invoicesData, $totalInvoicesAmount, $userId) {
+            $createdInvoices = [];
+            $remainingCapacities = $lineCapacities;
+            $lineIds = array_keys($remainingCapacities);
+            $currentLineIdx = 0;
+
+            foreach ($invoicesData as $invData) {
+                $invAmount = (float) $invData['original_amount'];
+                $invoice = ApArInvoice::create([
+                    'company_id' => $companyId,
+                    'unit_id' => $firstLine->unit_id,
+                    'account_id' => $accountId,
+                    'journal_line_id' => $firstLine->id,
+                    'type' => $type,
+                    'invoice_number' => trim((string) $invData['invoice_number']),
+                    'invoice_date' => $invData['invoice_date'] ?? date('Y-m-d'),
+                    'due_date' => $invData['due_date'] ?? $invData['invoice_date'] ?? date('Y-m-d'),
+                    'original_amount' => $invAmount,
+                    'partner_name' => $invData['partner_name'] ?? null,
+                    'notes' => $invData['notes'] ?? null,
+                    'status' => 'open',
+                    'created_by' => $userId,
+                ]);
+
+                // Alokasikan nilai invoice ke baris jurnal secara proporsional/FIFO
+                $remainingToAllocate = $invAmount;
+                $pivotAllocations = [];
+
+                while ($remainingToAllocate > 0.0001 && $currentLineIdx < count($lineIds)) {
+                    $currLineId = $lineIds[$currentLineIdx];
+                    $availCapacity = $remainingCapacities[$currLineId];
+
+                    if ($availCapacity <= 0.0001) {
+                        $currentLineIdx++;
+
+                        continue;
+                    }
+
+                    $take = min($remainingToAllocate, $availCapacity);
+                    $pivotAllocations[$currLineId] = ['allocated_amount' => round($take, 2)];
+
+                    $remainingCapacities[$currLineId] -= $take;
+                    $remainingToAllocate -= $take;
+
+                    if ($remainingCapacities[$currLineId] <= 0.0001) {
+                        $currentLineIdx++;
+                    }
+                }
+
+                $invoice->journalLines()->attach($pivotAllocations);
+                $createdInvoices[] = $invoice;
+            }
+
+            AuditLogService::record(
+                'aging.invoice.consolidate_multi',
+                "Menggabungkan {$lines->count()} baris jurnal menjadi ".count($createdInvoices).' lembar invoice senilai Rp '.number_format($totalInvoicesAmount, 2, ',', '.'),
+                $createdInvoices[0],
+                null,
+                [
+                    'journal_line_ids' => array_keys($lineCapacities),
+                    'invoices_count' => count($createdInvoices),
+                    'total_amount' => $totalInvoicesAmount,
+                ],
+                $userId
+            );
+
+            return $createdInvoices;
+        });
+    }
+
+    /**
      * Catat alokasi pelunasan invoice spesifik (Settlement).
      *
      * @throws Exception

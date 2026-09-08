@@ -209,6 +209,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
       - **Many-to-Many Relational Flexibility**:
         - *Split Invoicing (1 Jurnal Banyak Invoice)*: Memecah 1 baris pengakuan jurnal menjadi banyak nomor invoice dengan kalkulator validasi nominal real-time.
         - *Multi-Journal Consolidation (Banyak Jurnal 1 Invoice)*: Menggabungkan 2 atau lebih jurnal pengiriman/pekerjaan bertahap menjadi 1 lembar faktur fisik gabungan via seleksi checkbox.
+        - *Multi-Journal to Multi-Invoice (Banyak Jurnal Banyak Invoice / M:N)*: Memecah akumulasi beberapa transaksi jurnal sekaligus menjadi beberapa lembar nomor faktur fisik dengan alokasi pivot proporsional dan kalkulator penyeimbang nominal real-time.
       - **Post-Period Invoice Assignment**: Menginput/menugaskan nomor faktur fisik yang terbit menyusul tanpa merusak kunci periode tutup buku akuntansi.
       - **Dual-Tab Controller**: Beralih instan antara Piutang Usaha (AR) dan Hutang Usaha (AP).
       - **Executive KPI Cards & Bucket Umur**: Total Saldo Terbuka, Lancar/Current, Overdue 1-30, 31-60, 61-90, dan >90 hari.

@@ -189,3 +189,81 @@ test('can consolidate multiple journal lines into single invoice (Many to 1)', f
     expect($item['remaining_amount'])->toBe(500000.0);
     expect($item['entry_number'])->toContain('JU-'); // Memuat nomor jurnal terkait
 });
+
+test('can consolidate multiple journal lines into multiple invoices (Many to Many / M:N)', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+
+    // Jurnal 1: DO Tahap 1 (Rp 300.000)
+    $journal1 = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-10',
+        'document_number' => 'DO-M1',
+        'description' => 'Pengiriman Tahap 1 Multi',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang DO 1', 'debit' => 300000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 300000],
+    ], $this->user->id);
+
+    // Jurnal 2: DO Tahap 2 (Rp 200.000)
+    $journal2 = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-25',
+        'document_number' => 'DO-M2',
+        'description' => 'Pengiriman Tahap 2 Multi',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang DO 2', 'debit' => 200000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 200000],
+    ], $this->user->id);
+
+    $line1 = $journal1->lines()->where('account_id', $piutangAccount->id)->first();
+    $line2 = $journal2->lines()->where('account_id', $piutangAccount->id)->first();
+
+    // Gabungkan kedua jurnal (total Rp 500.000) menjadi 2 lembar Invoice:
+    // Invoice A: Rp 350.000
+    // Invoice B: Rp 150.000
+    $managerService = new AgingInvoiceManagerService;
+    $createdInvoices = $managerService->consolidateJournalLinesIntoMultipleInvoices(
+        [$line1->id, $line2->id],
+        [
+            [
+                'invoice_number' => 'INV-MULTI-A',
+                'original_amount' => 350000,
+                'invoice_date' => '2026-02-01',
+                'due_date' => '2026-02-15',
+                'partner_name' => 'Klien M:N',
+            ],
+            [
+                'invoice_number' => 'INV-MULTI-B',
+                'original_amount' => 150000,
+                'invoice_date' => '2026-02-01',
+                'due_date' => '2026-02-28',
+                'partner_name' => 'Klien M:N',
+            ],
+        ],
+        $this->user->id
+    );
+
+    expect(count($createdInvoices))->toBe(2);
+    expect((float) $createdInvoices[0]->original_amount)->toBe(350000.0);
+    expect((float) $createdInvoices[1]->original_amount)->toBe(150000.0);
+
+    // Verifikasi alokasi pivot M:N
+    $totalAllocatedPivot = DB::table('ap_ar_invoice_journal_lines')
+        ->whereIn('ap_ar_invoice_id', collect($createdInvoices)->pluck('id'))
+        ->sum('allocated_amount');
+
+    expect((float) $totalAllocatedPivot)->toBe(500000.0);
+
+    // Verifikasi laporan aging
+    $reportService = new AgingReportService;
+    $report = $reportService->getAgingReport('receivable', '2026-03-01');
+
+    $accData = collect($report['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    $invoices = collect($accData['invoices']);
+
+    expect($invoices->firstWhere('invoice_number', 'INV-MULTI-A'))->not->toBeNull();
+    expect($invoices->firstWhere('invoice_number', 'INV-MULTI-B'))->not->toBeNull();
+});
