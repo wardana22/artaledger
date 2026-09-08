@@ -4,7 +4,6 @@
     $isWorksheetActive = $active === 'worksheet' || ($active === null && (request()->routeIs('accounting.reports.worksheet*') || request()->is('accounting/reports/worksheet*')));
     $isTrialBalanceActive = $active === 'trial-balance' || ($active === null && (request()->routeIs('accounting.reports.trial-balance*') || request()->is('accounting/reports/trial-balance*')));
     $isBalanceSheetActive = $active === 'balance-sheet' || ($active === null && (request()->routeIs('accounting.reports.balance-sheet*') || request()->is('accounting/reports/balance-sheet*')));
-    $isAgingActive = $active === 'aging' || ($active === null && (request()->routeIs('accounting.reports.aging*') || request()->is('accounting/reports/aging*')));
 @endphp
 
 <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 mb-3.5 overflow-x-auto">
@@ -41,18 +40,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path>
             </svg>
             Laporan Neraca
-        </a>
-    @endif
-
-    @if (auth()->user()?->can('reports.view'))
-        <a 
-            href="{{ route('accounting.reports.aging') }}" 
-            wire:navigate
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $isAgingActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            Aging AP / AR
         </a>
     @endif
 </div>

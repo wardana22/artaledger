@@ -1,6 +1,4 @@
 <div class="p-4 sm:p-5 space-y-4">
-    <x-report-nav active="aging" />
-
     <!-- HEADER TITLE & EXPORT ACTION -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
