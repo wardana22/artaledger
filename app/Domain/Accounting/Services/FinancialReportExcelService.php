@@ -27,7 +27,7 @@ class FinancialReportExcelService
     ): int {
         $sheet = $spreadsheet->getActiveSheet();
 
-        $companyName = $company?->name ?? 'PT ArtaLedger Enterprise';
+        $companyName = $company->name ?? 'PT ArtaLedger Enterprise';
 
         $sheet->setCellValue('A1', $companyName);
         $sheet->mergeCells("A1:{$lastCol}1");
@@ -91,6 +91,8 @@ class FinancialReportExcelService
 
     /**
      * Auto size kolom lembar kerja.
+     *
+     * @param  array<int, string>  $columns
      */
     protected function autoSizeColumns(Spreadsheet $spreadsheet, array $columns): void
     {
@@ -128,7 +130,7 @@ class FinancialReportExcelService
 
         foreach ($data['rows'] as $r) {
             $acc = $r['account'];
-            $indent = str_repeat('    ', max(0, $r['level'] - 1));
+            $indent = str_repeat('    ', (int) max(0, $r['level'] - 1));
 
             $sheet->setCellValue("A{$row}", $acc->code);
             $sheet->setCellValue("B{$row}", $indent.$acc->name);
@@ -205,7 +207,7 @@ class FinancialReportExcelService
 
         foreach ($data['assetRows'] as $r) {
             $acc = $r['account'];
-            $indent = str_repeat('    ', max(0, $r['level'] - 1));
+            $indent = str_repeat('    ', (int) max(0, $r['level'] - 1));
 
             $sheet->setCellValue("A{$row}", $acc->code);
             $sheet->setCellValue("B{$row}", $indent.$acc->name);
@@ -235,7 +237,7 @@ class FinancialReportExcelService
 
         foreach ($data['liabilityRows'] as $r) {
             $acc = $r['account'];
-            $indent = str_repeat('    ', max(0, $r['level'] - 1));
+            $indent = str_repeat('    ', (int) max(0, $r['level'] - 1));
 
             $sheet->setCellValue("A{$row}", $acc->code);
             $sheet->setCellValue("B{$row}", $indent.$acc->name);
@@ -263,7 +265,7 @@ class FinancialReportExcelService
 
         foreach ($data['equityRows'] as $r) {
             $acc = $r['account'];
-            $indent = str_repeat('    ', max(0, $r['level'] - 1));
+            $indent = str_repeat('    ', (int) max(0, $r['level'] - 1));
 
             $sheet->setCellValue("A{$row}", $acc->code);
             $sheet->setCellValue("B{$row}", $indent.$acc->name);
@@ -327,7 +329,7 @@ class FinancialReportExcelService
 
         foreach ($data['rows'] as $r) {
             $acc = $r['account'];
-            $indent = str_repeat('    ', max(0, $r['level'] - 1));
+            $indent = str_repeat('    ', (int) max(0, $r['level'] - 1));
 
             $sheet->setCellValue("A{$row}", $acc->code);
             $sheet->setCellValue("B{$row}", $indent.$acc->name);
@@ -704,7 +706,7 @@ class FinancialReportExcelService
 
         foreach ($data['rows'] as $r) {
             $acc = $r['account'];
-            $indent = str_repeat('    ', max(0, $r['level'] - 1));
+            $indent = str_repeat('    ', (int) max(0, $r['level'] - 1));
 
             $sheet->setCellValue("A{$row}", $acc->code);
             $sheet->setCellValue("B{$row}", $indent.$acc->name);

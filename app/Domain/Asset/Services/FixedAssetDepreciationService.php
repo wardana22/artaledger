@@ -36,6 +36,7 @@ class FixedAssetDepreciationService
      */
     public function createAsset(array $data, ?User $user = null): FixedAsset
     {
+        /** @var AssetCategory $category */
         $category = AssetCategory::findOrFail($data['asset_category_id']);
         $cost = (float) ($data['acquisition_cost'] ?? 0);
         $salvage = (float) ($data['salvage_value'] ?? 0);
@@ -45,6 +46,7 @@ class FixedAssetDepreciationService
         $accumulated = (float) ($data['accumulated_depreciation'] ?? 0);
         $bookValue = max(0, $cost - $accumulated);
 
+        /** @var Unit|null $unit */
         $unit = Unit::find($data['unit_id']);
         $unitCode = $unit ? $unit->code : 'GEN';
         $year = Carbon::parse($data['acquisition_date'])->format('Y');
@@ -143,6 +145,8 @@ class FixedAssetDepreciationService
 
     /**
      * Dapatkan daftar aset aktif yang belum disusutkan untuk periode tertentu (YYYY-MM).
+     *
+     * @return Collection<int, FixedAsset>
      */
     public function getPendingAssetsForPeriod(string $period, ?int $unitId = null, ?int $companyId = null): Collection
     {
@@ -172,6 +176,8 @@ class FixedAssetDepreciationService
 
     /**
      * Eksekusi penyusutan bulanan untuk suatu periode (YYYY-MM) dan posting jurnal otomatis.
+     *
+     * @return array{success: bool, message: string, count: int, total_amount: float, journal_entries: array<int, string>}
      */
     public function runDepreciationForPeriod(string $period, ?int $unitId = null, ?User $user = null): array
     {
@@ -190,7 +196,7 @@ class FixedAssetDepreciationService
 
             $depreciationDate = Carbon::createFromFormat('Y-m', $period)->endOfMonth()->toDateString();
             $jpenType = JournalType::where('code', 'JPEN')->first();
-            $jpenTypeId = $jpenType?->id ?? 29;
+            $jpenTypeId = $jpenType !== null ? $jpenType->id : 29;
 
             $totalProcessed = 0;
             $totalAmountAll = 0.0;
@@ -202,9 +208,11 @@ class FixedAssetDepreciationService
             });
 
             foreach ($grouped as $groupKey => $groupAssets) {
+                /** @var FixedAsset $firstAsset */
                 $firstAsset = $groupAssets->first();
                 $companyId = $firstAsset->company_id;
                 $currentUnitId = $firstAsset->unit_id;
+                /** @var Unit|null $unitObj */
                 $unitObj = $firstAsset->unit;
 
                 // Cari accounting period
@@ -213,9 +221,9 @@ class FixedAssetDepreciationService
                     ->where('month', Carbon::parse($depreciationDate)->month)
                     ->first();
 
-                $entryNumber = sprintf('DEP-%s-%s-%04d', str_replace('-', '', $period), $unitObj?->code ?? 'KP', rand(100, 999));
-                $docNumber = sprintf('AST-DEP-%s-%s', $period, $unitObj?->code ?? 'KP');
-                $desc = sprintf('Penyusutan Aset Tetap Periode %s (%s)', $period, $unitObj?->name ?? 'Kantor Pusat');
+                $entryNumber = sprintf('DEP-%s-%s-%04d', str_replace('-', '', $period), $unitObj !== null ? $unitObj->code : 'KP', rand(100, 999));
+                $docNumber = sprintf('AST-DEP-%s-%s', $period, $unitObj !== null ? $unitObj->code : 'KP');
+                $desc = sprintf('Penyusutan Aset Tetap Periode %s (%s)', $period, $unitObj !== null ? $unitObj->name : 'Kantor Pusat');
 
                 $journalEntry = JournalEntry::create([
                     'company_id' => $companyId,
@@ -237,6 +245,7 @@ class FixedAssetDepreciationService
                 $linesByAccum = [];
 
                 foreach ($groupAssets as $asset) {
+                    /** @var AssetCategory $category */
                     $category = $asset->category;
 
                     // Pastikan kategori memiliki akun beban dan akun akumulasi

@@ -13,6 +13,8 @@ class CashFlowService
 {
     /**
      * Calculate comprehensive Direct Method Cash Flow Statement.
+     *
+     * @return array<string, mixed>
      */
     public function calculateStatement(string $startDate, string $endDate, string $unitFilter = 'all', ?int $companyId = null): array
     {
@@ -362,6 +364,8 @@ class CashFlowService
 
     /**
      * Get constituent accounts breakdown for a CashFlowRow.
+     *
+     * @return array<string, mixed>
      */
     public function getRowBreakdown(int $rowId, string $startDate, string $endDate, string $unitFilter = 'all'): array
     {
@@ -421,6 +425,9 @@ class CashFlowService
 
     /**
      * Fetch formatted breakdown rows for given account IDs.
+     *
+     * @param  array<int, int>  $accountIds
+     * @return array<string, mixed>
      */
     protected function getAccountsBreakdownData(array $accountIds, string $startDate, string $endDate, string $unitFilter = 'all'): array
     {

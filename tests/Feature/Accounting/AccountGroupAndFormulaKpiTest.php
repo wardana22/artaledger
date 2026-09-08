@@ -131,7 +131,8 @@ test('it evaluates formula kpi card correctly with percentage display format', f
     expect($formatted)->toBe('50,00%');
 
     Livewire::test(DashboardIndex::class)
-        ->set('selectedMonth', 1)
+        ->set('start_month', 1)
+        ->set('end_month', 1)
         ->set('selectedYear', 2025)
         ->assertStatus(200)
         ->assertSee('50,00%');
