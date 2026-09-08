@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Domain\Accounting\Services\AgingInvoiceManagerService;
 use App\Domain\Accounting\Services\AgingReportService;
+use App\Models\ApArInvoice;
 use App\Models\JournalLine;
 use App\Models\Unit;
 use Exception;
@@ -23,6 +24,28 @@ class AgingReport extends Component
 
     public bool $hideZeroBalances = true;
 
+    // Edit Invoice State
+    public bool $showEditModal = false;
+
+    public ?int $editingInvoiceId = null;
+
+    public string $editInvoiceNumber = '';
+
+    public string $editInvoiceDate = '';
+
+    public string $editDueDate = '';
+
+    public string $editPartnerName = '';
+
+    public string $editNotes = '';
+
+    public float $editOriginalAmount = 0.0;
+
+    public float $editSettledAmount = 0.0;
+
+    public bool $editHasSettlement = false;
+
+    // Assign / Split Modal State
     /** @var array<int, bool> */
     public array $expandedAccounts = [];
 
@@ -148,6 +171,108 @@ class AgingReport extends Component
         $this->showAssignModal = false;
         $this->selectedJournalLineId = null;
         $this->selectedJournalLine = null;
+    }
+
+    public function openEditModal(int $invoiceId): void
+    {
+        $invoice = ApArInvoice::with('settlements')->find($invoiceId);
+        if (! $invoice) {
+            session()->flash('error', 'Invoice tidak ditemukan.');
+
+            return;
+        }
+
+        $this->editingInvoiceId = $invoice->id;
+        $this->editInvoiceNumber = $invoice->invoice_number;
+        $this->editInvoiceDate = $invoice->invoice_date?->format('Y-m-d') ?? date('Y-m-d');
+        $this->editDueDate = $invoice->due_date?->format('Y-m-d') ?? date('Y-m-d');
+        $this->editPartnerName = $invoice->partner_name ?? '';
+        $this->editNotes = $invoice->notes ?? '';
+        $this->editOriginalAmount = (float) $invoice->original_amount;
+        $this->editSettledAmount = (float) $invoice->settlements->sum('settled_amount');
+        $this->editHasSettlement = $this->editSettledAmount > 0.01;
+
+        $this->showEditModal = true;
+    }
+
+    public function closeEditModal(): void
+    {
+        $this->showEditModal = false;
+        $this->editingInvoiceId = null;
+        $this->editInvoiceNumber = '';
+        $this->editInvoiceDate = '';
+        $this->editDueDate = '';
+        $this->editPartnerName = '';
+        $this->editNotes = '';
+        $this->editOriginalAmount = 0.0;
+        $this->editSettledAmount = 0.0;
+        $this->editHasSettlement = false;
+    }
+
+    public function saveUpdatedInvoice(): void
+    {
+        $this->validate([
+            'editInvoiceNumber' => 'required|string|max:100',
+            'editInvoiceDate' => 'required|date',
+            'editDueDate' => 'required|date',
+            'editPartnerName' => 'nullable|string|max:255',
+            'editNotes' => 'nullable|string|max:500',
+            'editOriginalAmount' => 'required|numeric|min:0.01',
+        ], [
+            'editInvoiceNumber.required' => 'Nomor invoice wajib diisi.',
+            'editInvoiceDate.required' => 'Tanggal invoice wajib diisi.',
+            'editDueDate.required' => 'Tanggal jatuh tempo wajib diisi.',
+            'editOriginalAmount.required' => 'Nominal invoice wajib diisi.',
+            'editOriginalAmount.min' => 'Nominal invoice harus lebih besar dari 0.',
+        ]);
+
+        if (! $this->editingInvoiceId) {
+            return;
+        }
+
+        $invoice = ApArInvoice::find($this->editingInvoiceId);
+        if (! $invoice) {
+            session()->flash('error', 'Data invoice tidak ditemukan.');
+
+            return;
+        }
+
+        try {
+            $service = new AgingInvoiceManagerService;
+            $service->updateInvoice($invoice, [
+                'invoice_number' => $this->editInvoiceNumber,
+                'invoice_date' => $this->editInvoiceDate,
+                'due_date' => $this->editDueDate,
+                'partner_name' => $this->editPartnerName,
+                'notes' => $this->editNotes,
+                'original_amount' => $this->editOriginalAmount,
+            ], auth()->id());
+
+            session()->flash('message', "Invoice {$this->editInvoiceNumber} berhasil diperbarui!");
+            $this->closeEditModal();
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function unlinkInvoice(int $invoiceId): void
+    {
+        $invoice = ApArInvoice::find($invoiceId);
+        if (! $invoice) {
+            session()->flash('error', 'Invoice tidak ditemukan.');
+
+            return;
+        }
+
+        try {
+            $service = new AgingInvoiceManagerService;
+            $invoiceNumber = $invoice->invoice_number;
+            $service->unlinkInvoice($invoice, auth()->id());
+
+            session()->flash('message', "Penugasan Invoice {$invoiceNumber} berhasil dibatalkan. Baris jurnal kembali ke status belum terdaftar.");
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
     }
 
     public function addSplitRow(): void

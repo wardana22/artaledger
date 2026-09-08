@@ -94,7 +94,7 @@ test('profit loss component renders successfully with 4-column excel audited lay
         ->assertSee('BEBAN GAJI OPERASIONAL')
         ->assertSee('Beban Gaji Dokter')
         ->assertSee('LABA / RUGI KOTOR')
-        ->assertSee('LABA (RUGI) BERSIH PERIODE BERJALAN');
+        ->assertSee('TOTAL LABA (RUGI) KOMPREHENSIF PERIODE BERJALAN');
 });
 
 test('profit loss toggleAccount expands level 4 child accounts', function () {

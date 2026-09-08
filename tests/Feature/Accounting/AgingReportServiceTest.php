@@ -5,6 +5,7 @@ use App\Domain\Accounting\Services\AgingInvoiceManagerService;
 use App\Domain\Accounting\Services\AgingReportService;
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Models\Account;
+use App\Models\ApArInvoice;
 use App\Models\Company;
 use App\Models\JournalType;
 use App\Models\User;
@@ -266,4 +267,97 @@ test('can consolidate multiple journal lines into multiple invoices (Many to Man
 
     expect($invoices->firstWhere('invoice_number', 'INV-MULTI-A'))->not->toBeNull();
     expect($invoices->firstWhere('invoice_number', 'INV-MULTI-B'))->not->toBeNull();
+});
+
+test('can update invoice details and reclassify aging buckets', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+    $journal = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-01',
+        'document_number' => 'DO-UPD-1',
+        'description' => 'Penjualan Edit Test',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Tagihan Awal', 'debit' => 1000000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 1000000],
+    ], $this->user->id);
+
+    $line = $journal->lines()->where('account_id', $piutangAccount->id)->first();
+    $managerService = new AgingInvoiceManagerService;
+
+    $invoice = $managerService->assignSingleInvoice($line, [
+        'invoice_number' => 'INV-SALAH-INPUT',
+        'invoice_date' => '2026-01-01',
+        'due_date' => '2026-01-10',
+        'partner_name' => 'PT Mitra Salah',
+        'notes' => 'Catatan awal',
+    ], $this->user->id);
+
+    expect($invoice->invoice_number)->toBe('INV-SALAH-INPUT');
+    expect($invoice->partner_name)->toBe('PT Mitra Salah');
+
+    // Lakukan pembaruan / koreksi
+    $updated = $managerService->updateInvoice($invoice, [
+        'invoice_number' => 'INV-BENAR-001',
+        'partner_name' => 'PT Mitra Sejati',
+        'due_date' => '2025-12-01', // Diundur jatuh temponya agar masuk overdue > 60 hari pada cutoff Jan 2026
+        'notes' => 'Catatan revisi',
+    ], $this->user->id);
+
+    expect($updated->invoice_number)->toBe('INV-BENAR-001');
+    expect($updated->partner_name)->toBe('PT Mitra Sejati');
+    expect($updated->due_date->format('Y-m-d'))->toBe('2025-12-01');
+
+    // Verifikasi bucket aging otomatis terpengaruh
+    $reportService = new AgingReportService;
+    $report = $reportService->getAgingReport('receivable', '2026-01-15');
+    $accData = collect($report['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    $item = collect($accData['invoices'])->firstWhere('invoice_number', 'INV-BENAR-001');
+
+    expect($item)->not->toBeNull();
+    expect($item['buckets']['overdue_31_60'])->toBe(1000000.0);
+});
+
+test('can unlink invoice to restore journal line as unassigned', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+    $journal = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-05',
+        'document_number' => 'DO-UNLINK',
+        'description' => 'Penjualan Unlink Test',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Tagihan Unlink', 'debit' => 750000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 750000],
+    ], $this->user->id);
+
+    $line = $journal->lines()->where('account_id', $piutangAccount->id)->first();
+    $managerService = new AgingInvoiceManagerService;
+
+    $invoice = $managerService->assignSingleInvoice($line, [
+        'invoice_number' => 'INV-UNLINK-ME',
+        'invoice_date' => '2026-01-05',
+        'due_date' => '2026-01-20',
+    ], $this->user->id);
+
+    expect(ApArInvoice::where('invoice_number', 'INV-UNLINK-ME')->exists())->toBeTrue();
+
+    // Batalkan penugasan invoice (Unlink)
+    $managerService->unlinkInvoice($invoice, $this->user->id);
+
+    expect(ApArInvoice::where('invoice_number', 'INV-UNLINK-ME')->exists())->toBeFalse();
+
+    // Laporan aging harus menunjukkan baris ini kembali ke status belum terdaftar
+    $reportService = new AgingReportService;
+    $report = $reportService->getAgingReport('receivable', '2026-01-30');
+    $accData = collect($report['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    $item = collect($accData['invoices'])->firstWhere('id', $line->id);
+
+    expect($item)->not->toBeNull();
+    expect($item['is_registered_invoice'])->toBeFalse();
+    expect($item['invoice_number'])->toBe('(Belum Bernomor Invoice)');
 });

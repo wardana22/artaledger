@@ -268,7 +268,26 @@
                                                 Tugaskan No.
                                             </button>
                                         @else
-                                            <span class="text-xs text-slate-400">✓ Terdaftar</span>
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <button 
+                                                    type="button" 
+                                                    wire:click="openEditModal({{ $inv['id'] }})"
+                                                    class="p-1 px-1.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all text-[11px] font-semibold flex items-center gap-1 shadow-sm"
+                                                    title="Edit / Koreksi Nomor Invoice, Rekanan, Jatuh Tempo, atau Nominal"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button 
+                                                    type="button" 
+                                                    wire:click="unlinkInvoice({{ $inv['id'] }})"
+                                                    wire:confirm="Yakin ingin membatalkan penugasan invoice ini? Baris jurnal akan dikembalikan ke status belum terdaftar."
+                                                    class="p-1 px-1.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-800 transition-all text-[11px]"
+                                                    title="Batalkan penugasan invoice (Unlink)"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
                                         @endif
                                     </td>
                                 </tr>
@@ -553,6 +572,124 @@
                             </div>
                         </div>
                     @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL EDIT DATA INVOICE --}}
+    @if ($showEditModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+                    <div class="flex items-center gap-2">
+                        <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Koreksi / Edit Data Faktur</h3>
+                            <p class="text-xs text-slate-500">Perbarui nomor invoice, rekanan, jatuh tempo, atau nominal faktur</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="closeEditModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-4">
+                    @if ($editHasSettlement)
+                        <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                            <p class="font-semibold flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Invoice ini sudah memiliki pelunasan sebesar Rp {{ number_format($editSettledAmount, 2, ',', '.') }}
+                            </p>
+                            <p class="text-[11px] text-amber-600 dark:text-amber-400">Nominal invoice tidak boleh diubah menjadi lebih kecil dari total yang sudah dilunasi.</p>
+                        </div>
+                    @endif
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nomor Invoice <span class="text-rose-500">*</span></label>
+                            <input 
+                                type="text" 
+                                wire:model="editInvoiceNumber" 
+                                class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                placeholder="Contoh: INV/2025/001"
+                            >
+                            @error('editInvoiceNumber') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nama Rekanan / Partner</label>
+                            <input 
+                                type="text" 
+                                wire:model="editPartnerName" 
+                                class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                                placeholder="Nama Vendor atau Pelanggan"
+                            >
+                            @error('editPartnerName') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Tanggal Faktur <span class="text-rose-500">*</span></label>
+                            <input 
+                                type="date" 
+                                wire:model="editInvoiceDate" 
+                                class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                            >
+                            @error('editInvoiceDate') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Tanggal Jatuh Tempo <span class="text-rose-500">*</span></label>
+                            <input 
+                                type="date" 
+                                wire:model="editDueDate" 
+                                class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                            >
+                            <span class="text-[10px] text-slate-400">Menentukan kelompok bucket umur tagihan</span>
+                            @error('editDueDate') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nominal Faktur (Rp) <span class="text-rose-500">*</span></label>
+                        <input 
+                            type="number" 
+                            step="0.01" 
+                            wire:model="editOriginalAmount" 
+                            class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold font-mono focus:ring-2 focus:ring-emerald-500 outline-none"
+                        >
+                        @error('editOriginalAmount') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Catatan / Memo</label>
+                        <textarea 
+                            wire:model="editNotes" 
+                            rows="2" 
+                            class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                            placeholder="Catatan tambahan faktur..."
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                    <button 
+                        type="button" 
+                        wire:click="closeEditModal" 
+                        class="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition-all"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        type="button" 
+                        wire:click="saveUpdatedInvoice" 
+                        class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition-all shadow-sm flex items-center gap-1.5"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Simpan Perubahan</span>
+                    </button>
                 </div>
             </div>
         </div>

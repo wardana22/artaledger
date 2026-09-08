@@ -211,6 +211,9 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
         - *Multi-Journal Consolidation (Banyak Jurnal 1 Invoice)*: Menggabungkan 2 atau lebih jurnal pengiriman/pekerjaan bertahap menjadi 1 lembar faktur fisik gabungan via seleksi checkbox.
         - *Multi-Journal to Multi-Invoice (Banyak Jurnal Banyak Invoice / M:N)*: Memecah akumulasi beberapa transaksi jurnal sekaligus menjadi beberapa lembar nomor faktur fisik dengan alokasi pivot proporsional dan kalkulator penyeimbang nominal real-time.
       - **Post-Period Invoice Assignment**: Menginput/menugaskan nomor faktur fisik yang terbit menyusul tanpa merusak kunci periode tutup buku akuntansi.
+      - **Invoice Correction & Unlink Engine**:
+        - *Edit Data Faktur Terdaftar*: Kemampuan mengoreksi nomor invoice, nama rekanan, tanggal faktur, tanggal jatuh tempo (otomatis menggeser bucket umur piutang/hutang), nominal (dengan validasi perlindungan batas pelunasan), dan memo catatan.
+        - *Unlink (Batalkan Penugasan)*: Menghapus record faktur yang salah input dan mengembalikan baris jurnal terkait ke status *Unassigned/Belum Bernomor* untuk ditugaskan ulang, dengan proteksi ketat menolak pembatalan jika faktur telah memiliki riwayat pelunasan (*settlement*).
       - **Dual-Tab Controller**: Beralih instan antara Piutang Usaha (AR) dan Hutang Usaha (AP).
       - **Executive KPI Cards & Bucket Umur**: Total Saldo Terbuka, Lancar/Current, Overdue 1-30, 31-60, 61-90, dan >90 hari.
       - **Drill-down Accordion**: Menampilkan rincian invoice per akun, nomor jurnal pembentuk, dan riwayat pelunasannya.

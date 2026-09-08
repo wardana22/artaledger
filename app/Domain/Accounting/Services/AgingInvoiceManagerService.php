@@ -432,4 +432,116 @@ class AgingInvoiceManagerService
             return $settlement;
         });
     }
+
+    /**
+     * Perbarui / koreksi metadata dan/atau nominal faktur invoice.
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws Exception
+     */
+    public function updateInvoice(ApArInvoice $invoice, array $data, ?int $userId = null): ApArInvoice
+    {
+        $invoice->loadMissing(['settlements', 'journalLines', 'journalLine']);
+
+        $totalSettled = (float) $invoice->settlements->sum('settled_amount');
+
+        // Jika ada perubahan original_amount
+        $newAmount = isset($data['original_amount']) ? (float) $data['original_amount'] : (float) $invoice->original_amount;
+
+        if ($newAmount <= 0) {
+            throw new Exception('Nominal invoice harus lebih besar dari 0.');
+        }
+
+        if ($newAmount < ($totalSettled - 0.01)) {
+            throw new Exception('Nominal invoice baru (Rp '.number_format($newAmount, 2, ',', '.').') tidak boleh lebih kecil dari total pelunasan yang sudah dicatat (Rp '.number_format($totalSettled, 2, ',', '.').').');
+        }
+
+        return DB::transaction(function () use ($invoice, $data, $newAmount, $totalSettled, $userId) {
+            $oldData = [
+                'invoice_number' => $invoice->invoice_number,
+                'invoice_date' => $invoice->invoice_date?->format('Y-m-d'),
+                'due_date' => $invoice->due_date?->format('Y-m-d'),
+                'original_amount' => (float) $invoice->original_amount,
+                'partner_name' => $invoice->partner_name,
+                'notes' => $invoice->notes,
+            ];
+
+            // Tentukan status invoice berdasarkan nominal baru dan pelunasan
+            $newRemaining = $newAmount - $totalSettled;
+            $newStatus = 'open';
+            if ($newRemaining <= 0.01) {
+                $newStatus = 'paid';
+            } elseif ($totalSettled > 0.01) {
+                $newStatus = 'partial';
+            }
+
+            $updatePayload = [
+                'invoice_number' => trim((string) ($data['invoice_number'] ?? $invoice->invoice_number)),
+                'invoice_date' => $data['invoice_date'] ?? $invoice->invoice_date,
+                'due_date' => $data['due_date'] ?? $invoice->due_date,
+                'partner_name' => array_key_exists('partner_name', $data) ? $data['partner_name'] : $invoice->partner_name,
+                'notes' => array_key_exists('notes', $data) ? $data['notes'] : $invoice->notes,
+                'original_amount' => $newAmount,
+                'status' => $newStatus,
+            ];
+
+            $invoice->update($updatePayload);
+
+            // Jika relasi 1:1 langsung ke 1 journal line dan nominal berubah, perbarui allocated_amount pivot
+            if ($invoice->journalLines->count() === 1 && abs((float) $oldData['original_amount'] - $newAmount) > 0.01) {
+                $firstLine = $invoice->journalLines->first();
+                $invoice->journalLines()->updateExistingPivot($firstLine->id, [
+                    'allocated_amount' => $newAmount,
+                ]);
+            }
+
+            AuditLogService::record(
+                'aging.invoice.update',
+                "Memperbarui data Invoice {$invoice->invoice_number}",
+                $invoice,
+                $oldData,
+                $updatePayload,
+                $userId
+            );
+
+            return $invoice->fresh();
+        });
+    }
+
+    /**
+     * Lepas / Batalkan penugasan invoice (Unlink).
+     *
+     * @throws Exception
+     */
+    public function unlinkInvoice(ApArInvoice $invoice, ?int $userId = null): void
+    {
+        $invoice->loadMissing(['settlements', 'journalLines']);
+
+        if ($invoice->settlements()->exists()) {
+            throw new Exception("Invoice {$invoice->invoice_number} tidak dapat dilepas karena sudah memiliki riwayat transaksi pelunasan. Batalkan pelunasan terlebih dahulu.");
+        }
+
+        DB::transaction(function () use ($invoice, $userId) {
+            $invoiceNumber = $invoice->invoice_number;
+            $amount = (float) $invoice->original_amount;
+            $linkedLines = $invoice->journalLines->pluck('id')->all();
+
+            $invoice->journalLines()->detach();
+            $invoice->delete();
+
+            AuditLogService::record(
+                'aging.invoice.unlink',
+                "Membatalkan penugasan Invoice {$invoiceNumber} senilai Rp ".number_format($amount, 2, ',', '.'),
+                null,
+                [
+                    'invoice_number' => $invoiceNumber,
+                    'original_amount' => $amount,
+                    'journal_line_ids' => $linkedLines,
+                ],
+                null,
+                $userId
+            );
+        });
+    }
 }
