@@ -214,6 +214,10 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
       - **Invoice Correction & Unlink Engine**:
         - *Edit Data Faktur Terdaftar*: Kemampuan mengoreksi nomor invoice, nama rekanan, tanggal faktur, tanggal jatuh tempo (otomatis menggeser bucket umur piutang/hutang), nominal (dengan validasi perlindungan batas pelunasan), dan memo catatan.
         - *Unlink (Batalkan Penugasan)*: Menghapus record faktur yang salah input dan mengembalikan baris jurnal terkait ke status *Unassigned/Belum Bernomor* untuk ditugaskan ulang, dengan proteksi ketat menolak pembatalan jika faktur telah memiliki riwayat pelunasan (*settlement*).
+      - **Interactive Settlement UI Modal (Pencatatan & Pelunasan Faktur)**:
+        - *Quick Cash/Bank Settle*: Memilih akun Kas/Bank tujuan/sumber, mencatat nominal pelunasan (penuh atau cicilan parsial), tanggal bayar, dan memo transfer, yang secara otomatis memposting jurnal transaksi ke buku besar dan mengalokasikan pelunasan ke faktur secara instan.
+        - *Link Existing Payment Line*: Menautkan baris jurnal pembayaran yang sebelumnya sudah pernah dibuat di Jurnal Umum.
+        - *Settlement History & Rollback*: Menampilkan riwayat transaksi pembayaran terdahulu dengan opsi pembatalan pelunasan (*cancel settlement*) yang secara aman mengembalikan status dan sisa tagihan faktur.
       - **Dual-Tab Controller**: Beralih instan antara Piutang Usaha (AR) dan Hutang Usaha (AP).
       - **Executive KPI Cards & Bucket Umur**: Total Saldo Terbuka, Lancar/Current, Overdue 1-30, 31-60, 61-90, dan >90 hari.
       - **Drill-down Accordion**: Menampilkan rincian invoice per akun, nomor jurnal pembentuk, dan riwayat pelunasannya.

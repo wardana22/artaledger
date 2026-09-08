@@ -271,8 +271,17 @@
                                             <div class="flex items-center justify-center gap-1.5">
                                                 <button 
                                                     type="button" 
+                                                    wire:click="openSettleModal({{ $inv['id'] }})"
+                                                    class="p-1 px-2 rounded bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 shadow-xs"
+                                                    title="Catat Pelunasan / Pembayaran Invoice ini"
+                                                >
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                                    <span>Bayar</span>
+                                                </button>
+                                                <button 
+                                                    type="button" 
                                                     wire:click="openEditModal({{ $inv['id'] }})"
-                                                    class="p-1 px-1.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all text-[11px] font-semibold flex items-center gap-1 shadow-sm"
+                                                    class="p-1 px-1.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all text-[11px] font-semibold flex items-center gap-1 shadow-xs"
                                                     title="Edit / Koreksi Nomor Invoice, Rekanan, Jatuh Tempo, atau Nominal"
                                                 >
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -689,6 +698,219 @@
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         <span>Simpan Perubahan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL CATAT PELUNASAN / SETTLEMENT --}}
+    @if ($showSettleModal && $settlingInvoice)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Catat Pelunasan / Pembayaran</h3>
+                            <p class="text-xs text-slate-500 font-mono">{{ $settlingInvoice->invoice_number }} &bull; {{ $settlingInvoice->partner_name ?: 'Tanpa Rekanan' }}</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="closeSettleModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                    <!-- INFORMASI KARTU SALDO INVOICE -->
+                    <div class="grid grid-cols-3 gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-xl text-center">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-semibold block uppercase">Total Nilai Faktur</span>
+                            <span class="text-xs font-mono font-bold text-slate-700 dark:text-slate-200">Rp {{ number_format((float) $settlingInvoice->original_amount, 2, ',', '.') }}</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-semibold block uppercase">Telah Dilunasi</span>
+                            <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format((float) $settlingInvoice->settlements->sum('settled_amount'), 2, ',', '.') }}</span>
+                        </div>
+                        <div class="bg-indigo-50/80 dark:bg-indigo-950/60 rounded-lg p-1">
+                            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold block uppercase">Sisa Tagihan</span>
+                            <span class="text-xs font-mono font-black text-indigo-700 dark:text-indigo-300">Rp {{ number_format($settleRemainingBalance, 2, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    <!-- TAB PILIHAN MODE SETTLEMENT -->
+                    <div class="flex border-b border-slate-200 dark:border-slate-800 gap-4 text-xs font-bold">
+                        <button 
+                            type="button" 
+                            wire:click="$set('settleMode', 'quick')"
+                            class="pb-2 transition-colors relative {{ $settleMode === 'quick' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-slate-400 hover:text-slate-600' }}"
+                        >
+                            Catat Mutasi Kas/Bank Baru
+                        </button>
+                        <button 
+                            type="button" 
+                            wire:click="$set('settleMode', 'existing')"
+                            class="pb-2 transition-colors relative {{ $settleMode === 'existing' ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400' : 'text-slate-400 hover:text-slate-600' }}"
+                        >
+                            Tautkan dari Jurnal Pembayaran Ada
+                        </button>
+                    </div>
+
+                    @if ($settleMode === 'quick')
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Akun Kas / Bank <span class="text-rose-500">*</span></label>
+                                    <select 
+                                        wire:model="settleCashAccountId" 
+                                        class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    >
+                                        <option value="">-- Pilih Rekening / Kasir --</option>
+                                        @foreach ($cashAccounts as $cash)
+                                            <option value="{{ $cash->id }}">{{ $cash->code }} - {{ $cash->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('settleCashAccountId') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Tanggal Bayar / Terima <span class="text-rose-500">*</span></label>
+                                    <input 
+                                        type="date" 
+                                        wire:model="settleDate" 
+                                        class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    >
+                                    @error('settleDate') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nominal Pelunasan (Rp) <span class="text-rose-500">*</span></label>
+                                    <button 
+                                        type="button" 
+                                        wire:click="setFullSettleAmount" 
+                                        class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                    >
+                                        Bayar Penuh (Rp {{ number_format($settleRemainingBalance, 2, ',', '.') }})
+                                    </button>
+                                </div>
+                                <input 
+                                    type="number" 
+                                    step="0.01" 
+                                    wire:model="settleAmount" 
+                                    class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                                >
+                                @error('settleAmount') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Catatan / Referensi Transfer</label>
+                                <input 
+                                    type="text" 
+                                    wire:model="settleNotes" 
+                                    placeholder="Contoh: Transfer Bank BCA Reff 9812..." 
+                                    class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                                >
+                            </div>
+                        </div>
+                    @else
+                        <!-- MODE LINK EXISTING PAYMENT LINE -->
+                        <div class="space-y-3">
+                            <div class="space-y-1">
+                                <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Pilih Baris Jurnal Pembayaran <span class="text-rose-500">*</span></label>
+                                <select 
+                                    wire:model="settlePaymentLineId" 
+                                    class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                                >
+                                    <option value="">-- Pilih Baris Jurnal --</option>
+                                    @forelse ($availablePaymentLines as $line)
+                                        @php
+                                            $lineAmt = $activeTab === 'receivable' ? (float) $line->credit : (float) $line->debit;
+                                        @endphp
+                                        <option value="{{ $line->id }}">
+                                            {{ $line->journalEntry?->entry_number }} ({{ $line->journalEntry?->entry_date->format('d/m/Y') }}) - Rp {{ number_format($lineAmt, 2, ',', '.') }} : {{ $line->description ?: 'Tanpa keterangan' }}
+                                        </option>
+                                    @empty
+                                        <option value="" disabled>Tidak ditemukan baris jurnal pembayaran yang cocok pada akun ini.</option>
+                                    @endforelse
+                                </select>
+                                @error('settlePaymentLineId') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nominal yang Dialokasikan (Rp) <span class="text-rose-500">*</span></label>
+                                <input 
+                                    type="number" 
+                                    step="0.01" 
+                                    wire:model="settleAmount" 
+                                    class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                                >
+                                @error('settleAmount') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- RIWAYAT PELUNASAN TERDAHULU -->
+                    @if ($settlingInvoice->settlements->count() > 0)
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                <span>Riwayat Pelunasan Terdahulu</span>
+                                <span class="text-[11px] text-slate-400 font-normal">{{ $settlingInvoice->settlements->count() }} transaksi</span>
+                            </h4>
+                            <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 dark:bg-slate-800/80 text-[10px] font-bold uppercase text-slate-500">
+                                        <tr>
+                                            <th class="p-2 pl-3">Tanggal</th>
+                                            <th class="p-2">Nominal</th>
+                                            <th class="p-2">Jurnal Ref</th>
+                                            <th class="p-2 pr-3 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        @foreach ($settlingInvoice->settlements as $st)
+                                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 font-mono">
+                                                <td class="p-2 pl-3">{{ \Carbon\Carbon::parse($st->settled_date)->format('d/m/Y') }}</td>
+                                                <td class="p-2 font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format((float) $st->settled_amount, 2, ',', '.') }}</td>
+                                                <td class="p-2 text-slate-500 font-sans text-[11px]">{{ $st->paymentJournalLine?->journalEntry?->entry_number ?: '-' }}</td>
+                                                <td class="p-2 pr-3 text-center">
+                                                    <button 
+                                                        type="button" 
+                                                        wire:click="deleteSettlement({{ $st->id }})"
+                                                        wire:confirm="Yakin ingin membatalkan pembayaran sebesar Rp {{ number_format((float) $st->settled_amount, 2, ',', '.') }} ini?"
+                                                        class="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                                                        title="Batalkan pelunasan ini"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                    <button 
+                        type="button" 
+                        wire:click="closeSettleModal" 
+                        class="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition-all"
+                    >
+                        Tutup
+                    </button>
+                    <button 
+                        type="button" 
+                        wire:click="saveSettlement" 
+                        class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-sm flex items-center gap-1.5"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span>Simpan Pelunasan</span>
                     </button>
                 </div>
             </div>

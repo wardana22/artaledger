@@ -361,3 +361,71 @@ test('can unlink invoice to restore journal line as unassigned', function () {
     expect($item['is_registered_invoice'])->toBeFalse();
     expect($item['invoice_number'])->toBe('(Belum Bernomor Invoice)');
 });
+
+test('can perform quick settlement and cancel settlement on invoice', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+    $kasAccount = Account::where('type', 'KAS')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+    $journal = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-10',
+        'document_number' => 'DO-SETTLE',
+        'description' => 'Penjualan Quick Settle Test',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Tagihan Settle', 'debit' => 1000000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 1000000],
+    ], $this->user->id);
+
+    $line = $journal->lines()->where('account_id', $piutangAccount->id)->first();
+    $managerService = new AgingInvoiceManagerService;
+
+    $invoice = $managerService->assignSingleInvoice($line, [
+        'invoice_number' => 'INV-SETTLE-001',
+        'invoice_date' => '2026-01-10',
+        'due_date' => '2026-01-25',
+        'partner_name' => 'Klien Settle',
+    ], $this->user->id);
+
+    // 1. Pelunasan sebagian (cicilan Rp 400.000)
+    $settlement1 = $managerService->quickSettleInvoice($invoice, [
+        'payment_date' => '2026-01-15',
+        'cash_account_id' => $kasAccount->id,
+        'amount' => 400000,
+        'notes' => 'Cicilan 1',
+    ], $this->user->id);
+
+    expect($settlement1)->not->toBeNull();
+    $invoiceFresh = $invoice->fresh();
+    expect($invoiceFresh->status)->toBe('partial');
+    expect((float) $invoiceFresh->remaining_amount)->toBe(600000.0);
+
+    // Verifikasi pada laporan aging per 20 Januari 2026
+    $reportService = new AgingReportService;
+    $report = $reportService->getAgingReport('receivable', '2026-01-20');
+    $accData = collect($report['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    $item = collect($accData['invoices'])->firstWhere('invoice_number', 'INV-SETTLE-001');
+
+    expect($item)->not->toBeNull();
+    expect($item['remaining_amount'])->toBe(600000.0);
+    expect($item['settled_amount'])->toBe(400000.0);
+
+    // 2. Pelunasan sisa tagihan (Rp 600.000) sampai lunas
+    $settlement2 = $managerService->quickSettleInvoice($invoiceFresh, [
+        'payment_date' => '2026-01-22',
+        'cash_account_id' => $kasAccount->id,
+        'amount' => 600000,
+        'notes' => 'Pelunasan tuntas',
+    ], $this->user->id);
+
+    $invoiceFullyPaid = $invoiceFresh->fresh();
+    expect($invoiceFullyPaid->status)->toBe('paid');
+    expect((float) $invoiceFullyPaid->remaining_amount)->toBe(0.0);
+
+    // 3. Batalkan settlement ke-2 (Rollback/Cancel)
+    $managerService->cancelSettlement($settlement2, $this->user->id);
+    $invoiceRollback = $invoiceFullyPaid->fresh();
+    expect($invoiceRollback->status)->toBe('partial');
+    expect((float) $invoiceRollback->remaining_amount)->toBe(600000.0);
+});

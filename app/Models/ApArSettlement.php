@@ -29,6 +29,11 @@ class ApArSettlement extends Model
         return $this->belongsTo(ApArInvoice::class, 'ap_ar_invoice_id');
     }
 
+    public function apArInvoice(): BelongsTo
+    {
+        return $this->belongsTo(ApArInvoice::class, 'ap_ar_invoice_id');
+    }
+
     public function paymentJournalLine(): BelongsTo
     {
         return $this->belongsTo(JournalLine::class, 'payment_journal_line_id');

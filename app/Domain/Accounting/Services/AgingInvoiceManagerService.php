@@ -2,6 +2,7 @@
 
 namespace App\Domain\Accounting\Services;
 
+use App\Models\Account;
 use App\Models\ApArInvoice;
 use App\Models\ApArSettlement;
 use App\Models\JournalLine;
@@ -430,6 +431,143 @@ class AgingInvoiceManagerService
             );
 
             return $settlement;
+        });
+    }
+
+    /**
+     * Catat pelunasan invoice langsung dengan menjurnal mutasi Kas/Bank (Quick Settlement).
+     *
+     * @param  array<string, mixed>  $data  ['payment_date', 'cash_account_id', 'amount', 'notes']
+     *
+     * @throws Exception
+     */
+    public function quickSettleInvoice(ApArInvoice $invoice, array $data, ?int $userId = null): ApArSettlement
+    {
+        $invoice->loadMissing('account');
+
+        $amount = (float) ($data['amount'] ?? 0);
+        $paymentDate = $data['payment_date'] ?? date('Y-m-d');
+        $cashAccountId = (int) ($data['cash_account_id'] ?? 0);
+        $notes = $data['notes'] ?? "Pelunasan Invoice {$invoice->invoice_number}";
+
+        if ($amount <= 0) {
+            throw new Exception('Nominal pelunasan harus lebih besar dari 0.');
+        }
+
+        if ($cashAccountId <= 0) {
+            throw new Exception('Pilih akun Kas / Bank penerima/pengeluar pembayaran.');
+        }
+
+        $remaining = (float) $invoice->remaining_amount;
+        if ($amount > ($remaining + 0.01)) {
+            throw new Exception('Nominal pelunasan (Rp '.number_format($amount, 2, ',', '.').') melebihi sisa tagihan (Rp '.number_format($remaining, 2, ',', '.').').');
+        }
+
+        $cashAccount = Account::find($cashAccountId);
+        if (! $cashAccount) {
+            throw new Exception('Akun Kas/Bank tidak ditemukan.');
+        }
+
+        return DB::transaction(function () use ($invoice, $amount, $paymentDate, $cashAccount, $notes, $userId) {
+            $postingService = new JournalPostingService;
+
+            // Jika tipe receivable (piutang): Kas bertambah di Debit, Piutang berkurang di Kredit
+            // Jika tipe payable (hutang): Hutang berkurang di Debit, Kas berkurang di Kredit
+            if ($invoice->type === 'receivable') {
+                $lines = [
+                    [
+                        'account_id' => $cashAccount->id,
+                        'description' => "Penerimaan Kas/Bank atas {$invoice->invoice_number}".($notes ? " - {$notes}" : ''),
+                        'debit' => $amount,
+                        'credit' => 0,
+                        'unit_id' => $invoice->unit_id,
+                    ],
+                    [
+                        'account_id' => $invoice->account_id,
+                        'description' => "Pelunasan Piutang Invoice {$invoice->invoice_number}".($invoice->partner_name ? " ({$invoice->partner_name})" : ''),
+                        'debit' => 0,
+                        'credit' => $amount,
+                        'unit_id' => $invoice->unit_id,
+                    ],
+                ];
+            } else {
+                $lines = [
+                    [
+                        'account_id' => $invoice->account_id,
+                        'description' => "Pelunasan Hutang Invoice {$invoice->invoice_number}".($invoice->partner_name ? " ({$invoice->partner_name})" : ''),
+                        'debit' => $amount,
+                        'credit' => 0,
+                        'unit_id' => $invoice->unit_id,
+                    ],
+                    [
+                        'account_id' => $cashAccount->id,
+                        'description' => "Pengeluaran Kas/Bank atas {$invoice->invoice_number}".($notes ? " - {$notes}" : ''),
+                        'debit' => 0,
+                        'credit' => $amount,
+                        'unit_id' => $invoice->unit_id,
+                    ],
+                ];
+            }
+
+            $journalEntry = $postingService->postManualEntry([
+                'company_id' => $invoice->company_id,
+                'entry_date' => $paymentDate,
+                'document_number' => "PAY-{$invoice->invoice_number}-".date('ymdHis'),
+                'description' => "Pelunasan Faktur {$invoice->invoice_number}".($notes ? " - {$notes}" : ''),
+            ], $lines, $userId);
+
+            // Baris jurnal pembayaran adalah baris yang mengkredit piutang atau mendebit hutang
+            $paymentLine = $journalEntry->lines()
+                ->where('account_id', $invoice->account_id)
+                ->first();
+
+            if (! $paymentLine) {
+                throw new Exception('Gagal menautkan baris jurnal pelunasan piutang/hutang.');
+            }
+
+            return $this->settleInvoice($invoice, $paymentLine, $amount, $userId);
+        });
+    }
+
+    /**
+     * Batalkan suatu alokasi pelunasan (Cancel Settlement).
+     *
+     * @throws Exception
+     */
+    public function cancelSettlement(ApArSettlement $settlement, ?int $userId = null): void
+    {
+        $settlement->loadMissing('apArInvoice');
+        $invoice = $settlement->apArInvoice;
+
+        DB::transaction(function () use ($settlement, $invoice, $userId) {
+            $settledAmount = (float) $settlement->settled_amount;
+            $invoiceNumber = $invoice ? $invoice->invoice_number : '-';
+
+            $settlement->delete();
+
+            if ($invoice) {
+                $newRemaining = $invoice->fresh()->remaining_amount;
+                if ($newRemaining <= 0.01) {
+                    $invoice->update(['status' => 'paid']);
+                } elseif ($newRemaining >= (float) $invoice->original_amount - 0.01) {
+                    $invoice->update(['status' => 'open']);
+                } else {
+                    $invoice->update(['status' => 'partial']);
+                }
+            }
+
+            AuditLogService::record(
+                'aging.invoice.cancel_settle',
+                'Membatalkan pelunasan senilai Rp '.number_format($settledAmount, 2, ',', '.')." pada Invoice {$invoiceNumber}",
+                $invoice,
+                null,
+                [
+                    'settlement_id' => $settlement->id,
+                    'invoice_number' => $invoiceNumber,
+                    'cancelled_amount' => $settledAmount,
+                ],
+                $userId
+            );
         });
     }
 

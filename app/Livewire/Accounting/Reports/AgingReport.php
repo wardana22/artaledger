@@ -4,7 +4,9 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Domain\Accounting\Services\AgingInvoiceManagerService;
 use App\Domain\Accounting\Services\AgingReportService;
+use App\Models\Account;
 use App\Models\ApArInvoice;
+use App\Models\ApArSettlement;
 use App\Models\JournalLine;
 use App\Models\Unit;
 use Exception;
@@ -44,6 +46,27 @@ class AgingReport extends Component
     public float $editSettledAmount = 0.0;
 
     public bool $editHasSettlement = false;
+
+    // Settlement Modal State
+    public bool $showSettleModal = false;
+
+    public ?int $settlingInvoiceId = null;
+
+    public ?ApArInvoice $settlingInvoice = null;
+
+    public string $settleMode = 'quick'; // 'quick' | 'existing'
+
+    public float $settleAmount = 0.0;
+
+    public string $settleDate = '';
+
+    public ?int $settleCashAccountId = null;
+
+    public ?int $settlePaymentLineId = null;
+
+    public string $settleNotes = '';
+
+    public float $settleRemainingBalance = 0.0;
 
     // Assign / Split Modal State
     /** @var array<int, bool> */
@@ -270,6 +293,145 @@ class AgingReport extends Component
             $service->unlinkInvoice($invoice, auth()->id());
 
             session()->flash('message', "Penugasan Invoice {$invoiceNumber} berhasil dibatalkan. Baris jurnal kembali ke status belum terdaftar.");
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+    }
+
+    public function openSettleModal(int $invoiceId): void
+    {
+        $invoice = ApArInvoice::with(['settlements.paymentJournalLine.journalEntry', 'account'])->find($invoiceId);
+        if (! $invoice) {
+            session()->flash('error', 'Invoice tidak ditemukan.');
+
+            return;
+        }
+
+        $this->settlingInvoiceId = $invoice->id;
+        $this->settlingInvoice = $invoice;
+        $this->settleRemainingBalance = (float) $invoice->remaining_amount;
+        $this->settleAmount = $this->settleRemainingBalance;
+        $this->settleDate = date('Y-m-d');
+        $this->settleNotes = "Pelunasan Invoice {$invoice->invoice_number}";
+        $this->settleMode = 'quick';
+        $this->settlePaymentLineId = null;
+
+        // Cari akun kas/bank default
+        $defaultCash = Account::where('is_group', false)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('type', 'KAS')
+                    ->orWhere('type', 'BANK')
+                    ->orWhere('code', 'like', '11%');
+            })
+            ->orderBy('code')
+            ->first();
+
+        $this->settleCashAccountId = $defaultCash?->id;
+        $this->showSettleModal = true;
+    }
+
+    public function closeSettleModal(): void
+    {
+        $this->showSettleModal = false;
+        $this->settlingInvoiceId = null;
+        $this->settlingInvoice = null;
+        $this->settleAmount = 0.0;
+        $this->settleDate = '';
+        $this->settleCashAccountId = null;
+        $this->settlePaymentLineId = null;
+        $this->settleNotes = '';
+    }
+
+    public function setFullSettleAmount(): void
+    {
+        if ($this->settlingInvoice) {
+            $this->settleAmount = (float) $this->settlingInvoice->remaining_amount;
+        }
+    }
+
+    public function saveSettlement(): void
+    {
+        if (! $this->settlingInvoiceId) {
+            return;
+        }
+
+        $invoice = ApArInvoice::find($this->settlingInvoiceId);
+        if (! $invoice) {
+            session()->flash('error', 'Invoice tidak ditemukan.');
+
+            return;
+        }
+
+        $service = new AgingInvoiceManagerService;
+
+        if ($this->settleMode === 'quick') {
+            $this->validate([
+                'settleAmount' => 'required|numeric|min:0.01',
+                'settleDate' => 'required|date',
+                'settleCashAccountId' => 'required|exists:accounts,id',
+                'settleNotes' => 'nullable|string|max:255',
+            ], [
+                'settleAmount.required' => 'Nominal pelunasan wajib diisi.',
+                'settleAmount.min' => 'Nominal pelunasan harus lebih besar dari 0.',
+                'settleDate.required' => 'Tanggal pembayaran wajib diisi.',
+                'settleCashAccountId.required' => 'Pilih akun Kas / Bank.',
+            ]);
+
+            try {
+                $service->quickSettleInvoice($invoice, [
+                    'amount' => $this->settleAmount,
+                    'payment_date' => $this->settleDate,
+                    'cash_account_id' => $this->settleCashAccountId,
+                    'notes' => $this->settleNotes,
+                ], auth()->id());
+
+                session()->flash('message', "Pelunasan Invoice {$invoice->invoice_number} sebesar Rp ".number_format($this->settleAmount, 2, ',', '.').' berhasil dicatat!');
+                $this->closeSettleModal();
+            } catch (Exception $e) {
+                session()->flash('error', $e->getMessage());
+            }
+        } else {
+            // Mode Existing Payment Line
+            $this->validate([
+                'settlePaymentLineId' => 'required|exists:journal_lines,id',
+                'settleAmount' => 'required|numeric|min:0.01',
+            ], [
+                'settlePaymentLineId.required' => 'Pilih baris jurnal pembayaran yang akan ditautkan.',
+                'settleAmount.required' => 'Nominal pelunasan wajib diisi.',
+            ]);
+
+            try {
+                $paymentLine = JournalLine::find($this->settlePaymentLineId);
+                $service->settleInvoice($invoice, $paymentLine, $this->settleAmount, auth()->id());
+
+                session()->flash('message', "Berhasil menautkan pelunasan Invoice {$invoice->invoice_number}!");
+                $this->closeSettleModal();
+            } catch (Exception $e) {
+                session()->flash('error', $e->getMessage());
+            }
+        }
+    }
+
+    public function deleteSettlement(int $settlementId): void
+    {
+        $settlement = ApArSettlement::find($settlementId);
+        if (! $settlement) {
+            session()->flash('error', 'Data pelunasan tidak ditemukan.');
+
+            return;
+        }
+
+        try {
+            $service = new AgingInvoiceManagerService;
+            $service->cancelSettlement($settlement, auth()->id());
+
+            session()->flash('message', 'Pelunasan berhasil dibatalkan dan saldo tagihan dikembalikan!');
+
+            if ($this->settlingInvoiceId) {
+                $this->settlingInvoice = ApArInvoice::with(['settlements.paymentJournalLine.journalEntry', 'account'])->find($this->settlingInvoiceId);
+                $this->settleRemainingBalance = (float) $this->settlingInvoice->remaining_amount;
+            }
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
         }
@@ -503,9 +665,36 @@ class AgingReport extends Component
 
         $units = Unit::orderBy('code')->get();
 
+        $cashAccounts = Account::where('is_group', false)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('type', 'KAS')
+                    ->orWhere('type', 'BANK')
+                    ->orWhere('code', 'like', '11%');
+            })
+            ->orderBy('code')
+            ->get();
+
+        // Cari kandidat baris jurnal pembayaran (misal jika mode existing dipilih)
+        $availablePaymentLines = collect();
+        if ($this->showSettleModal && $this->settlingInvoice) {
+            $oppColumn = $this->activeTab === 'receivable' ? 'credit' : 'debit';
+            $availablePaymentLines = JournalLine::with('journalEntry')
+                ->where('account_id', $this->settlingInvoice->account_id)
+                ->where($oppColumn, '>', 0)
+                ->whereHas('journalEntry', function ($q) {
+                    $q->where('status', 'posted');
+                })
+                ->latest('id')
+                ->limit(20)
+                ->get();
+        }
+
         return view('livewire.accounting.reports.aging-report', [
             'report' => $reportData,
             'units' => $units,
+            'cashAccounts' => $cashAccounts,
+            'availablePaymentLines' => $availablePaymentLines,
         ]);
     }
 }
