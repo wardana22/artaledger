@@ -281,7 +281,7 @@ class AgingReport extends Component
 
     public function addMergeInvoiceRow(): void
     {
-        $currentSum = (float) collect($this->mergeInvoiceRows)->sum('original_amount');
+        $currentSum = (float) array_sum(array_map(fn ($r) => (float) ($r['original_amount'] ?? 0), $this->mergeInvoiceRows));
         $remainder = max(0, $this->mergeTotalAmount - $currentSum);
 
         $this->mergeInvoiceRows[] = [
@@ -347,7 +347,7 @@ class AgingReport extends Component
                 'mergeInvoiceRows.*.due_date.required' => 'Tanggal jatuh tempo wajib diisi.',
             ]);
 
-            $totalInvoices = (float) collect($this->mergeInvoiceRows)->sum('original_amount');
+            $totalInvoices = (float) array_sum(array_map(fn ($r) => (float) ($r['original_amount'] ?? 0), $this->mergeInvoiceRows));
             if (abs($totalInvoices - $this->mergeTotalAmount) > 0.01) {
                 session()->flash('error', 'Total invoice (Rp '.number_format($totalInvoices, 2, ',', '.').') harus sama dengan total akumulasi jurnal (Rp '.number_format($this->mergeTotalAmount, 2, ',', '.').').');
 

@@ -373,7 +373,7 @@
                         <!-- SPLIT MODE FORM -->
                         <div class="space-y-3">
                             @php
-                                $totalSplit = array_sum(array_column($splitRows, 'original_amount'));
+                                $totalSplit = (float) array_sum(array_map(fn($r) => (float) ($r['original_amount'] ?? 0), $splitRows));
                                 $targetAmount = $activeTab === 'receivable' ? (float) $selectedJournalLine->debit : (float) $selectedJournalLine->credit;
                                 $diff = $targetAmount - $totalSplit;
                             @endphp
@@ -435,7 +435,7 @@
                         </div>
                     @elseif ($modalMode === 'merge')
                         @php
-                            $currentMergeSum = (float) collect($mergeInvoiceRows)->sum('original_amount');
+                            $currentMergeSum = (float) array_sum(array_map(fn($r) => (float) ($r['original_amount'] ?? 0), $mergeInvoiceRows));
                             $mergeDiff = $mergeTotalAmount - $currentMergeSum;
                         @endphp
                         <!-- MERGE MODE FORM -->
