@@ -63,9 +63,11 @@
             <div>
                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Tahun Buku</label>
                 <select wire:model.live="selectedYear" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all">
-                    @for ($y = 2026; $y >= 2022; $y--)
+                    @forelse ($availableYears as $y)
                         <option value="{{ $y }}">Tahun {{ $y }}</option>
-                    @endfor
+                    @empty
+                        <option value="{{ now()->year }}">Tahun {{ now()->year }}</option>
+                    @endforelse
                 </select>
             </div>
         </div>

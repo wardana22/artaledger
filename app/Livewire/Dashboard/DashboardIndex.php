@@ -28,7 +28,7 @@ class DashboardIndex extends Component
 
     public int $end_month = 2;
 
-    public int $selectedYear = 2025;
+    public int $selectedYear = 0; // di-set dinamis di mount()
 
     public function mount(): void
     {
@@ -63,6 +63,16 @@ class DashboardIndex extends Component
                 $this->selectedUnitId = $userUnitIds[0];
             }
         }
+
+        // Set selectedYear dinamis: dari periode open, atau tahun terbaru, atau tahun ini
+        $this->selectedYear = AccountingPeriod::where('company_id', $this->company->id)
+            ->where('status', 'open')
+            ->orderByDesc('year')
+            ->value('year')
+            ?? AccountingPeriod::where('company_id', $this->company->id)
+                ->orderByDesc('year')
+                ->value('year')
+            ?? now()->year;
     }
 
     public function updatedStartMonth(): void
@@ -88,6 +98,12 @@ class DashboardIndex extends Component
     {
         $startDate = sprintf('%04d-%02d-01', $this->selectedYear, $this->start_month);
         $endDate = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $this->selectedYear, $this->end_month)));
+
+        // Daftar tahun dinamis berdasarkan AccountingPeriod yang tersedia
+        $availableYears = AccountingPeriod::where('company_id', $this->company->id)
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year');
 
         // 1. Ensure KPIs and default charts are seeded for company
         $existingKpisCount = DashboardKpi::where('company_id', $this->company->id)->count();
@@ -163,6 +179,7 @@ class DashboardIndex extends Component
             'units' => $units,
             'startDate' => $startDate,
             'endDate' => $endDate,
+            'availableYears' => $availableYears,
         ]);
     }
 }
