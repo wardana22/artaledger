@@ -64,6 +64,8 @@ class AgingReport extends Component
 
     public string $mergeNotes = '';
 
+    public float $mergeTotalAmount = 0.0;
+
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('reports.view')) {
@@ -227,6 +229,11 @@ class AgingReport extends Component
 
             return;
         }
+
+        $lines = JournalLine::whereIn('id', $activeLineIds)->get();
+        $this->mergeTotalAmount = $this->activeTab === 'receivable'
+            ? (float) $lines->sum('debit')
+            : (float) $lines->sum('credit');
 
         $this->modalMode = 'merge';
         $this->mergeInvoiceNumber = '';

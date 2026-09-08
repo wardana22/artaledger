@@ -300,11 +300,15 @@
                 <div class="px-5 py-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                     <div>
                         <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">
-                            Penugasan Nomor Invoice Resmi
+                            {{ $modalMode === 'merge' ? 'Penugasan Invoice Gabungan Multi-Jurnal' : 'Penugasan Nomor Invoice Resmi' }}
                         </h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Jurnal: {{ $selectedJournalLine->journalEntry?->entry_number }} | 
-                            Nominal: Rp {{ number_format($activeTab === 'receivable' ? $selectedJournalLine->debit : $selectedJournalLine->credit, 2, ',', '.') }}
+                            @if ($modalMode === 'merge')
+                                Akumulasi Nominal ({{ count(array_filter($selectedLineIds)) }} Jurnal): <strong class="text-slate-700 dark:text-slate-200 font-semibold">Rp {{ number_format($mergeTotalAmount, 2, ',', '.') }}</strong>
+                            @else
+                                Jurnal: {{ $selectedJournalLine->journalEntry?->entry_number }} | 
+                                Nominal: Rp {{ number_format($activeTab === 'receivable' ? $selectedJournalLine->debit : $selectedJournalLine->credit, 2, ',', '.') }}
+                            @endif
                         </p>
                     </div>
                     <button type="button" wire:click="closeAssignModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -314,22 +318,24 @@
 
                 <!-- Mode Switcher (Single vs Split) -->
                 <div class="p-5 space-y-4">
-                    <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit text-xs font-semibold">
-                        <button 
-                            type="button" 
-                            wire:click="$set('modalMode', 'single')"
-                            class="px-3 py-1.5 rounded-md transition-all {{ $modalMode === 'single' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-2xs' : 'text-slate-500' }}"
-                        >
-                            1 Jurnal = 1 Invoice Tunggal
-                        </button>
-                        <button 
-                            type="button" 
-                            wire:click="$set('modalMode', 'split')"
-                            class="px-3 py-1.5 rounded-md transition-all {{ $modalMode === 'split' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-2xs' : 'text-slate-500' }}"
-                        >
-                            Pecah Menjadi Banyak Invoice (Split)
-                        </button>
-                    </div>
+                    @if ($modalMode !== 'merge')
+                        <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit text-xs font-semibold">
+                            <button 
+                                type="button" 
+                                wire:click="$set('modalMode', 'single')"
+                                class="px-3 py-1.5 rounded-md transition-all {{ $modalMode === 'single' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-2xs' : 'text-slate-500' }}"
+                            >
+                                1 Jurnal = 1 Invoice Tunggal
+                            </button>
+                            <button 
+                                type="button" 
+                                wire:click="$set('modalMode', 'split')"
+                                class="px-3 py-1.5 rounded-md transition-all {{ $modalMode === 'split' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-2xs' : 'text-slate-500' }}"
+                            >
+                                Pecah Menjadi Banyak Invoice (Split)
+                            </button>
+                        </div>
+                    @endif
 
                     <!-- SINGLE MODE FORM -->
                     @if ($modalMode === 'single')
