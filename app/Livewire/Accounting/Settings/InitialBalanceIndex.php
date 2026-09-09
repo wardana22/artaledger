@@ -486,6 +486,10 @@ class InitialBalanceIndex extends Component
             $this->loadData();
             session()->flash('message', 'Selamat! Saldo Awal Perdana berhasil diposting seimbang (100% Balance) dan terkunci resmi.');
         } catch (Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error posting Initial Balance: '.$e->getMessage(), [
+                'exception' => $e,
+            ]);
+            $this->closeSaveModal();
             session()->flash('error', 'Gagal memposting Saldo Awal: '.$e->getMessage());
         }
     }
