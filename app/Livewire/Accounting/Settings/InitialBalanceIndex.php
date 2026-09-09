@@ -12,6 +12,7 @@ use App\Services\AuditLogService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -381,7 +382,7 @@ class InitialBalanceIndex extends Component
                         'document_number' => $this->documentNumber,
                         'description' => $this->notes,
                         'source_type' => 'opening_balance',
-                        'entry_type' => 'opening_balance',
+                        'entry_type' => 'general',
                         'status' => 'posted',
                         'is_locked' => true,
                         'posted_by' => auth()->id() ?? 1,
@@ -394,7 +395,7 @@ class InitialBalanceIndex extends Component
                         'document_number' => $this->documentNumber,
                         'description' => $this->notes,
                         'source_type' => 'opening_balance',
-                        'entry_type' => 'opening_balance',
+                        'entry_type' => 'general',
                         'status' => 'posted',
                         'is_locked' => true,
                     ]);
@@ -486,7 +487,7 @@ class InitialBalanceIndex extends Component
             $this->loadData();
             session()->flash('message', 'Selamat! Saldo Awal Perdana berhasil diposting seimbang (100% Balance) dan terkunci resmi.');
         } catch (Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error posting Initial Balance: '.$e->getMessage(), [
+            Log::error('Error posting Initial Balance: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
             $this->closeSaveModal();
