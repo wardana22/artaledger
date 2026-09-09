@@ -70,8 +70,21 @@ it('requires super admin password to reopen / unlock initial balance', function 
         ->set('unlockReason', 'Koreksi saldo audit tahunan 2025')
         ->call('confirmUnlock')
         ->assertHasNoErrors()
+        ->assertSet('isLocked', false);
+
+    // 3. Verifikasi persistensi database: setelah refresh/remount, status tetap terbuka (isLocked = false)
+    Livewire::test(InitialBalanceIndex::class)
         ->assertSet('isLocked', false)
         ->assertSee('🔓 MODE PENGISIAN / KOREKSI');
+
+    // 4. Ketika dikunci kembali secara manual, status kembali terkunci di database
+    Livewire::test(InitialBalanceIndex::class)
+        ->call('lockAgain')
+        ->assertSet('isLocked', true);
+
+    Livewire::test(InitialBalanceIndex::class)
+        ->assertSet('isLocked', true)
+        ->assertSee('🔒 TERKUNCI RESMI');
 });
 
 it('can update initial balance and automatically re-lock upon posting', function () {
@@ -90,4 +103,5 @@ it('can update initial balance and automatically re-lock upon posting', function
     $entry = JournalEntry::where('entry_number', 'SA-2025-001')->first();
     expect($entry)->not->toBeNull();
     expect($entry->status)->toBe('posted');
+    expect($entry->is_locked)->toBeTrue();
 });

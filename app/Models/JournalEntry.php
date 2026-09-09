@@ -35,6 +35,8 @@ class JournalEntry extends Model
         'entry_type',
         'journal_type_id',
         'is_auto_document_number',
+        'is_locked',
+        'unlocked_at',
         'posted_by',
         'posted_at',
     ];
@@ -42,7 +44,9 @@ class JournalEntry extends Model
     protected $casts = [
         'entry_date' => 'date',
         'posted_at' => 'datetime',
+        'unlocked_at' => 'datetime',
         'is_auto_document_number' => 'boolean',
+        'is_locked' => 'boolean',
     ];
 
     protected static function boot()

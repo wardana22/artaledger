@@ -115,7 +115,9 @@ class InitialBalanceIndex extends Component
             $this->entryDate = $existingEntry->entry_date?->format('Y-m-d') ?? '2025-01-01';
             $this->documentNumber = $existingEntry->document_number ?: 'SALDO-AWAL-PERDANA';
             $this->notes = $existingEntry->description ?: 'Posting Saldo Awal Perdana Akuntansi';
-            $this->isLocked = true; // Terkunci otomatis
+
+            // Baca status kunci langsung dari database (default true jika bernilai null)
+            $this->isLocked = $existingEntry->is_locked !== false;
 
             foreach ($existingEntry->lines as $line) {
                 $amt = $line->account?->normal_balance === 'credit'
@@ -265,9 +267,16 @@ class InitialBalanceIndex extends Component
             return;
         }
 
-        // 2. Buka Kunci
+        // 2. Buka Kunci dan simpan status ke database
         $this->isLocked = false;
         $this->showUnlockModal = false;
+
+        if ($this->existingEntryId) {
+            JournalEntry::where('id', $this->existingEntryId)->update([
+                'is_locked' => false,
+                'unlocked_at' => now(),
+            ]);
+        }
 
         // 3. Catat ke Audit Trail
         AuditLogService::record(
@@ -278,13 +287,20 @@ class InitialBalanceIndex extends Component
             ['locked' => false, 'reason' => $this->unlockReason]
         );
 
-        session()->flash('message', 'Kunci Saldo Awal berhasil dibuka untuk koreksi. Pastikan mengunci kembali setelah selesai.');
+        session()->flash('message', 'Kunci Saldo Awal berhasil dibuka untuk koreksi (Status tersimpan). Pastikan mengunci kembali setelah selesai.');
     }
 
     public function lockAgain(): void
     {
         $this->isLocked = true;
-        session()->flash('message', 'Saldo Awal Perdana kembali dikunci dengan aman.');
+
+        if ($this->existingEntryId) {
+            JournalEntry::where('id', $this->existingEntryId)->update([
+                'is_locked' => true,
+            ]);
+        }
+
+        session()->flash('message', 'Saldo Awal Perdana kembali dikunci dengan aman (Status tersimpan).');
     }
 
     public function openSaveModal(): void
@@ -367,6 +383,7 @@ class InitialBalanceIndex extends Component
                         'source_type' => 'opening_balance',
                         'entry_type' => 'opening_balance',
                         'status' => 'posted',
+                        'is_locked' => true,
                         'posted_by' => auth()->id() ?? 1,
                         'posted_at' => now(),
                     ]);
@@ -379,6 +396,7 @@ class InitialBalanceIndex extends Component
                         'source_type' => 'opening_balance',
                         'entry_type' => 'opening_balance',
                         'status' => 'posted',
+                        'is_locked' => true,
                     ]);
 
                     // Hapus lines lama untuk digantikan yang baru seimbang
