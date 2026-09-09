@@ -56,4 +56,19 @@
             Branding & Perusahaan
         </a>
     @endif
+
+    @if (auth()->user()?->can('settings.manage') || auth()->user()?->can('accounts.view') || auth()->user()?->hasRole('Super Admin'))
+        @php
+            $isInitialBalanceActive = $active === 'initial-balance' || request()->routeIs('accounting.initial-balance.*');
+        @endphp
+        <a 
+            href="{{ route('accounting.initial-balance.index') }}" 
+            wire:navigate
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $isInitialBalanceActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            Saldo Awal Perdana
+        </a>
+    @endif
 </div>

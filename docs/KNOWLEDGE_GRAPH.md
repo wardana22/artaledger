@@ -23,12 +23,15 @@ graph TD
         A_UNT["Route: /accounting/units"] --> B_UNT["Livewire: UnitIndex"]
         A_JTY["Route: /accounting/journal-types"] --> B_JTY["Livewire: JournalTypeIndex"]
         A_CMP["Route: /accounting/settings/company"] --> B_CMP["Livewire: CompanySettingsIndex"]
+        A_INI["Route: /accounting/initial-balance"] --> B_INI["Livewire: InitialBalanceIndex"]
         
         B_COA --> M_ACC["Model: Account"]
         B_GRP --> M_AGRP["Model: AccountGroup"]
         B_UNT --> M_UNT["Model: Unit"]
         B_JTY --> M_JTY["Model: JournalType"]
         B_CMP --> M_CMP["Model: Company (Branding & Signers)"]
+        B_INI --> M_JE["Model: JournalEntry (SA-...)"]
+        B_INI --> M_JL["Model: JournalLine"]
     end
 
     subgraph SG_Journal["2. Jurnal & Penyesuaian"]
@@ -147,6 +150,10 @@ graph TD
 - **Jenis Jurnal**: `/accounting/journal-types` $\rightarrow$ [JournalTypeIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/JournalTypeIndex.php) $\rightarrow$ [JournalType.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/JournalType.php)
 - **Branding & Penandatangan Dokumen**: `/accounting/settings/company` $\rightarrow$ [CompanySettingsIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/CompanySettingsIndex.php) $\rightarrow$ [Company.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/Company.php)
   - Mengatur Logo Perusahaan, Favicon dinamis, Nama Perusahaan, dan Pejabat Penandatangan Laporan Keuangan (*Disusun*, *Diperiksa*, *Disetujui*).
+- **Saldo Awal Perdana (Wizard Initial Balance)**: `/accounting/initial-balance` $\rightarrow$ [InitialBalanceIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/InitialBalanceIndex.php) $\rightarrow$ [initial-balance-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/settings/initial-balance-index.blade.php)
+  - Formulir terpandu setup saldo awal neraca sekali pakai (*initial cut-off setup*).
+  - Dilengkapi perhitungan **Auto-Balance** real-time yang menyeimbangkan selisih Debit/Kredit secara otomatis ke akun **Laba Ditahan (Retained Earnings)**.
+  - Mekanisme penguncian resmi (**Locking Mechanism**): Berstatus terkunci (*Locked*) saat saldo awal sudah terdaftar (`SA-...`), dengan verifikasi wajib password Super Admin dan pencatatan alasan audit (*Audit Trail*) saat membuka kunci darurat (*reopen/unlock*).
 
 ### 2. Jurnal Umum, Penyesuaian & Template
 - **Jurnal Umum**: `/accounting/journals` $\rightarrow$ [JournalIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalIndex.php), [JournalForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalForm.php)

@@ -43,6 +43,7 @@ use App\Livewire\Accounting\OpeningBalance\OpeningBalanceIndex;
 use App\Livewire\Accounting\Reconciliation\BankReconciliationDetail;
 use App\Livewire\Accounting\Reconciliation\BankReconciliationIndex;
 use App\Livewire\Accounting\Settings\CompanySettingsIndex;
+use App\Livewire\Accounting\Settings\InitialBalanceIndex;
 use App\Livewire\Accounting\Settings\JournalTypeIndex;
 use App\Livewire\Accounting\Settings\UnitIndex;
 use App\Livewire\Admin\AuditLogIndex;
@@ -67,6 +68,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/accounting/journal-types', JournalTypeIndex::class)->name('accounting.journal-types.index');
     Route::get('/accounting/units', UnitIndex::class)->name('accounting.units.index');
     Route::get('/accounting/settings/company', CompanySettingsIndex::class)->name('accounting.settings.company.index');
+    Route::get('/accounting/initial-balance', InitialBalanceIndex::class)->name('accounting.initial-balance.index');
     Route::get('/accounting/periods', PeriodIndex::class)->name('accounting.periods.index');
     Route::get('/accounting/opening-balance', OpeningBalanceIndex::class)->name('accounting.opening-balance.index');
     Route::get('/accounting/import', JournalImportWizard::class)->name('accounting.import.index');
