@@ -817,31 +817,118 @@
                             </div>
                         </div>
                     @else
-                        <!-- MODE LINK EXISTING PAYMENT LINE -->
-                        <div class="space-y-3">
-                            <div class="space-y-1">
-                                <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Pilih Baris Jurnal Pembayaran <span class="text-rose-500">*</span></label>
-                                <select 
-                                    wire:model="settlePaymentLineId" 
-                                    class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
-                                >
-                                    <option value="">-- Pilih Baris Jurnal --</option>
-                                    @forelse ($availablePaymentLines as $line)
-                                        @php
-                                            $lineAmt = $activeTab === 'receivable' ? (float) $line->credit : (float) $line->debit;
-                                        @endphp
-                                        <option value="{{ $line->id }}">
-                                            {{ $line->journalEntry?->entry_number }} ({{ $line->journalEntry?->entry_date->format('d/m/Y') }}) - Rp {{ number_format($lineAmt, 2, ',', '.') }} : {{ $line->description ?: 'Tanpa keterangan' }}
-                                        </option>
-                                    @empty
-                                        <option value="" disabled>Tidak ditemukan baris jurnal pembayaran yang cocok pada akun ini.</option>
-                                    @endforelse
-                                </select>
-                                @error('settlePaymentLineId') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
+                        <!-- MODE LINK EXISTING PAYMENT LINE (SMART PAYMENT LINE PICKER) -->
+                        <div class="space-y-3.5">
+                            <!-- SEARCH & FILTER BAR -->
+                            <div class="space-y-2 p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 rounded-xl">
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        wire:model.live.debounce.300ms="settleSearchQuery" 
+                                        placeholder="Cari nomor jurnal (JU-...), keterangan transfer, atau kata kunci..." 
+                                        class="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                    >
+                                    @if ($settleSearchQuery !== '')
+                                        <button 
+                                            type="button" 
+                                            wire:click="$set('settleSearchQuery', '')" 
+                                            class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold"
+                                        >
+                                            ✕
+                                        </button>
+                                    @endif
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <input 
+                                            type="date" 
+                                            wire:model.live="settleDateFilterStart" 
+                                            title="Dari Tanggal Jurnal"
+                                            class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[11px] text-slate-600 dark:text-slate-300"
+                                        >
+                                        <span class="text-slate-400 text-[10px]">s/d</span>
+                                        <input 
+                                            type="date" 
+                                            wire:model.live="settleDateFilterEnd" 
+                                            title="Sampai Tanggal Jurnal"
+                                            class="px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-[11px] text-slate-600 dark:text-slate-300"
+                                        >
+                                    </div>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-slate-600 dark:text-slate-300 text-[11px] font-medium">
+                                        <input type="checkbox" wire:model.live="hideFullyAllocatedPayments" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                        <span>Sembunyikan yang habis teralokasi</span>
+                                    </label>
+                                </div>
                             </div>
 
-                            <div class="space-y-1">
-                                <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nominal yang Dialokasikan (Rp) <span class="text-rose-500">*</span></label>
+                            <!-- DAFTAR KANDIDAT TRANSAKSI JURNAL (MAX HEIGHT SCROLLABLE) -->
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                    <span>Pilih Transaksi Pembayaran Kas/Bank <span class="text-rose-500">*</span></span>
+                                    <span class="text-[11px] text-slate-400 font-normal">Ditemukan {{ count($availablePaymentLines) }} transaksi</span>
+                                </label>
+
+                                <div class="max-h-52 overflow-y-auto space-y-2 p-1 border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800/60 bg-slate-50/40 dark:bg-slate-900/30">
+                                    @forelse ($availablePaymentLines as $line)
+                                        @php
+                                            $isSelected = (int) $settlePaymentLineId === (int) $line['id'];
+                                        @endphp
+                                        <div 
+                                            wire:key="pay-line-{{ $line['id'] }}"
+                                            wire:click="selectPaymentLine({{ $line['id'] }}, {{ $line['available_amount'] }})"
+                                            class="p-2.5 rounded-lg cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 border {{ $isSelected ? 'bg-indigo-50/90 dark:bg-indigo-950/70 border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs' : 'bg-white dark:bg-slate-850 border-slate-200/70 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700' }}"
+                                        >
+                                            <div class="space-y-0.5 text-xs flex-1">
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ $line['entry_number'] }}</span>
+                                                    @if (!empty($line['document_number']))
+                                                        <span class="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-slate-150 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700">Ref: {{ $line['document_number'] }}</span>
+                                                    @endif
+                                                    <span class="text-[10px] text-slate-400 font-mono">({{ $line['entry_date'] }})</span>
+                                                    @if ($line['is_fully_allocated'])
+                                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">Habis</span>
+                                                    @elseif ($line['allocated_amount'] > 0)
+                                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">Tersisa Sebagian</span>
+                                                    @else
+                                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Tersedia Penuh</span>
+                                                    @endif
+                                                </div>
+                                                <p class="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-1" title="{{ $line['description'] }}">
+                                                    {{ $line['description'] }}
+                                                </p>
+                                            </div>
+
+                                            <div class="flex items-center justify-between sm:justify-end gap-3 text-right">
+                                                <div class="text-xs font-mono">
+                                                    <span class="text-[10px] text-slate-400 block sm:inline">Sisa:</span>
+                                                    <span class="font-extrabold {{ $line['available_amount'] > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400' }}">
+                                                        Rp {{ number_format($line['available_amount'], 2, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                                <button 
+                                                    type="button" 
+                                                    class="px-2.5 py-1 rounded text-[11px] font-bold transition-all {{ $isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-500 hover:text-white' }}"
+                                                >
+                                                    {{ $isSelected ? '✓ Terpilih' : 'Pilih' }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="p-6 text-center text-slate-400 text-xs italic">
+                                            Tidak ditemukan baris jurnal pembayaran yang cocok dengan kata kunci pencarian.
+                                        </div>
+                                    @endforelse
+                                </div>
+                                @error('settlePaymentLineId') <span class="text-[10px] text-rose-500 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <!-- NOMINAL ALOKASI -->
+                            <div class="space-y-1 pt-1">
+                                <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nominal yang Dialokasikan ke Faktur Ini (Rp) <span class="text-rose-500">*</span></label>
                                 <input 
                                     type="number" 
                                     step="0.01" 

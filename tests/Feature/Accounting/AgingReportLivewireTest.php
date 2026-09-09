@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Accounting\Services\AccountSeederService;
+use App\Domain\Accounting\Services\AgingInvoiceManagerService;
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Livewire\Accounting\Reports\AgingReport;
 use App\Models\Account;
@@ -126,4 +127,64 @@ test('can export aging report to pdf and excel', function () {
         'unit' => 'all',
     ]));
     $excelResponse->assertOk();
+});
+
+test('can search and link payment line using smart payment line picker in settlement modal', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+    $kasAccount = Account::where('type', 'KAS')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+
+    // 1. Jurnal Penjualan / Tagihan (Debit Piutang Rp 1.500.000)
+    $journalTagihan = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-10',
+        'document_number' => 'DO-SMART-PICKER',
+        'description' => 'Tagihan Penjualan Jasa',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang Jasa', 'debit' => 1500000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan Jasa', 'debit' => 0, 'credit' => 1500000],
+    ], $this->user->id);
+
+    $lineTagihan = $journalTagihan->lines()->where('account_id', $piutangAccount->id)->first();
+    $managerService = new AgingInvoiceManagerService;
+    $invoice = $managerService->assignSingleInvoice($lineTagihan, [
+        'invoice_number' => 'INV-PICKER-001',
+        'invoice_date' => '2026-01-10',
+        'due_date' => '2026-01-30',
+        'partner_name' => 'RS Citra Medika',
+    ], $this->user->id);
+
+    // 2. Jurnal Pembayaran Penerimaan Bank (Kredit Piutang Rp 1.500.000)
+    $journalBayar = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-25',
+        'document_number' => 'JU-2026-PAY-888',
+        'description' => 'Penerimaan Transfer Bank Rek RS Citra Medika',
+    ], [
+        ['account_id' => $kasAccount->id, 'description' => 'Kas Masuk Bank', 'debit' => 1500000, 'credit' => 0],
+        ['account_id' => $piutangAccount->id, 'description' => 'Pelunasan Transfer RS Citra', 'debit' => 0, 'credit' => 1500000],
+    ], $this->user->id);
+
+    $lineBayar = $journalBayar->lines()->where('account_id', $piutangAccount->id)->first();
+
+    // 3. Test Livewire: Buka Modal Pelunasan, cari via search query, pilih, dan simpan
+    Livewire::actingAs($this->user)
+        ->test(AgingReport::class)
+        ->call('openSettleModal', $invoice->id)
+        ->assertSet('showSettleModal', true)
+        ->set('settleMode', 'existing')
+        ->set('settleSearchQuery', 'PAY-888')
+        ->assertSee('JU-2026-PAY-888')
+        ->call('selectPaymentLine', $lineBayar->id, 1500000)
+        ->assertSet('settlePaymentLineId', $lineBayar->id)
+        ->assertSet('settleAmount', 1500000.0)
+        ->call('saveSettlement')
+        ->assertHasNoErrors()
+        ->assertSet('showSettleModal', false);
+
+    // Verifikasi invoice lunas
+    expect($invoice->fresh()->status)->toBe('paid');
+    expect((float) $invoice->fresh()->remaining_amount)->toBe(0.0);
 });

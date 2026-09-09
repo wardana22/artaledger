@@ -68,6 +68,15 @@ class AgingReport extends Component
 
     public float $settleRemainingBalance = 0.0;
 
+    // Smart Payment Line Picker Search & Filter State
+    public string $settleSearchQuery = '';
+
+    public string $settleDateFilterStart = '';
+
+    public string $settleDateFilterEnd = '';
+
+    public bool $hideFullyAllocatedPayments = true;
+
     // Assign / Split Modal State
     /** @var array<int, bool> */
     public array $expandedAccounts = [];
@@ -328,6 +337,10 @@ class AgingReport extends Component
             ->first();
 
         $this->settleCashAccountId = $defaultCash?->id;
+        $this->settleSearchQuery = '';
+        $this->settleDateFilterStart = '';
+        $this->settleDateFilterEnd = '';
+        $this->hideFullyAllocatedPayments = true;
         $this->showSettleModal = true;
     }
 
@@ -341,6 +354,20 @@ class AgingReport extends Component
         $this->settleCashAccountId = null;
         $this->settlePaymentLineId = null;
         $this->settleNotes = '';
+        $this->settleSearchQuery = '';
+        $this->settleDateFilterStart = '';
+        $this->settleDateFilterEnd = '';
+    }
+
+    public function selectPaymentLine(int $lineId, float $availableAmount): void
+    {
+        $this->settlePaymentLineId = $lineId;
+
+        // Otomatis isi nominal yang dialokasikan: nilai terkecil antara sisa tagihan invoice dengan sisa kapasitas jurnal
+        $targetAmount = min($this->settleRemainingBalance, $availableAmount);
+        if ($targetAmount > 0) {
+            $this->settleAmount = $targetAmount;
+        }
     }
 
     public function setFullSettleAmount(): void
@@ -677,17 +704,59 @@ class AgingReport extends Component
 
         // Cari kandidat baris jurnal pembayaran (misal jika mode existing dipilih)
         $availablePaymentLines = collect();
-        if ($this->showSettleModal && $this->settlingInvoice) {
+        if ($this->showSettleModal && $this->settlingInvoiceId) {
+            $invoice = $this->settlingInvoice ?: ApArInvoice::find($this->settlingInvoiceId);
             $oppColumn = $this->activeTab === 'receivable' ? 'credit' : 'debit';
-            $availablePaymentLines = JournalLine::with('journalEntry')
-                ->where('account_id', $this->settlingInvoice->account_id)
+            $query = JournalLine::with(['journalEntry', 'apArSettlements'])
+                ->where('account_id', $invoice->account_id)
                 ->where($oppColumn, '>', 0)
                 ->whereHas('journalEntry', function ($q) {
                     $q->where('status', 'posted');
-                })
-                ->latest('id')
-                ->limit(20)
-                ->get();
+
+                    if ($this->settleDateFilterStart !== '') {
+                        $q->where('entry_date', '>=', $this->settleDateFilterStart);
+                    }
+                    if ($this->settleDateFilterEnd !== '') {
+                        $q->where('entry_date', '<=', $this->settleDateFilterEnd);
+                    }
+                });
+
+            // Filter Pencarian Teks (No Jurnal, No Dokumen/Referensi, atau Keterangan)
+            if (trim($this->settleSearchQuery) !== '') {
+                $search = trim($this->settleSearchQuery);
+                $query->where(function ($q) use ($search) {
+                    $q->where('description', 'like', "%{$search}%")
+                        ->orWhereHas('journalEntry', function ($sub) use ($search) {
+                            $sub->where('entry_number', 'like', "%{$search}%")
+                                ->orWhere('document_number', 'like', "%{$search}%")
+                                ->orWhere('description', 'like', "%{$search}%");
+                        });
+                });
+            }
+
+            $rawLines = $query->latest('id')->limit(80)->get();
+
+            $availablePaymentLines = $rawLines->map(function ($line) use ($oppColumn) {
+                $totalAmount = (float) $line->{$oppColumn};
+                $allocatedAmount = (float) $line->apArSettlements->sum('settled_amount');
+                $availableAmount = max(0.0, $totalAmount - $allocatedAmount);
+
+                return [
+                    'id' => $line->id,
+                    'entry_number' => $line->journalEntry?->entry_number ?: '-',
+                    'document_number' => $line->journalEntry?->document_number ?: null,
+                    'entry_date' => $line->journalEntry?->entry_date?->format('d/m/Y') ?: '-',
+                    'description' => $line->description ?: ($line->journalEntry?->description ?: '-'),
+                    'total_amount' => $totalAmount,
+                    'allocated_amount' => $allocatedAmount,
+                    'available_amount' => $availableAmount,
+                    'is_fully_allocated' => $availableAmount <= 0.001,
+                ];
+            });
+
+            if ($this->hideFullyAllocatedPayments) {
+                $availablePaymentLines = $availablePaymentLines->filter(fn ($item) => ! $item['is_fully_allocated'])->values();
+            }
         }
 
         return view('livewire.accounting.reports.aging-report', [
