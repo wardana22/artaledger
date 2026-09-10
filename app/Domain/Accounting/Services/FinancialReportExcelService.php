@@ -764,14 +764,15 @@ class FinancialReportExcelService
     /**
      * 9. Export Laporan Saldo Awal (Opening Balance)
      */
-    public function exportOpeningBalance(?int $periodId = null, string $unitFilter = 'all', ?User $user = null): Spreadsheet
+    public function exportOpeningBalance(?int $periodId = null, string $unitFilter = 'all', ?User $user = null, string $mode = 'balance_sheet'): Spreadsheet
     {
-        $data = $this->pdfService->getOpeningBalanceData($periodId, $unitFilter, $user);
+        $data = $this->pdfService->getOpeningBalanceData($periodId, $unitFilter, $user, $mode);
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Saldo Awal');
 
-        $row = $this->applyReportHeader($spreadsheet, $data['company'], 'Laporan Saldo Awal Akun', 'Periode '.$data['periodName'], $data['unitName'], 'D');
+        $modeTitle = $mode === 'balance_sheet' ? 'Saldo Awal Neraca Murni' : 'Neraca Saldo Kumulatif';
+        $row = $this->applyReportHeader($spreadsheet, $data['company'], "Laporan {$modeTitle}", 'Periode '.$data['periodName'], $data['unitName'], 'D');
 
         $sheet->setCellValue("A{$row}", 'Kode');
         $sheet->setCellValue("B{$row}", 'Nama Akun');

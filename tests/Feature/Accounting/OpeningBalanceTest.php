@@ -34,5 +34,29 @@ beforeEach(function () {
 
 it('can render opening balance report page', function () {
     Livewire::test(OpeningBalanceIndex::class)
-        ->assertStatus(200);
+        ->assertStatus(200)
+        ->assertSee('Laporan Saldo Awal')
+        ->assertSee('Neraca Murni (Post-Closing)');
+});
+
+it('can switch view mode between balance_sheet and all', function () {
+    Livewire::test(OpeningBalanceIndex::class)
+        ->assertSet('viewMode', 'balance_sheet')
+        ->set('viewMode', 'all')
+        ->assertSet('viewMode', 'all')
+        ->assertSee('Neraca Saldo Kumulatif (Pre-Closing)');
+});
+
+it('can export opening balance report to pdf and excel with mode', function () {
+    $responsePdf = $this->get(route('accounting.reports.export.pdf', [
+        'type' => 'opening-balance',
+        'mode' => 'balance_sheet',
+    ]));
+    $responsePdf->assertStatus(200);
+
+    $responseExcel = $this->get(route('accounting.reports.export.excel', [
+        'type' => 'opening-balance',
+        'mode' => 'all',
+    ]));
+    $responseExcel->assertStatus(200);
 });

@@ -103,8 +103,9 @@ class FinancialReportPdfController extends Controller
                     abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat Saldo Awal.');
                 }
                 $periodId = $request->has('period_id') ? (int) $request->query('period_id') : null;
-                $pdf = $this->pdfService->renderOpeningBalancePdf($periodId, $unitFilter, $user);
-                $filename = 'Laporan-Saldo-Awal'.($periodId ? "-Periode-{$periodId}" : '').'.pdf';
+                $mode = $request->query('mode', 'balance_sheet');
+                $pdf = $this->pdfService->renderOpeningBalancePdf($periodId, $unitFilter, $user, $mode);
+                $filename = 'Laporan-Saldo-Awal'.($periodId ? "-Periode-{$periodId}" : '')."-{$mode}.pdf";
                 break;
 
             case 'aging-receivable':

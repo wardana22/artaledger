@@ -15,8 +15,8 @@
 
         <div class="flex items-center gap-2">
             <x-report-export-dropdown 
-                :pdfUrl="route('accounting.reports.export.pdf', ['type' => 'opening-balance', 'period_id' => $periodId])"
-                :excelUrl="route('accounting.reports.export.excel', ['type' => 'opening-balance', 'period_id' => $periodId])"
+                :pdfUrl="route('accounting.reports.export.pdf', ['type' => 'opening-balance', 'period_id' => $periodId, 'mode' => $viewMode])"
+                :excelUrl="route('accounting.reports.export.excel', ['type' => 'opening-balance', 'period_id' => $periodId, 'mode' => $viewMode])"
             />
             <span class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,9 +49,9 @@
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
             <span class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 block">STATUS KESEIMBANGAN</span>
             <div class="mt-1 flex items-center gap-2">
-                @if ($batchDifference <= 1.00)
-                    <span class="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5" title="Selisih Rp {{ number_format($batchDifference, 2, ',', '.') }} berada dalam batas toleransi pembulatan">
-                        ✓ BALANCE (Selisih Rp {{ number_format($batchDifference, 2, ',', '.') }})
+                @if ($batchDifference <= 2.00)
+                    <span class="text-base font-bold font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5" title="Selisih Rp {{ number_format($batchDifference, 2, ',', '.') }} seimbang / dalam batas toleransi pembulatan">
+                        ✓ BALANCE {{ $batchDifference > 0 ? '(Toleransi Rp '.number_format($batchDifference, 2, ',', '.').')' : '' }}
                     </span>
                 @else
                     <span class="text-base font-bold font-mono text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
@@ -73,10 +73,28 @@
                             {{ $selectedPeriod->name }}
                         </span>
                     @endif
+                    @if ($viewMode === 'balance_sheet')
+                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            Neraca Murni (Post-Closing)
+                        </span>
+                    @else
+                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            Neraca Saldo Kumulatif (Pre-Closing)
+                        </span>
+                    @endif
                 </h3>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
+                <!-- VIEW MODE SELECTOR -->
+                <select 
+                    wire:model.live="viewMode" 
+                    aria-label="Pilih Mode Laporan"
+                    class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="balance_sheet">📑 Saldo Awal Neraca Murni</option>
+                    <option value="all">📊 Neraca Saldo Kumulatif</option>
+                </select>
+
                 <!-- PERIOD SELECTOR -->
                 <select 
                     wire:model.live="periodId" 

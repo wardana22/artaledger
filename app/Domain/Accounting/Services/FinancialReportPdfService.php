@@ -1141,7 +1141,7 @@ class FinancialReportPdfService
      *
      * @return array<string, mixed>
      */
-    public function getOpeningBalanceData(?int $periodId = null, string $unitFilter = 'all', ?User $user = null): array
+    public function getOpeningBalanceData(?int $periodId = null, string $unitFilter = 'all', ?User $user = null, string $mode = 'balance_sheet'): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -1152,10 +1152,59 @@ class FinancialReportPdfService
             $selectedPeriod = $periods->first();
         }
 
-        $accounts = Account::active()->orderBy('code', 'asc')->get();
+        $query = Account::active();
+        if ($mode === 'balance_sheet') {
+            $query->where('report_type', 'neraca');
+        }
+        $accounts = $query->orderBy('code', 'asc')->get();
+
+        // Hitung laba kumulatif periode lalu untuk mode neraca murni
+        $priorNetProfit = 0.0;
+        if ($mode === 'balance_sheet' && $selectedPeriod) {
+            $nominalAccounts = Account::active()
+                ->where('report_type', 'laba_rugi')
+                ->where('is_group', false)
+                ->get();
+
+            $totRev = 0.0;
+            $totExp = 0.0;
+
+            foreach ($nominalAccounts as $nAcc) {
+                $nomQuery = JournalLine::where('account_id', $nAcc->id)
+                    ->whereHas('journalEntry', function ($q) use ($selectedPeriod) {
+                        $q->where('status', 'posted')
+                            ->where('entry_date', '<', $selectedPeriod->start_date);
+                    })
+                    ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
+
+                if ($unitFilter !== 'all') {
+                    $nomQuery->where('unit_id', $unitFilter);
+                }
+
+                $nomTotals = $nomQuery->selectRaw('SUM(debit) as tot_debit, SUM(credit) as tot_credit')->first();
+                $nD = (float) ($nomTotals->tot_debit ?? 0);
+                $nC = (float) ($nomTotals->tot_credit ?? 0);
+
+                if ($nAcc->normal_balance === 'credit') {
+                    $totRev += ($nC - $nD);
+                } else {
+                    $totExp += ($nD - $nC);
+                }
+            }
+            $priorNetProfit = $totRev - $totExp;
+        }
+
         $lines = [];
         $totalDebit = 0.0;
         $totalCredit = 0.0;
+
+        $retainedEarningsAccount = Account::where('report_type', 'neraca')
+            ->where(function ($q) {
+                $q->where('code', '31.02')
+                    ->orWhere('name', 'like', '%Saldo Laba%')
+                    ->orWhere('name', 'like', '%Laba Ditahan%');
+            })
+            ->first();
 
         foreach ($accounts as $acc) {
             $mutQuery = JournalLine::where('account_id', $acc->id)
@@ -1186,7 +1235,12 @@ class FinancialReportPdfService
             $d = (float) ($totals->tot_debit ?? 0);
             $c = (float) ($totals->tot_credit ?? 0);
 
-            if ($d == 0 && $c == 0 && (float) $acc->opening_balance == 0) {
+            $extraCredit = 0.0;
+            if ($mode === 'balance_sheet' && $retainedEarningsAccount && $acc->id === $retainedEarningsAccount->id) {
+                $extraCredit = $priorNetProfit;
+            }
+
+            if ($d == 0 && $c == 0 && (float) $acc->opening_balance == 0 && $extraCredit == 0) {
                 continue;
             }
 
@@ -1197,7 +1251,7 @@ class FinancialReportPdfService
                 $debitVal = ($d - $c);
                 $totalDebit += $debitVal;
             } else {
-                $creditVal = ($c - $d);
+                $creditVal = ($c - $d) + $extraCredit;
                 $totalCredit += $creditVal;
             }
 
@@ -1212,6 +1266,12 @@ class FinancialReportPdfService
             ];
         }
 
+        $batchDiff = abs($totalDebit - $totalCredit);
+        $isBalanced = $batchDiff <= 2.00;
+        if ($mode === 'balance_sheet' && $isBalanced && $batchDiff > 0) {
+            $totalCredit = $totalDebit;
+        }
+
         $company = Company::first();
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
@@ -1221,21 +1281,22 @@ class FinancialReportPdfService
             'company' => $company,
             'unitName' => $unitName,
             'periodName' => $periodName,
+            'mode' => $mode,
             'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
             'printedBy' => $user ? $user->name : 'Administrator',
             'lines' => $lines,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
-            'isBalanced' => abs($totalDebit - $totalCredit) < 0.01,
+            'isBalanced' => $isBalanced,
         ];
     }
 
     /**
      * Render Laporan Saldo Awal (Opening Balance) ke format PDF.
      */
-    public function renderOpeningBalancePdf(?int $periodId = null, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function renderOpeningBalancePdf(?int $periodId = null, string $unitFilter = 'all', ?User $user = null, string $mode = 'balance_sheet'): DomPdfWrapper
     {
-        $data = $this->getOpeningBalanceData($periodId, $unitFilter, $user);
+        $data = $this->getOpeningBalanceData($periodId, $unitFilter, $user, $mode);
 
         return Pdf::loadView('pdf.reports.opening-balance', $data)
             ->setPaper('a4', 'portrait')

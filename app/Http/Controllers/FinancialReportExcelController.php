@@ -103,8 +103,9 @@ class FinancialReportExcelController extends Controller
                     abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat Saldo Awal.');
                 }
                 $periodId = $request->has('period_id') ? (int) $request->query('period_id') : null;
-                $spreadsheet = $this->excelService->exportOpeningBalance($periodId, $unitFilter, $user);
-                $filename = 'Laporan-Saldo-Awal'.($periodId ? "-Periode-{$periodId}" : '').'.xlsx';
+                $mode = $request->query('mode', 'balance_sheet');
+                $spreadsheet = $this->excelService->exportOpeningBalance($periodId, $unitFilter, $user, $mode);
+                $filename = 'Laporan-Saldo-Awal'.($periodId ? "-Periode-{$periodId}" : '')."-{$mode}.xlsx";
                 break;
 
             case 'aging-receivable':

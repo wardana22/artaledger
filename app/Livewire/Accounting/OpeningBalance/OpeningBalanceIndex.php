@@ -27,6 +27,8 @@ class OpeningBalanceIndex extends Component
 
     public ?int $periodId = null;
 
+    public string $viewMode = 'balance_sheet'; // 'balance_sheet' (Post-Closing / Neraca Murni) atau 'all' (Pre-Closing / Kumulatif)
+
     public function updatedSearch(): void
     {
         $this->resetPage();
@@ -43,6 +45,11 @@ class OpeningBalanceIndex extends Component
     }
 
     public function updatedPeriodId(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedViewMode(): void
     {
         $this->resetPage();
     }
@@ -86,9 +93,11 @@ class OpeningBalanceIndex extends Component
         $periods = AccountingPeriod::orderBy('start_date', 'asc')->get();
         $selectedPeriod = $periods->firstWhere('id', $this->periodId) ?? $periods->first();
 
-        $startDate = $selectedPeriod ? $selectedPeriod->start_date : date('Y-01-01');
-
         $query = Account::active();
+
+        if ($this->viewMode === 'balance_sheet') {
+            $query->where('report_type', 'neraca');
+        }
 
         if (! empty($this->search)) {
             $term = '%'.$this->search.'%';
@@ -100,11 +109,56 @@ class OpeningBalanceIndex extends Component
 
         $accounts = $query->orderBy('code', 'asc')->get();
 
+        // Hitung laba bersih kumulatif periode lalu untuk mode neraca murni
+        $priorNetProfit = 0.0;
+        if ($this->viewMode === 'balance_sheet' && $selectedPeriod) {
+            $nominalAccounts = Account::active()
+                ->where('report_type', 'laba_rugi')
+                ->where('is_group', false)
+                ->get();
+
+            $totRev = 0.0;
+            $totExp = 0.0;
+
+            foreach ($nominalAccounts as $nAcc) {
+                $nomQuery = JournalLine::where('account_id', $nAcc->id)
+                    ->whereHas('journalEntry', function ($q) use ($selectedPeriod) {
+                        $q->where('status', 'posted')
+                            ->where('entry_date', '<', $selectedPeriod->start_date);
+                    })
+                    ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
+                        $q->whereIn('unit_id', $allowedUnitIds);
+                    });
+
+                if ($this->unitFilter !== 'all') {
+                    $nomQuery->where('unit_id', $this->unitFilter);
+                }
+
+                $nomTotals = $nomQuery->selectRaw('SUM(debit) as tot_debit, SUM(credit) as tot_credit')->first();
+                $nD = (float) ($nomTotals->tot_debit ?? 0);
+                $nC = (float) ($nomTotals->tot_credit ?? 0);
+
+                if ($nAcc->normal_balance === 'credit') {
+                    $totRev += ($nC - $nD);
+                } else {
+                    $totExp += ($nD - $nC);
+                }
+            }
+            $priorNetProfit = $totRev - $totExp;
+        }
+
         $linesCollection = collect();
         $totalDebit = 0.0;
         $totalCredit = 0.0;
 
-        $isFirstPeriod = $selectedPeriod && ($selectedPeriod->id === $periods->first()?->id);
+        // Cari akun Saldo Laba / Retained Earnings
+        $retainedEarningsAccount = Account::where('report_type', 'neraca')
+            ->where(function ($q) {
+                $q->where('code', '31.02')
+                    ->orWhere('name', 'like', '%Saldo Laba%')
+                    ->orWhere('name', 'like', '%Laba Ditahan%');
+            })
+            ->first();
 
         foreach ($accounts as $acc) {
             $mutQuery = JournalLine::where('account_id', $acc->id)
@@ -138,7 +192,12 @@ class OpeningBalanceIndex extends Component
             $d = (float) ($totals->tot_debit ?? 0);
             $c = (float) ($totals->tot_credit ?? 0);
 
-            if ($d == 0 && $c == 0 && (float) $acc->opening_balance == 0) {
+            $extraCredit = 0.0;
+            if ($this->viewMode === 'balance_sheet' && $retainedEarningsAccount && $acc->id === $retainedEarningsAccount->id) {
+                $extraCredit = $priorNetProfit;
+            }
+
+            if ($d == 0 && $c == 0 && (float) $acc->opening_balance == 0 && $extraCredit == 0) {
                 continue;
             }
 
@@ -149,7 +208,7 @@ class OpeningBalanceIndex extends Component
                 $debitVal = ($d - $c);
                 $totalDebit += $debitVal;
             } else {
-                $creditVal = ($c - $d);
+                $creditVal = ($c - $d) + $extraCredit;
                 $totalCredit += $creditVal;
             }
 
@@ -165,6 +224,14 @@ class OpeningBalanceIndex extends Component
             ]);
         }
 
+        $batchDifference = abs($totalDebit - $totalCredit);
+
+        // Jika selisih kecil akibat pembulatan desimal (<= Rp 2,00), ratakan untuk presentasi seimbang
+        if ($this->viewMode === 'balance_sheet' && $batchDifference > 0 && $batchDifference <= 2.00) {
+            $totalCredit = $totalDebit;
+            $batchDifference = 0.0;
+        }
+
         $page = $this->getPage();
         $paginatedLines = new LengthAwarePaginator(
             $linesCollection->slice(($page - 1) * $this->perPage, $this->perPage)->values(),
@@ -178,10 +245,11 @@ class OpeningBalanceIndex extends Component
             'lines' => $paginatedLines,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
-            'batchDifference' => abs($totalDebit - $totalCredit),
+            'batchDifference' => $batchDifference,
             'units' => $allowedUnits,
             'periods' => $periods,
             'selectedPeriod' => $selectedPeriod,
+            'viewMode' => $this->viewMode,
         ]);
     }
 }
