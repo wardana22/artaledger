@@ -248,6 +248,8 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Accounting/FinancialReportsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportsTest.php) (Pengujian Komponen Laporan Keuangan & Validasi Penempatan Kolom Strict Neraca Lajur)
 - [tests/Feature/Accounting/OpeningBalanceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/OpeningBalanceTest.php)
 - [tests/Feature/Accounting/ImportJournalTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/ImportJournalTest.php)
+- [tests/Feature/Accounting/SubModuleAuthorizationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/SubModuleAuthorizationTest.php) (Validasi Otorisasi RBAC Sub-modul & Proteksi Jurnal Terkunci is_locked)
+- [tests/Feature/Accounting/InitialBalanceWizardTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/InitialBalanceWizardTest.php) (Validasi Setup Saldo Awal, Auto-Balance Retained Earnings, & Hardening Buka Kunci Super Admin)
 
 ---
 

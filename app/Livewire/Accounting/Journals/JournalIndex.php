@@ -37,6 +37,10 @@ class JournalIndex extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('journals.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         if (request()->has('status') && ! empty(request()->get('status'))) {
             $this->statusFilter = request()->get('status');
         }
@@ -109,6 +113,12 @@ class JournalIndex extends Component
 
     public function reverseJournal(int $id): void
     {
+        if (auth()->check() && ! auth()->user()->can('journals.post') && ! auth()->user()->can('journals.edit')) {
+            session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin untuk membalikkan (reverse) jurnal.');
+
+            return;
+        }
+
         try {
             $entry = JournalEntry::findOrFail($id);
             $service = new JournalReversalService;
@@ -122,6 +132,12 @@ class JournalIndex extends Component
 
     public function deleteJournal(int $id): void
     {
+        if (auth()->check() && ! auth()->user()->can('journals.delete')) {
+            session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin [journals.delete] untuk menghapus jurnal.');
+
+            return;
+        }
+
         try {
             $entry = JournalEntry::findOrFail($id);
             $service = new JournalPostingService;

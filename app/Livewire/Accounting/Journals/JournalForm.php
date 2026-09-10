@@ -75,9 +75,20 @@ class JournalForm extends Component
     public function mount(?int $id = null): void
     {
         if ($id) {
+            if (auth()->check() && ! auth()->user()->can('journals.edit')) {
+                abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+            }
+
             $journal = JournalEntry::with('lines')->findOrFail($id);
             if ($journal->status === 'reversed') {
                 session()->flash('error', "Jurnal {$journal->entry_number} berstatus Reversal dan tidak dapat di-edit.");
+                $this->redirect(route('accounting.journals.index'), navigate: true);
+
+                return;
+            }
+
+            if ($journal->is_locked) {
+                session()->flash('error', "Jurnal {$journal->entry_number} berstatus Terkunci (Locked Initial Balance) dan tidak dapat di-edit langsung. Gunakan Wizard Saldo Awal.");
                 $this->redirect(route('accounting.journals.index'), navigate: true);
 
                 return;
@@ -102,6 +113,10 @@ class JournalForm extends Component
                 ];
             }
         } else {
+            if (auth()->check() && ! auth()->user()->can('journals.create')) {
+                abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+            }
+
             $this->entry_date = date('Y-m-d');
 
             // Default to JK or BM or first type
@@ -207,6 +222,16 @@ class JournalForm extends Component
 
     public function saveJournal(bool $isPostDirectly = false): void
     {
+        if ($this->is_edit) {
+            if (auth()->check() && ! auth()->user()->can('journals.edit')) {
+                abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+            }
+        } else {
+            if (auth()->check() && ! auth()->user()->can('journals.create')) {
+                abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+            }
+        }
+
         $this->validate([
             'entry_date' => 'required|date',
             'journal_type_id' => 'required|exists:journal_types,id',
@@ -229,6 +254,12 @@ class JournalForm extends Component
 
             if ($this->is_edit && $this->journal_entry_id) {
                 $journal = JournalEntry::findOrFail($this->journal_entry_id);
+                if ($journal->is_locked) {
+                    session()->flash('error', "Jurnal {$journal->entry_number} berstatus Terkunci dan tidak dapat di-edit.");
+
+                    return;
+                }
+
                 $service->updateManualEntry(
                     $journal,
                     [

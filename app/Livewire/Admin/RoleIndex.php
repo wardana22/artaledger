@@ -63,6 +63,18 @@ class RoleIndex extends Component
         'reports.view' => 'Lihat Seluruh Laporan Keuangan (Global)',
         'reports.export' => 'Ekspor Laporan Keuangan (Excel/PDF)',
 
+        // Rekonsiliasi Bank Modul
+        'reconciliation.view' => 'Lihat Rekonsiliasi Bank',
+        'reconciliation.manage' => 'Kelola & Eksekusi Rekonsiliasi Bank',
+        'reconciliation.upload' => 'Unggah Rekening Koran Bank',
+
+        // Aset Tetap & Penyusutan Modul
+        'assets.view' => 'Lihat Master Register Aset Tetap',
+        'assets.create' => 'Tambah Data Aset Tetap Baru',
+        'assets.edit' => 'Edit Data Aset Tetap',
+        'assets.delete' => 'Hapus Data Aset Tetap',
+        'assets.depreciate' => 'Eksekusi & Posting Penyusutan Aset Tetap',
+
         // Master Pengaturan Modul
         'settings.view' => 'Lihat Pengaturan System',
         'settings.company' => 'Kelola Branding & Pengaturan Perusahaan',

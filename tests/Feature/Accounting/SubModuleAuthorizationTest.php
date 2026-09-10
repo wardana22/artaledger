@@ -127,3 +127,92 @@ test('admin with journals.delete permission can delete posted journal entries', 
 
     expect(JournalEntry::find($journal->id))->toBeNull();
 });
+
+test('user without journals.create is forbidden from create journal page', function () {
+    Permission::firstOrCreate(['name' => 'journals.view']);
+
+    $role = Role::create(['name' => 'Journal Viewer Only Role']);
+    $role->givePermissionTo(['journals.view']);
+
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    $this->actingAs($user)
+        ->get(route('accounting.journals.create'))
+        ->assertStatus(403);
+});
+
+test('user cannot edit locked journal entry via JournalForm and is redirected', function () {
+    Permission::firstOrCreate(['name' => 'journals.edit']);
+
+    $role = Role::create(['name' => 'Journal Editor Role']);
+    $role->givePermissionTo(['journals.edit']);
+
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    $company = Company::first() ?? Company::create(['code' => 'ALT', 'name' => 'Arta']);
+    $lockedJournal = JournalEntry::create([
+        'company_id' => $company->id,
+        'entry_number' => 'SA-2026-0001',
+        'entry_date' => '2026-01-01',
+        'status' => 'posted',
+        'is_locked' => true,
+        'description' => 'Saldo Awal Terkunci',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('accounting.journals.edit', ['id' => $lockedJournal->id]))
+        ->assertRedirect(route('accounting.journals.index'));
+});
+
+test('deleting a locked journal entry throws an exception', function () {
+    Permission::firstOrCreate(['name' => 'journals.delete']);
+
+    $role = Role::create(['name' => 'Super Deleter Role']);
+    $role->givePermissionTo(['journals.delete']);
+
+    $user = User::factory()->create();
+    $user->assignRole($role);
+    $this->actingAs($user);
+
+    $company = Company::first() ?? Company::create(['code' => 'ALT', 'name' => 'Arta']);
+    $period = AccountingPeriod::firstOrCreate(
+        ['company_id' => $company->id, 'year' => 2026, 'month' => 1],
+        ['start_date' => '2026-01-01', 'end_date' => '2026-01-31', 'status' => 'open']
+    );
+
+    $lockedJournal = JournalEntry::create([
+        'company_id' => $company->id,
+        'period_id' => $period->id,
+        'entry_number' => 'SA-2026-0002',
+        'entry_date' => '2026-01-01',
+        'status' => 'posted',
+        'is_locked' => true,
+        'description' => 'Saldo Awal Locked',
+    ]);
+
+    $service = new JournalPostingService;
+    expect(fn () => $service->deleteJournalEntry($lockedJournal))
+        ->toThrow(Exception::class, 'berstatus Terkunci (Locked) dan tidak dapat dihapus');
+});
+
+test('user without assets.view cannot access fixed assets index', function () {
+    $role = Role::create(['name' => 'No Asset Role']);
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    $this->actingAs($user)
+        ->get(route('accounting.fixed-assets.index'))
+        ->assertStatus(403);
+});
+
+test('user without journals.import cannot access journal import wizard', function () {
+    $role = Role::create(['name' => 'No Import Role']);
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    $this->actingAs($user)
+        ->get(route('accounting.import.index'))
+        ->assertStatus(403);
+});

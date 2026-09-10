@@ -26,6 +26,10 @@ class AdjustmentForm extends Component
 
     public function mount(): void
     {
+        if (auth()->check() && ! auth()->user()->can('journals.create')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->entry_date = now()->format('Y-m-d');
 
         // Default to JPEN or first type
@@ -109,6 +113,10 @@ class AdjustmentForm extends Component
 
     public function saveAdjustment(JournalPostingService $postingService)
     {
+        if (auth()->check() && ! auth()->user()->can('journals.create')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         $this->validate([
             'entry_date' => 'required|date',
             'journal_type_id' => 'required|exists:journal_types,id',

@@ -205,6 +205,12 @@ class FixedAssetIndex extends Component
 
     public function saveAsset(FixedAssetDepreciationService $service): void
     {
+        if ($this->editingAssetId) {
+            abort_unless(auth()->user()?->can('assets.edit'), 403, 'Akses Ditolak: Anda tidak memiliki izin mengedit Aset Tetap.');
+        } else {
+            abort_unless(auth()->user()?->can('assets.create'), 403, 'Akses Ditolak: Anda tidak memiliki izin menambah Aset Tetap.');
+        }
+
         $this->validate([
             'unit_id' => 'required|exists:units,id',
             'asset_category_id' => 'required|exists:asset_categories,id',
@@ -296,6 +302,8 @@ class FixedAssetIndex extends Component
 
     public function deleteAsset(int $id): void
     {
+        abort_unless(auth()->user()?->can('assets.delete'), 403, 'Akses Ditolak: Anda tidak memiliki izin menghapus Aset Tetap.');
+
         $asset = FixedAsset::withCount('depreciations')->findOrFail($id);
 
         if ($asset->depreciations_count > 0) {

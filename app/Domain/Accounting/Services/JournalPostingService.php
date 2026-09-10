@@ -208,6 +208,14 @@ class JournalPostingService
      */
     public function deleteJournalEntry(JournalEntry $journalEntry): void
     {
+        if ($journalEntry->is_locked) {
+            throw new Exception("Jurnal ({$journalEntry->entry_number}) berstatus Terkunci (Locked) dan tidak dapat dihapus. Gunakan Wizard Saldo Awal.");
+        }
+
+        if ($journalEntry->period && ! $journalEntry->period->isOpen()) {
+            throw new Exception("Gagal menghapus! Periode akuntansi jurnal ini berstatus '{$journalEntry->period->status}'. Penghapusan hanya diizinkan pada periode 'open'.");
+        }
+
         $canDeletePosted = auth()->check() && (auth()->user()->can('journals.delete') || auth()->user()->hasRole('Super Admin'));
 
         if ($journalEntry->status === 'posted' && ! $canDeletePosted) {

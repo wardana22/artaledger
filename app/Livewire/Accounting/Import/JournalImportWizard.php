@@ -47,6 +47,10 @@ class JournalImportWizard extends Component
 
     public function mount(?int $batchId = null): void
     {
+        if (auth()->check() && ! auth()->user()->can('journals.import') && ! auth()->user()->can('journals.view')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+
         if ($batchId) {
             $this->activeBatch = ImportBatch::find($batchId);
         }
@@ -63,6 +67,10 @@ class JournalImportWizard extends Component
 
     public function deleteBatch(int $batchId): void
     {
+        if (auth()->check() && ! auth()->user()->can('journals.delete')) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki izin [journals.delete] untuk menghapus data impor.');
+        }
+
         set_time_limit(300);
         ini_set('memory_limit', '512M');
 
@@ -108,6 +116,10 @@ class JournalImportWizard extends Component
 
     public function processUpload(ExcelImportService $importService, ImportValidationService $validationService): void
     {
+        if (auth()->check() && ! auth()->user()->can('journals.import')) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki izin [journals.import] untuk mengunggah berkas impor.');
+        }
+
         set_time_limit(300);
         ini_set('memory_limit', '512M');
 
@@ -146,6 +158,10 @@ class JournalImportWizard extends Component
 
     public function commitPosting(ImportCommitService $commitService)
     {
+        if (auth()->check() && ! auth()->user()->can('journals.post')) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki izin [journals.post] untuk memposting transaksi ke General Ledger.');
+        }
+
         set_time_limit(300);
         ini_set('memory_limit', '512M');
 

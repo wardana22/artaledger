@@ -78,7 +78,7 @@ class CompanySettingsIndex extends Component
     public function updatedLogo()
     {
         $this->validate([
-            'logo' => 'nullable|file|mimes:jpeg,jpg,png,webp,svg,bmp,ico,gif',
+            'logo' => 'nullable|file|mimes:jpeg,jpg,png,webp,svg,bmp,ico,gif|max:2048',
         ]);
     }
 
@@ -92,7 +92,7 @@ class CompanySettingsIndex extends Component
             'app_name' => 'required|string|max:100',
             'name' => 'required|string|max:150',
             'code' => 'required|string|max:20|unique:companies,code,'.$this->company->id,
-            'logo' => 'nullable|file|mimes:jpeg,jpg,png,webp,svg,bmp,ico,gif',
+            'logo' => 'nullable|file|mimes:jpeg,jpg,png,webp,svg,bmp,ico,gif|max:2048',
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:100',

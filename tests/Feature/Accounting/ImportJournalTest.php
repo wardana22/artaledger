@@ -9,11 +9,14 @@ use App\Models\AccountingPeriod;
 use App\Models\Company;
 use App\Models\Unit;
 use App\Models\User;
+use Database\Seeders\RoleAndPermissionSeeder;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 beforeEach(function () {
+    $this->seed(RoleAndPermissionSeeder::class);
     $this->user = User::factory()->create();
+    $this->user->assignRole('Super Admin');
     $this->actingAs($this->user);
 
     $this->company = Company::firstOrCreate([

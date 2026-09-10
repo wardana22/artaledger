@@ -12,6 +12,7 @@ use Database\Seeders\SaldoAwalSeeder;
 use Database\Seeders\UnitSeeder;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     $this->seed(RoleAndPermissionSeeder::class);
@@ -104,4 +105,23 @@ it('can update initial balance and automatically re-lock upon posting', function
     expect($entry)->not->toBeNull();
     expect($entry->status)->toBe('posted');
     expect($entry->is_locked)->toBeTrue();
+});
+
+it('rejects unlock attempt from non-superadmin users even with correct user password', function () {
+    $accountant = User::factory()->create([
+        'password' => Hash::make('AccountantPass123!'),
+    ]);
+    $accountantRole = Role::firstOrCreate(['name' => 'Akuntan Biasa']);
+    $accountantRole->givePermissionTo(['settings.manage', 'accounts.view']);
+    $accountant->assignRole($accountantRole);
+
+    $this->actingAs($accountant);
+
+    Livewire::test(InitialBalanceIndex::class)
+        ->call('openUnlockModal')
+        ->set('unlockPassword', 'AccountantPass123!')
+        ->set('unlockReason', 'Percobaan buka kunci tanpa hak akses')
+        ->call('confirmUnlock')
+        ->assertHasErrors(['unlockPassword'])
+        ->assertSet('isLocked', true);
 });

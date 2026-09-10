@@ -261,7 +261,14 @@ class InitialBalanceIndex extends Component
 
         $user = auth()->user();
 
-        // 1. Verifikasi Password Super Admin
+        // 1. Verifikasi Pengguna adalah Super Admin
+        if (! $user || ! $user->hasRole('Super Admin')) {
+            $this->addError('unlockPassword', 'Akses Ditolak: Hanya pengguna dengan peran Super Admin yang berwenang membuka kunci darurat Saldo Awal.');
+
+            return;
+        }
+
+        // 2. Verifikasi Password Super Admin
         if (! Hash::check($this->unlockPassword, $user->password)) {
             $this->addError('unlockPassword', 'Password Super Admin salah / tidak cocok.');
 
