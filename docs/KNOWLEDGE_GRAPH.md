@@ -248,3 +248,8 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Accounting/FinancialReportsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportsTest.php) (Pengujian Komponen Laporan Keuangan & Validasi Penempatan Kolom Strict Neraca Lajur)
 - [tests/Feature/Accounting/OpeningBalanceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/OpeningBalanceTest.php)
 - [tests/Feature/Accounting/ImportJournalTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/ImportJournalTest.php)
+
+---
+
+### 8. Laporan Audit & Kepatuhan Sistem
+- [docs/AUDIT_REPORT.md](file:///d:/Belajar%20Laravel/artaledger/docs/AUDIT_REPORT.md) (Laporan audit sistem menyeluruh: arsitektur, keamanan RBAC, integritas akuntansi, performa basis data, dan kualitas kode)
