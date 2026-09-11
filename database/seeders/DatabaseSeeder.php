@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             UserAndUnitSeeder::class,
             JournalTemplateSeeder::class,
             CashFlowRowSeeder::class,
+            BudgetSeeder::class,
         ]);
     }
 }
