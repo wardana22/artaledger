@@ -297,7 +297,18 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Accounting/SubModuleAuthorizationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/SubModuleAuthorizationTest.php) (Validasi Otorisasi RBAC Sub-modul & Proteksi Jurnal Terkunci is_locked)
 - [tests/Feature/Accounting/InitialBalanceWizardTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/InitialBalanceWizardTest.php) (Validasi Setup Saldo Awal, Auto-Balance Retained Earnings, & Hardening Buka Kunci Super Admin)
 
+### 8. Tata Kelola Antarmuka UI/UX Enterprise (Navigation & Layout)
+- **Komponen Sidebar Utama**: [resources/views/layouts/app/sidebar.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/layouts/app/sidebar.blade.php)
+  - Fitur **Collapsible Rail Mode**: Mendukung mode ciut (*collapsed*) desktop & mobile secara responsif (~56px) dengan tombol toggle `<flux:sidebar.collapse />`.
+  - **Interactive Floating Tooltips**: Setiap ikon menu memunculkan tooltip popover interaktif di sebelah kanan saat sidebar dalam kondisi tersembunyi/ciut (*collapsed-desktop*).
+  - **Active & Hover Micro-Interactions**: Indikator menu aktif beraksen Indigo (`border-l-3 border-indigo-600 font-semibold bg-indigo-50/90 dark:bg-indigo-950/60`), transisi sorot kursor lembut (`translate-x-0.5`), dan kompatibilitas penuh Light & Dark mode.
+- **Komponen Flux Layout**:
+  - [resources/views/flux/sidebar/collapse.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/flux/sidebar/collapse.blade.php): Pengontrol visibilitas tombol toggle collapse di mode desktop maupun mobile.
+  - [resources/views/flux/sidebar/item.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/flux/sidebar/item.blade.php): Pengaturan perataan ikon di tengah saat mode ciut, penanda border samping, dan pemicu tooltip.
+  - [resources/views/flux/sidebar/group.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/flux/sidebar/group.blade.php): Pengelolaan heading grup yang otomatis menyembunyikan teks judul namun tetap menampilkan ikon menu saat sidebar diciutkan.
+  - [resources/views/flux/tooltip/content.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/flux/tooltip/content.blade.php): Desain kartu floating tooltip dengan sudut membulat, bayangan mendalam, dan kontras tajam.
+
 ---
 
-### 8. Laporan Audit & Kepatuhan Sistem
+### 9. Laporan Audit & Kepatuhan Sistem
 - [docs/AUDIT_REPORT.md](file:///d:/Belajar%20Laravel/artaledger/docs/AUDIT_REPORT.md) (Laporan audit sistem menyeluruh: arsitektur, keamanan RBAC, integritas akuntansi, performa basis data, dan kualitas kode)

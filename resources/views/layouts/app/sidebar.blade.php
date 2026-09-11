@@ -4,18 +4,18 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
-        <flux:sidebar sticky collapsible="mobile" class="border-e border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/95">
+        <flux:sidebar sticky :collapsible="true" class="border-e border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/95 transition-all duration-300">
             @php
                 $company = \App\Models\Company::first();
                 $appName = $company?->app_name ?? config('app.name', 'ArtaLedger');
             @endphp
-            <flux:sidebar.header class="flex items-center gap-2.5 px-3 py-2">
+            <flux:sidebar.header class="flex items-center gap-2.5 px-3 py-2 in-data-flux-sidebar-collapsed-desktop:px-1 in-data-flux-sidebar-collapsed-desktop:justify-center">
                 <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
-                <a href="{{ route('dashboard') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight">
+                <a href="{{ route('dashboard') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight in-data-flux-sidebar-collapsed-desktop:hidden">
                     <span class="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ $appName }}</span>
                     <span class="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ $company?->name ?? 'PT ArtaLedger Enterprise' }}</span>
                 </a>
-                <flux:sidebar.collapse class="lg:hidden ms-auto" />
+                <flux:sidebar.collapse class="ms-auto" :tooltip="__('Toggle sidebar')" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="space-y-2">
