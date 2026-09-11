@@ -72,6 +72,7 @@ class SaldoAwalSeeder extends Seeder
                 'source_type' => 'manual',
                 'entry_type' => 'general',
                 'status' => 'posted',
+                'is_locked' => true,
                 'posted_by' => 1,
                 'posted_at' => now(),
             ]);

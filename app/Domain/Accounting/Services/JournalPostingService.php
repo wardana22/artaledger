@@ -98,6 +98,7 @@ class JournalPostingService
                 'source_type' => 'manual',
                 'entry_type' => $entryType,
                 'status' => 'posted',
+                'is_locked' => false,
                 'posted_by' => $userId,
                 'posted_at' => now(),
             ]);
@@ -311,6 +312,7 @@ class JournalPostingService
                 'source_type' => 'manual',
                 'entry_type' => $entryType,
                 'status' => 'draft',
+                'is_locked' => false,
                 'posted_by' => null,
                 'posted_at' => null,
             ]);

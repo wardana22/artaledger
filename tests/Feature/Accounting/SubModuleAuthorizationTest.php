@@ -197,6 +197,40 @@ test('deleting a locked journal entry throws an exception', function () {
         ->toThrow(Exception::class, 'berstatus Terkunci (Locked) dan tidak dapat dihapus');
 });
 
+test('user with journals.delete can successfully delete regular unlocked manual journal entry', function () {
+    Permission::firstOrCreate(['name' => 'journals.delete']);
+
+    $role = Role::create(['name' => 'General Deleter Role']);
+    $role->givePermissionTo(['journals.delete']);
+
+    $user = User::factory()->create();
+    $user->assignRole($role);
+    $this->actingAs($user);
+
+    $company = Company::first() ?? Company::create(['code' => 'ALT', 'name' => 'Arta']);
+    $period = AccountingPeriod::firstOrCreate(
+        ['company_id' => $company->id, 'year' => 2026, 'month' => 9],
+        ['start_date' => '2026-09-01', 'end_date' => '2026-09-30', 'status' => 'open']
+    );
+
+    // Manual journal created without is_locked should be false
+    $manualJournal = JournalEntry::create([
+        'company_id' => $company->id,
+        'period_id' => $period->id,
+        'entry_number' => 'JU-2026-09-999999',
+        'entry_date' => '2026-09-11',
+        'status' => 'posted',
+        'description' => 'Jurnal Manual Umum',
+    ]);
+
+    expect($manualJournal->is_locked)->toBeFalse();
+
+    $service = new JournalPostingService;
+    $service->deleteJournalEntry($manualJournal);
+
+    expect(JournalEntry::find($manualJournal->id))->toBeNull();
+});
+
 test('user without assets.view cannot access fixed assets index', function () {
     $role = Role::create(['name' => 'No Asset Role']);
     $user = User::factory()->create();

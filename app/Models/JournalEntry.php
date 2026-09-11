@@ -49,6 +49,10 @@ class JournalEntry extends Model
         'is_locked' => 'boolean',
     ];
 
+    protected $attributes = [
+        'is_locked' => false,
+    ];
+
     protected static function boot()
     {
         parent::boot();
