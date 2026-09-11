@@ -43,7 +43,57 @@ class BudgetSeeder extends Seeder
         $firstUnitId = $units->first()?->id;
 
         DB::transaction(function () use ($adminId, $currentYear, $expenseAccounts, $firstUnitId) {
-            // 1. Master Anggaran Aktif Tahun Berjalan (Tahun ini)
+            $samplePlafons = [
+                120000000, // 120 Juta / thn
+                240000000, // 240 Juta / thn
+                60000000,  // 60 Juta / thn
+                48000000,  // 48 Juta / thn
+                96000000,  // 96 Juta / thn
+                180000000, // 180 Juta / thn
+                36000000,  // 36 Juta / thn
+                72000000,  // 72 Juta / thn
+                150000000, // 150 Juta / thn
+                84000000,  // 84 Juta / thn
+                54000000,  // 54 Juta / thn
+                300000000, // 300 Juta / thn
+            ];
+
+            // 1. Master Anggaran Tahun 2025 (Tutup Buku / Historis)
+            $budget2025 = Budget::updateOrCreate(
+                [
+                    'fiscal_year' => 2025,
+                    'name' => 'Rencana Kerja & Anggaran Biaya (RKAB) 2025',
+                ],
+                [
+                    'description' => 'Realisasi dan plafon anggaran operasional tahun buku 2025.',
+                    'status' => 'active',
+                    'enforcement_mode' => 'warning_only',
+                    'warning_threshold_pct' => 80.00,
+                    'created_by' => $adminId,
+                    'updated_by' => $adminId,
+                ]
+            );
+
+            $budget2025->lines()->delete();
+
+            foreach ($expenseAccounts as $index => $acc) {
+                // Skala pagu 2025 (~90% dari plafon dasar)
+                $annualAmount2025 = round($samplePlafons[$index % count($samplePlafons)] * 0.90, -5);
+                $unitId = ($index % 3 === 0) ? $firstUnitId : null;
+
+                $line = new BudgetLine([
+                    'budget_id' => $budget2025->id,
+                    'account_id' => $acc->id,
+                    'unit_id' => $unitId,
+                    'annual_amount' => $annualAmount2025,
+                    'notes' => "Alokasi anggaran 2025 {$acc->name}",
+                ]);
+
+                $line->distributeEvenly();
+                $line->save();
+            }
+
+            // 2. Master Anggaran Aktif Tahun Berjalan (Tahun ini)
             $activeBudget = Budget::updateOrCreate(
                 [
                     'fiscal_year' => $currentYear,
@@ -62,22 +112,6 @@ class BudgetSeeder extends Seeder
             // Bersihkan baris lama agar idempotent
             $activeBudget->lines()->delete();
 
-            // Rincian Plafon Akun Realistis
-            $samplePlafons = [
-                120000000, // 120 Juta / thn
-                240000000, // 240 Juta / thn
-                60000000,  // 60 Juta / thn
-                48000000,  // 48 Juta / thn
-                96000000,  // 96 Juta / thn
-                180000000, // 180 Juta / thn
-                36000000,  // 36 Juta / thn
-                72000000,  // 72 Juta / thn
-                150000000, // 150 Juta / thn
-                84000000,  // 84 Juta / thn
-                54000000,  // 54 Juta / thn
-                300000000, // 300 Juta / thn
-            ];
-
             foreach ($expenseAccounts as $index => $acc) {
                 $annualAmount = $samplePlafons[$index % count($samplePlafons)];
                 $unitId = ($index % 3 === 0) ? $firstUnitId : null; // Sebagian spesifik unit, sebagian konsolidasi
@@ -95,7 +129,7 @@ class BudgetSeeder extends Seeder
                 $line->save();
             }
 
-            // 2. Master Anggaran Draft untuk Tahun Depan
+            // 3. Master Anggaran Draft untuk Tahun Depan
             $nextYear = $currentYear + 1;
             $draftBudget = Budget::updateOrCreate(
                 [
@@ -130,6 +164,6 @@ class BudgetSeeder extends Seeder
             }
         });
 
-        $this->command?->info("Seeding anggaran berhasil: Dibuat 1 Anggaran Aktif ({$currentYear}) dan 1 Anggaran Draft (".($currentYear + 1).').');
+        $this->command?->info("Seeding anggaran berhasil: Dibuat Anggaran Tahun 2025, Anggaran Aktif ({$currentYear}), dan Anggaran Draft (".($currentYear + 1).').');
     }
 }
