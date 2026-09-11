@@ -135,10 +135,12 @@ graph TD
         
         S_BCALC --> M_BDG["Model: Budget"]
         S_BCALC --> M_BDGL["Model: BudgetLine"]
-        S_BCALC --> M_JL
+        S_BCALC --> M_JL["Model: JournalLine"]
+        S_BCALC --> M_ACC["Model: Account (normal_balance: debit/credit)"]
         S_BGUARD --> M_BDG
         S_BGUARD --> M_BDGL
         S_BGUARD --> M_JL
+        S_BGUARD --> M_ACC
         C_BDGE --> S_BCALC
     end
 ```
@@ -256,22 +258,22 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 
 ### 7. Kontrol Anggaran & Biaya (Budgeting vs Actual)
 - **Master Anggaran**: `/accounting/budgets` $\rightarrow$ [BudgetIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Budgets/BudgetIndex.php) $\rightarrow$ [budget-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/budgets/budget-index.blade.php)
-  - Manajemen master anggaran tahunan, aktivasi anggaran per tahun buku, penutupan anggaran, duplikasi anggaran tahun lalu, dan ringkasan total pagu anggaran.
+  - Manajemen master anggaran tahunan, aktivasi anggaran per tahun buku, penutupan anggaran, duplikasi anggaran tahun lalu, dan ringkasan total pagu anggaran. Mendukung akun **Beban** (`normal_balance = 'debit'`) dan akun **Pendapatan** (`normal_balance = 'credit'/'kredit'`).
 - **Form Anggaran & Alokasi Bulanan**: `/accounting/budgets/create` & `/{id}/edit` $\rightarrow$ [BudgetForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Budgets/BudgetForm.php) $\rightarrow$ [budget-form.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/budgets/budget-form.blade.php)
   - Penentuan pagu plafon tahunan, fitur tombol auto-split 1/12 ke alokasi bulanan (M01-M12), penugasan ke unit bisnis spesifik atau konsolidasi, konfigurasi ambang batas serapan warning (default 80%).
 - **Laporan Analisis Varian Anggaran**: `/accounting/budgets/variance-report` $\rightarrow$ [BudgetVarianceReport.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Budgets/BudgetVarianceReport.php) $\rightarrow$ [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/budgets/budget-variance-report.blade.php)
-  - Analisa perbandingan real-time antara plafon pagu dengan realisasi aktual di buku besar (`JournalLine` status `posted`).
-  - Kolom Data Inti: **Akun Biaya**, **Anggaran (Rp)**, **Realisasi (Rp)**, **Sisa Pagu (Rp)**, **Serapan (%)**, dan **Status**.
-  - Tri-Klasifikasi Status Serapan: 🟢 **Terkendali** ($< 80\%$), 🟡 **Mendekati** ($80\% - 99.9\%$), dan 🔴 **Melampaui** ($\ge 100\%$).
+  - Analisa perbandingan real-time antara plafon pagu dengan realisasi aktual di buku besar (`JournalLine` status `posted`) yang dinormalisasi berdasarkan `normal_balance` akun (debit: `debit - credit`, kredit: `credit - debit`).
+  - Kolom Data Inti: **Akun Biaya/Pendapatan**, **Anggaran (Rp)**, **Realisasi (Rp)**, **Sisa Pagu (Rp)**, **Serapan (%)**, dan **Status**.
+  - Klasifikasi Status Serapan: 🟢 **Terkendali** ($0\% \le \text{rate} < 80\%$), 🟡 **Mendekati** ($80\% \le \text{rate} < 100\%$), 🔴 **Melampaui** ($\ge 100\%$), dan ⚫ **Anomali** ($< 0\%$, anomali data terbalik/retur ekstrem).
   - Bilah Filter Terpadu: Filter Tahun Buku, Filter Status Serapan, Filter Unit Bisnis, Filter Periode Bulan (M01-M12 vs Setahun Penuh), dan Pencarian Akun Cepat.
   - Kartu KPI Glassmorphic: Total Anggaran, Total Realisasi Aktual, Sisa Pagu (Varian), dan Rasio Serapan Total (%) dengan visual progress bar.
-  - **Drill-down Modal Jurnal Pembentuk**: Menampilkan rincian transaksi jurnal posting spesifik (nomor jurnal, tanggal, unit, deskripsi, debit, kredit, netto) yang membentuk saldo realisasi akun terpilih.
+  - **Drill-down Modal Jurnal Pembentuk**: Menampilkan rincian transaksi jurnal posting spesifik (nomor jurnal, tanggal, unit, deskripsi, debit, kredit, netto berbasis saldo normal akun) yang membentuk saldo realisasi akun terpilih.
 - **Ekspor Dokumen Anggaran**: [BudgetReportExportController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/BudgetReportExportController.php)
-  - Cetak PDF: Format A4 siap cetak dengan status Terkendali/Mendekati/Melampaui via [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/pdf/budget-variance-report.blade.php).
+  - Cetak PDF: Format A4 siap cetak dengan status Terkendali/Mendekati/Melampaui/Anomali via [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/pdf/budget-variance-report.blade.php).
   - Unduh CSV / Excel: Lembar kerja spreadsheet komparasi anggaran berformula sesuai parameter filter status & unit aktif.
 - **Domain Services**:
-  - [BudgetCalculationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetCalculationService.php): Agregasi realisasi buku besar, kalkulasi varian & rasio serapan, penentuan status Terkendali/Mendekati/Melampaui, filter pencarian/status, serta query rincian jurnal drill-down (`getAccountJournalDetails`).
-  - [BudgetGuardService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetGuardService.php): Evaluasi potensi kelebihan pagu anggaran (*budget overrun*) dan peringatan serapan secara langsung pada [JournalForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalForm.php).
+  - [BudgetCalculationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetCalculationService.php): Agregasi realisasi buku besar dengan normalisasi `normal_balance` (debit vs credit), kalkulasi varian & rasio serapan, penentuan 4 kategori status, filter pencarian/status, serta query rincian jurnal drill-down (`getAccountJournalDetails`).
+  - [BudgetGuardService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetGuardService.php): Evaluasi potensi kelebihan pagu anggaran (*budget overrun*) dan peringatan serapan secara langsung pada [JournalForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalForm.php) dengan penyesuaian saldo normal akun.
 
 ### 8. Suite Pengujian Otomatis Pest PHP
 - [tests/Feature/BudgetServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/BudgetServiceTest.php) (Validasi akurasi perhitungan varian BudgetCalculationService dan deteksi proteksi pelampauan pagu BudgetGuardService)

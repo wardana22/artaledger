@@ -2,6 +2,7 @@
 
 namespace App\Domain\Budget\Services;
 
+use App\Models\Account;
 use App\Models\Budget;
 use App\Models\JournalLine;
 use Illuminate\Support\Facades\DB;
@@ -45,13 +46,20 @@ class BudgetCalculationService
             $actualsQuery->where('journal_lines.unit_id', $unitId);
         }
 
-        // Net expense spending for expense/asset accounts is (debit - credit)
+        // Actual spending/revenue from posted journals normalized by account normal_balance
+        // - Debit normal accounts (Expense/Asset): debit - credit
+        // - Credit normal accounts (Revenue/Liability/Equity): credit - debit
         $actuals = $actualsQuery
             ->groupBy('journal_lines.account_id', 'journal_lines.unit_id')
             ->select(
                 'journal_lines.account_id',
                 'journal_lines.unit_id',
-                DB::raw('SUM(journal_lines.debit - journal_lines.credit) as actual_amount')
+                DB::raw("SUM(
+                    CASE 
+                        WHEN LOWER(accounts.normal_balance) IN ('credit', 'kredit') THEN (journal_lines.credit - journal_lines.debit)
+                        ELSE (journal_lines.debit - journal_lines.credit)
+                    END
+                ) as actual_amount")
             )
             ->get()
             ->keyBy(function ($item) {
@@ -146,6 +154,10 @@ class BudgetCalculationService
      */
     public function getAccountJournalDetails(int $accountId, int $year, ?int $month = null, ?int $unitId = null): array
     {
+        $account = Account::find($accountId);
+        $norm = strtolower($account->normal_balance ?? '');
+        $isCreditNormal = in_array($norm, ['credit', 'kredit']);
+
         $query = JournalLine::query()
             ->with(['journalEntry', 'unit', 'account'])
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
@@ -173,7 +185,7 @@ class BudgetCalculationService
         foreach ($lines as $line) {
             $debit = (float) $line->debit;
             $credit = (float) $line->credit;
-            $net = $debit - $credit;
+            $net = $isCreditNormal ? ($credit - $debit) : ($debit - $credit);
 
             $details[] = [
                 'id' => $line->id,
@@ -191,11 +203,14 @@ class BudgetCalculationService
             $totalCredit += $credit;
         }
 
+        $netActual = $isCreditNormal ? ($totalCredit - $totalDebit) : ($totalDebit - $totalCredit);
+
         return [
             'lines' => $details,
+            'normal_balance' => $account->normal_balance ?? 'debit',
             'total_debit' => $totalDebit,
             'total_credit' => $totalCredit,
-            'net_actual' => $totalDebit - $totalCredit,
+            'net_actual' => $netActual,
         ];
     }
 }

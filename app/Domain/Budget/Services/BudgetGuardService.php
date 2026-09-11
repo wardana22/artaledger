@@ -2,6 +2,7 @@
 
 namespace App\Domain\Budget\Services;
 
+use App\Models\Account;
 use App\Models\Budget;
 use App\Models\BudgetLine;
 use App\Models\JournalLine;
@@ -57,7 +58,14 @@ class BudgetGuardService
             ];
         }
 
-        // Calculate YTD or MTD actual spent
+        // Calculate YTD or MTD actual spent normalized by account normal_balance
+        $account = Account::find($accountId);
+        $norm = strtolower($account->normal_balance ?? '');
+        $isCreditNormal = in_array($norm, ['credit', 'kredit']);
+        $sumExpression = $isCreditNormal
+            ? 'journal_lines.credit - journal_lines.debit'
+            : 'journal_lines.debit - journal_lines.credit';
+
         $currentActual = (float) JournalLine::query()
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
@@ -66,7 +74,7 @@ class BudgetGuardService
             ->when($budgetLine->unit_id, function ($q, $uId) {
                 $q->where('journal_lines.unit_id', $uId);
             })
-            ->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
+            ->sum(DB::raw($sumExpression));
 
         $allocatedAnnual = (float) $budgetLine->annual_amount;
         $projectedTotal = $currentActual + $amount;

@@ -127,6 +127,68 @@ test('budget calculation service accurately compares budget and posted actual jo
     expect($resAnomali['items'][0]['status'])->toEqual('anomali');
 });
 
+test('budget calculation accurately calculates revenue account with normal_balance kredit as positive actual', function () {
+    $service = new BudgetCalculationService;
+
+    // Create revenue account (normal_balance = 'credit')
+    $revenueAccount = Account::create([
+        'company_id' => $this->company->id,
+        'code' => '4101',
+        'name' => 'Pendapatan Layanan Rawat Jalan',
+        'type' => 'PENDAPATAN',
+        'normal_balance' => 'credit',
+        'report_type' => 'laba_rugi',
+        'is_group' => false,
+        'is_active' => true,
+    ]);
+
+    // Budget line for revenue: 1 Milyar per tahun
+    $revBudgetLine = BudgetLine::create([
+        'budget_id' => $this->budget->id,
+        'account_id' => $revenueAccount->id,
+        'unit_id' => null,
+        'annual_amount' => 1000000000,
+        'm01_amount' => 100000000,
+        'm02_amount' => 100000000,
+    ]);
+
+    // Post journal entry for revenue with credit 850 Juta (85% of target)
+    $entry = JournalEntry::create([
+        'company_id' => $this->company->id,
+        'entry_number' => 'JU-2027-REV-001',
+        'entry_date' => '2027-02-20',
+        'description' => 'Penerimaan Pendapatan Rawat Jalan',
+        'status' => 'posted',
+        'entry_type' => 'GENERAL',
+    ]);
+
+    JournalLine::create([
+        'journal_entry_id' => $entry->id,
+        'line_no' => 1,
+        'account_id' => $revenueAccount->id,
+        'debit' => 0,
+        'credit' => 850000000, // 850 Juta kredit
+    ]);
+
+    $res = $service->calculateBudgetComparison($this->budget);
+    $revItem = collect($res['items'])->firstWhere('account_id', $revenueAccount->id);
+
+    expect($revItem)->not->toBeNull();
+    expect($revItem['budget_amount'])->toEqual(1000000000.0);
+    // Realisasi harus positif 850 Juta, bukan negatif!
+    expect($revItem['actual_amount'])->toEqual(850000000.0);
+    expect($revItem['absorption_rate'])->toEqual(85.0);
+    // Karena 85% >= threshold (80%) dan < 100%, statusnya 'mendekati', BUKAN 'anomali'
+    expect($revItem['status'])->toEqual('mendekati');
+
+    // Drill down check for revenue account
+    $drillDown = $service->getAccountJournalDetails($revenueAccount->id, 2027);
+    expect($drillDown['lines'])->toHaveCount(1);
+    expect($drillDown['normal_balance'])->toEqual('credit');
+    expect($drillDown['net_actual'])->toEqual(850000000.0);
+    expect($drillDown['lines'][0]['net_amount'])->toEqual(850000000.0);
+});
+
 test('budget guard service evaluates spending and warns when threshold or limit is exceeded', function () {
     $guard = new BudgetGuardService;
 
