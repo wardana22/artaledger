@@ -52,6 +52,9 @@
                                 {{ __('Aset Tetap & Depresiasi') }}
                             </flux:sidebar.item>
                         @endif
+                        <flux:sidebar.item icon="chart-bar" :href="route('accounting.budgets.index')" :current="request()->routeIs('accounting.budgets.*')" wire:navigate>
+                            {{ __('Anggaran & Kontrol Biaya') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
 
                     <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />

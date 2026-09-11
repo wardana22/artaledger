@@ -32,11 +32,15 @@ use App\Http\Controllers\AssetScanController;
 Route::get('/a/{code}', [AssetScanController::class, 'show'])->name('assets.scan.public');
 
 use App\Http\Controllers\BankReconciliationPdfController;
+use App\Http\Controllers\BudgetReportExportController;
 use App\Http\Controllers\FinancialReportExcelController;
 use App\Http\Controllers\FinancialReportPdfController;
 use App\Livewire\Accounting\Accounts\AccountGroupIndex;
 use App\Livewire\Accounting\Assets\DepreciationRun;
 use App\Livewire\Accounting\Assets\FixedAssetIndex;
+use App\Livewire\Accounting\Budgets\BudgetForm;
+use App\Livewire\Accounting\Budgets\BudgetIndex;
+use App\Livewire\Accounting\Budgets\BudgetVarianceReport;
 use App\Livewire\Accounting\Import\JournalImportWizard;
 use App\Livewire\Accounting\Journals\JournalTemplateIndex;
 use App\Livewire\Accounting\OpeningBalance\OpeningBalanceIndex;
@@ -87,6 +91,14 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Fixed Assets & Depreciation
     Route::get('/accounting/fixed-assets', FixedAssetIndex::class)->name('accounting.fixed-assets.index');
     Route::get('/accounting/fixed-assets/depreciation', DepreciationRun::class)->name('accounting.fixed-assets.depreciation');
+
+    // Budgeting & Cost Control
+    Route::get('/accounting/budgets', BudgetIndex::class)->name('accounting.budgets.index');
+    Route::get('/accounting/budgets/create', BudgetForm::class)->name('accounting.budgets.create');
+    Route::get('/accounting/budgets/{id}/edit', BudgetForm::class)->name('accounting.budgets.edit');
+    Route::get('/accounting/budgets/variance-report', BudgetVarianceReport::class)->name('accounting.budgets.variance-report');
+    Route::get('/accounting/budgets/reports/export/pdf', [BudgetReportExportController::class, 'exportPdf'])->name('accounting.budgets.export.pdf');
+    Route::get('/accounting/budgets/reports/export/excel', [BudgetReportExportController::class, 'exportExcel'])->name('accounting.budgets.export.excel');
 
     // Reports
     Route::get('/accounting/reports/general-ledger', GeneralLedger::class)->name('accounting.reports.general-ledger');

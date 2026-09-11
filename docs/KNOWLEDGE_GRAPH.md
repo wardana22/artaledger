@@ -122,6 +122,25 @@ graph TD
         S_RPDF --> M_CMP
         S_RXLS --> M_CMP
     end
+
+    subgraph SG_Budget["7. Kontrol Anggaran & Biaya (Budgeting vs Actual)"]
+        A_BDG["Route: /accounting/budgets"] --> B_BDG["Livewire: BudgetIndex"]
+        A_BDGF["Route: /accounting/budgets/create, /{id}/edit"] --> B_BDGF["Livewire: BudgetForm"]
+        A_BDGV["Route: /accounting/budgets/variance-report"] --> B_BDGV["Livewire: BudgetVarianceReport"]
+        A_BDGP["Route: /accounting/budgets/reports/export/pdf"] --> C_BDGE["Controller: BudgetReportExportController"]
+        A_BDGX["Route: /accounting/budgets/reports/export/excel"] --> C_BDGE
+
+        B_BDGV --> S_BCALC["Service: BudgetCalculationService"]
+        B_JRN --> S_BGUARD["Service: BudgetGuardService (Warning Mode)"]
+        
+        S_BCALC --> M_BDG["Model: Budget"]
+        S_BCALC --> M_BDGL["Model: BudgetLine"]
+        S_BCALC --> M_JL
+        S_BGUARD --> M_BDG
+        S_BGUARD --> M_BDGL
+        S_BGUARD --> M_JL
+        C_BDGE --> S_BCALC
+    end
 ```
 
 ---
@@ -235,7 +254,23 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 landscape cetak siap tanda tangan)
 - **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Spreadsheet multi-kolom bucket dengan format akuntansi)
 
-### 7. Suite Pengujian Otomatis Pest PHP
+### 7. Kontrol Anggaran & Biaya (Budgeting vs Actual)
+- **Master Anggaran**: `/accounting/budgets` $\rightarrow$ [BudgetIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Budgets/BudgetIndex.php) $\rightarrow$ [budget-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/budgets/budget-index.blade.php)
+  - Manajemen master anggaran tahunan, aktivasi anggaran per tahun buku, penutupan anggaran, duplikasi anggaran tahun lalu, dan ringkasan total pagu anggaran.
+- **Form Anggaran & Alokasi Bulanan**: `/accounting/budgets/create` & `/{id}/edit` $\rightarrow$ [BudgetForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Budgets/BudgetForm.php) $\rightarrow$ [budget-form.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/budgets/budget-form.blade.php)
+  - Penentuan pagu plafon tahunan, fitur tombol auto-split 1/12 ke alokasi bulanan (M01-M12), penugasan ke unit bisnis spesifik atau konsolidasi, konfigurasi ambang batas serapan warning (default 80%).
+- **Laporan Analisis Varian Anggaran**: `/accounting/budgets/variance-report` $\rightarrow$ [BudgetVarianceReport.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Budgets/BudgetVarianceReport.php) $\rightarrow$ [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/budgets/budget-variance-report.blade.php)
+  - Analisa perbandingan real-time antara plafon pagu dengan realisasi aktual di buku besar (`JournalLine` status `posted`).
+  - Kartu KPI Glassmorphic: Total Anggaran, Total Realisasi Aktual, Sisa Pagu (Varian), dan Rasio Serapan Total (%) dengan visual progress bar.
+- **Ekspor Dokumen Anggaran**: [BudgetReportExportController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/BudgetReportExportController.php)
+  - Cetak PDF: Format A4 siap cetak via [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/pdf/budget-variance-report.blade.php).
+  - Unduh CSV / Excel: Lembar kerja spreadsheet komparasi anggaran berformula.
+- **Domain Services**:
+  - [BudgetCalculationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetCalculationService.php): Agregasi realisasi buku besar dan perhitungan varian & rasio serapan.
+  - [BudgetGuardService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetGuardService.php): Evaluasi potensi kelebihan pagu anggaran (*budget overrun*) dan peringatan serapan secara langsung pada [JournalForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalForm.php).
+
+### 8. Suite Pengujian Otomatis Pest PHP
+- [tests/Feature/BudgetServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/BudgetServiceTest.php) (Validasi akurasi perhitungan varian BudgetCalculationService dan deteksi proteksi pelampauan pagu BudgetGuardService)
 - [tests/Feature/Accounting/AgingReportServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportServiceTest.php) (Validasi Single Assign, Split Invoicing 1-ke-Banyak, Specific Invoice Settlement, dan Akurasi Bucket Umur)
 - [tests/Feature/Accounting/AgingReportLivewireTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportLivewireTest.php) (Uji UI Livewire AgingReport, Tab Switcher, Modal Penugasan Invoice, serta Ekspor PDF & Excel)
 - [tests/Feature/Dashboard/DashboardMetricEngineTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Dashboard/DashboardMetricEngineTest.php) (Validasi Engine 12 Metrik Eksekutif, Rasio Finansial, Multi-series Tren 12 Bulan, dan Seeder Grup Akun Kustom)

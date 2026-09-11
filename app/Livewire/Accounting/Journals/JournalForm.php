@@ -3,6 +3,7 @@
 namespace App\Livewire\Accounting\Journals;
 
 use App\Domain\Accounting\Services\JournalPostingService;
+use App\Domain\Budget\Services\BudgetGuardService;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\JournalTemplate;
@@ -31,9 +32,42 @@ class JournalForm extends Component
 
     public array $lines = [];
 
+    public array $budgetWarnings = [];
+
     public ?int $journal_entry_id = null;
 
     public bool $is_edit = false;
+
+    public function checkBudgetWarning(int $index): void
+    {
+        if (! isset($this->lines[$index])) {
+            return;
+        }
+
+        $line = $this->lines[$index];
+        $accountId = ! empty($line['account_id']) ? (int) $line['account_id'] : null;
+        $debit = ! empty($line['debit']) ? (float) $line['debit'] : 0.0;
+        $unitId = ! empty($line['unit_id']) ? (int) $line['unit_id'] : null;
+        $entryDate = ! empty($this->entry_date) ? $this->entry_date : date('Y-m-d');
+
+        if (! $accountId || $debit <= 0) {
+            unset($this->budgetWarnings[$index]);
+
+            return;
+        }
+
+        $guard = new BudgetGuardService;
+        $eval = $guard->evaluateSpending($accountId, $debit, $entryDate, $unitId);
+
+        if ($eval['has_budget'] && in_array($eval['status'], ['warning', 'exceeded'])) {
+            $this->budgetWarnings[$index] = [
+                'status' => $eval['status'],
+                'message' => $eval['warning_message'],
+            ];
+        } else {
+            unset($this->budgetWarnings[$index]);
+        }
+    }
 
     public function updatedSelectedTemplateId($value): void
     {
