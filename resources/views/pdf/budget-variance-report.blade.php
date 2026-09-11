@@ -80,15 +80,15 @@
         .text-center {
             text-align: center;
         }
-        .status-safe {
+        .status-terkendali {
             color: #065f46;
             font-weight: bold;
         }
-        .status-warning {
+        .status-mendekati {
             color: #92400e;
             font-weight: bold;
         }
-        .status-exceeded {
+        .status-melampaui {
             color: #991b1b;
             font-weight: bold;
         }

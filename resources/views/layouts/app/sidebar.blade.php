@@ -111,6 +111,9 @@
                             <flux:sidebar.item icon="clock" :href="route('accounting.reports.aging')" :current="request()->routeIs('accounting.reports.aging')" wire:navigate>
                                 {{ __('Aging Hutang / Piutang') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="chart-pie" :href="route('accounting.budgets.variance-report')" :current="request()->routeIs('accounting.budgets.variance-report')" wire:navigate>
+                                {{ __('Laporan Varian Anggaran') }}
+                            </flux:sidebar.item>
                         @endif
                     </flux:sidebar.group>
 
