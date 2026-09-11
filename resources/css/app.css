@@ -107,3 +107,14 @@ select:focus[data-flux-control] {
     }
 }
 
+/* Sidebar Brand Text Visibility Control */
+[data-flux-sidebar-collapsed-desktop] .sidebar-brand-text {
+    display: none !important;
+}
+
+[data-flux-sidebar-collapsed-desktop] [data-flux-sidebar-header] > div {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+
