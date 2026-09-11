@@ -116,10 +116,62 @@
                                     <input wire:model="lines.{{ $index }}.description" type="text" placeholder="Keterangan baris..." class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs dark:text-slate-200" />
                                 </td>
                                 <td class="px-4 py-3">
-                                    <input wire:model.live="lines.{{ $index }}.debit" type="number" step="0.01" class="w-full px-2.5 py-1.5 text-right font-mono font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-amber-600 dark:text-amber-400" />
+                                    <div x-data="{
+                                        raw: @entangle('lines.'.$index.'.debit').live,
+                                        formatted: '',
+                                        scale: '',
+                                        updateFormatted() {
+                                            this.formatted = window.formatMoneyId(this.raw);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                        },
+                                        onInput(e) {
+                                            let clean = e.target.value.replace(/[^0-9]/g, '');
+                                            this.raw = clean === '' ? 0 : parseFloat(clean);
+                                            this.formatted = window.formatMoneyId(clean);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                        }
+                                    }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())" class="relative">
+                                        <input 
+                                            type="text" 
+                                            inputmode="numeric"
+                                            x-model="formatted" 
+                                            @input="onInput($event)"
+                                            class="w-full px-2.5 py-1.5 text-right font-mono font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-amber-600 dark:text-amber-400 focus:ring-2 focus:ring-amber-500"
+                                            placeholder="0"
+                                        />
+                                        <template x-if="scale">
+                                            <div class="text-[9px] font-semibold text-amber-500 dark:text-amber-400 text-right mt-0.5 tracking-tighter truncate" x-text="scale"></div>
+                                        </template>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <input wire:model.live="lines.{{ $index }}.credit" type="number" step="0.01" class="w-full px-2.5 py-1.5 text-right font-mono font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-purple-600 dark:text-purple-400" />
+                                    <div x-data="{
+                                        raw: @entangle('lines.'.$index.'.credit').live,
+                                        formatted: '',
+                                        scale: '',
+                                        updateFormatted() {
+                                            this.formatted = window.formatMoneyId(this.raw);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                        },
+                                        onInput(e) {
+                                            let clean = e.target.value.replace(/[^0-9]/g, '');
+                                            this.raw = clean === '' ? 0 : parseFloat(clean);
+                                            this.formatted = window.formatMoneyId(clean);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                        }
+                                    }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())" class="relative">
+                                        <input 
+                                            type="text" 
+                                            inputmode="numeric"
+                                            x-model="formatted" 
+                                            @input="onInput($event)"
+                                            class="w-full px-2.5 py-1.5 text-right font-mono font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-purple-600 dark:text-purple-400 focus:ring-2 focus:ring-purple-500"
+                                            placeholder="0"
+                                        />
+                                        <template x-if="scale">
+                                            <div class="text-[9px] font-semibold text-purple-500 dark:text-purple-400 text-right mt-0.5 tracking-tighter truncate" x-text="scale"></div>
+                                        </template>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <button type="button" wire:click="removeLine({{ $index }})" class="text-slate-400 hover:text-rose-500 p-1">

@@ -430,7 +430,27 @@
                                             </div>
                                             <div>
                                                 <label class="text-[10px] text-slate-400">Nominal (Rp)</label>
-                                                <input type="number" step="0.01" wire:model.live="splitRows.{{ $idx }}.original_amount" class="w-full px-2 py-1 bg-white dark:bg-slate-900 border rounded text-xs font-semibold">
+                                                <div x-data="{
+                                                    raw: @entangle('splitRows.'.$idx.'.original_amount').live,
+                                                    formatted: '',
+                                                    updateFormatted() {
+                                                        this.formatted = window.formatMoneyId(this.raw);
+                                                    },
+                                                    onInput(e) {
+                                                        let clean = e.target.value.replace(/[^0-9]/g, '');
+                                                        this.raw = clean === '' ? 0 : parseFloat(clean);
+                                                        this.formatted = window.formatMoneyId(clean);
+                                                    }
+                                                }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())">
+                                                    <input 
+                                                        type="text" 
+                                                        inputmode="numeric"
+                                                        x-model="formatted" 
+                                                        @input="onInput($event)"
+                                                        class="w-full px-2 py-1 bg-white dark:bg-slate-900 border rounded text-xs font-semibold text-right"
+                                                        placeholder="0"
+                                                    >
+                                                </div>
                                             </div>
                                             <div>
                                                 <label class="text-[10px] text-slate-400">Jatuh Tempo</label>
@@ -663,12 +683,33 @@
 
                     <div class="space-y-1">
                         <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nominal Faktur (Rp) <span class="text-rose-500">*</span></label>
-                        <input 
-                            type="number" 
-                            step="0.01" 
-                            wire:model="editOriginalAmount" 
-                            class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold font-mono focus:ring-2 focus:ring-emerald-500 outline-none"
-                        >
+                        <div x-data="{
+                            raw: @entangle('editOriginalAmount'),
+                            formatted: '',
+                            scale: '',
+                            updateFormatted() {
+                                this.formatted = window.formatMoneyId(this.raw);
+                                this.scale = window.getTerbilangScale(this.raw);
+                            },
+                            onInput(e) {
+                                let clean = e.target.value.replace(/[^0-9]/g, '');
+                                this.raw = clean === '' ? 0 : parseFloat(clean);
+                                this.formatted = window.formatMoneyId(clean);
+                                this.scale = window.getTerbilangScale(this.raw);
+                            }
+                        }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())" class="relative">
+                            <input 
+                                type="text" 
+                                inputmode="numeric"
+                                x-model="formatted" 
+                                @input="onInput($event)"
+                                class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold font-mono focus:ring-2 focus:ring-emerald-500 outline-none"
+                                placeholder="0"
+                            >
+                            <template x-if="scale">
+                                <div class="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 text-right mt-1 tracking-tight truncate" x-text="scale"></div>
+                            </template>
+                        </div>
                         @error('editOriginalAmount') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
                     </div>
 
@@ -797,12 +838,33 @@
                                         Bayar Penuh (Rp {{ number_format($settleRemainingBalance, 2, ',', '.') }})
                                     </button>
                                 </div>
-                                <input 
-                                    type="number" 
-                                    step="0.01" 
-                                    wire:model="settleAmount" 
-                                    class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
-                                >
+                                <div x-data="{
+                                    raw: @entangle('settleAmount'),
+                                    formatted: '',
+                                    scale: '',
+                                    updateFormatted() {
+                                        this.formatted = window.formatMoneyId(this.raw);
+                                        this.scale = window.getTerbilangScale(this.raw);
+                                    },
+                                    onInput(e) {
+                                        let clean = e.target.value.replace(/[^0-9]/g, '');
+                                        this.raw = clean === '' ? 0 : parseFloat(clean);
+                                        this.formatted = window.formatMoneyId(clean);
+                                        this.scale = window.getTerbilangScale(this.raw);
+                                    }
+                                }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())" class="relative">
+                                    <input 
+                                        type="text" 
+                                        inputmode="numeric"
+                                        x-model="formatted" 
+                                        @input="onInput($event)"
+                                        class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        placeholder="0"
+                                    >
+                                    <template x-if="scale">
+                                        <div class="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 text-right mt-1 tracking-tight truncate" x-text="scale"></div>
+                                    </template>
+                                </div>
                                 @error('settleAmount') <span class="text-[10px] text-rose-500">{{ $message }}</span> @enderror
                             </div>
 

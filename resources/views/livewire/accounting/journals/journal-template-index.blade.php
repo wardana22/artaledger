@@ -221,11 +221,47 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-span-2">
-                                        <input wire:model="lines.{{ $index }}.debit" type="number" step="0.01" placeholder="Debit" class="w-full px-2 py-1 text-right font-mono font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-indigo-600" />
+                                    <div class="col-span-2" x-data="{
+                                        raw: @entangle('lines.'.$index.'.debit'),
+                                        formatted: '',
+                                        updateFormatted() {
+                                            this.formatted = window.formatMoneyId(this.raw);
+                                        },
+                                        onInput(e) {
+                                            let clean = e.target.value.replace(/[^0-9]/g, '');
+                                            this.raw = clean === '' ? 0 : parseFloat(clean);
+                                            this.formatted = window.formatMoneyId(clean);
+                                        }
+                                    }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())">
+                                        <input 
+                                            type="text" 
+                                            inputmode="numeric"
+                                            x-model="formatted" 
+                                            @input="onInput($event)"
+                                            placeholder="Debit" 
+                                            class="w-full px-2 py-1 text-right font-mono font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-indigo-600 focus:ring-1 focus:ring-indigo-500" 
+                                        />
                                     </div>
-                                    <div class="col-span-2">
-                                        <input wire:model="lines.{{ $index }}.credit" type="number" step="0.01" placeholder="Kredit" class="w-full px-2 py-1 text-right font-mono font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-purple-600" />
+                                    <div class="col-span-2" x-data="{
+                                        raw: @entangle('lines.'.$index.'.credit'),
+                                        formatted: '',
+                                        updateFormatted() {
+                                            this.formatted = window.formatMoneyId(this.raw);
+                                        },
+                                        onInput(e) {
+                                            let clean = e.target.value.replace(/[^0-9]/g, '');
+                                            this.raw = clean === '' ? 0 : parseFloat(clean);
+                                            this.formatted = window.formatMoneyId(clean);
+                                        }
+                                    }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())">
+                                        <input 
+                                            type="text" 
+                                            inputmode="numeric"
+                                            x-model="formatted" 
+                                            @input="onInput($event)"
+                                            placeholder="Kredit" 
+                                            class="w-full px-2 py-1 text-right font-mono font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs text-purple-600 focus:ring-1 focus:ring-purple-500" 
+                                        />
                                     </div>
                                     <div class="col-span-1 text-center">
                                         <button type="button" wire:click="removeLine({{ $index }})" class="text-slate-400 hover:text-rose-500">

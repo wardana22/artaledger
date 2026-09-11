@@ -222,14 +222,34 @@
                                         Rp {{ number_format($calc['retained_earnings_amount'], 2, ',', '.') }}
                                     </div>
                                 @else
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
-                                        wire:model.live.debounce.350ms="balances.{{ $accId }}.amount" 
-                                        @disabled($isLocked)
-                                        class="w-full text-right px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-transparent disabled:border-transparent disabled:text-slate-800 dark:disabled:text-slate-200"
-                                        placeholder="0,00"
-                                    >
+                                    <div x-data="{
+                                        raw: @entangle('balances.'.$accId.'.amount').live,
+                                        formatted: '',
+                                        scale: '',
+                                        updateFormatted() {
+                                            this.formatted = window.formatMoneyId(this.raw);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                        },
+                                        onInput(e) {
+                                            let clean = e.target.value.replace(/[^0-9]/g, '');
+                                            this.raw = clean === '' ? 0 : parseFloat(clean);
+                                            this.formatted = window.formatMoneyId(clean);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                        }
+                                    }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())" class="relative">
+                                        <input 
+                                            type="text" 
+                                            inputmode="numeric"
+                                            x-model="formatted" 
+                                            @input="onInput($event)"
+                                            @disabled($isLocked)
+                                            class="w-full text-right px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-transparent disabled:border-transparent disabled:text-slate-800 dark:disabled:text-slate-200"
+                                            placeholder="0"
+                                        >
+                                        <template x-if="scale">
+                                            <div class="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 text-right mt-0.5 tracking-tighter truncate" x-text="scale"></div>
+                                        </template>
+                                    </div>
                                 @endif
                             </td>
                         </tr>

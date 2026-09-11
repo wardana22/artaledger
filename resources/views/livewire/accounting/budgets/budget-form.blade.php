@@ -98,20 +98,20 @@
                     <tr>
                         <th class="px-4 py-3 min-w-[220px]">Akun Biaya</th>
                         <th class="px-4 py-3 min-w-[140px]">Unit Bisnis</th>
-                        <th class="px-4 py-3 min-w-[150px] text-right">Plafon Tahunan (Rp)</th>
-                        <th class="px-3 py-3 text-center min-w-[90px]">Auto 1/12</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Jan</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Feb</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Mar</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Apr</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Mei</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Jun</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Jul</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Ags</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Sep</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Okt</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Nov</th>
-                        <th class="px-3 py-3 min-w-[90px] text-right">Des</th>
+                        <th class="px-4 py-3 min-w-[180px] text-right">Plafon Tahunan (Rp)</th>
+                        <th class="px-3 py-3 text-center min-w-[80px]">Auto 1/12</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Jan</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Feb</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Mar</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Apr</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Mei</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Jun</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Jul</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Ags</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Sep</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Okt</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Nov</th>
+                        <th class="px-3 py-3 min-w-[125px] text-right">Des</th>
                         <th class="px-3 py-3 text-center">Hapus</th>
                     </tr>
                 </thead>
@@ -140,7 +140,33 @@
 
                             <!-- Annual Plafon -->
                             <td class="px-4 py-2">
-                                <input type="number" step="1000" wire:model.live.debounce.500ms="lines.{{ $idx }}.annual_amount" class="w-full text-right bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-xs font-semibold text-gray-900 dark:text-white">
+                                <div x-data="{
+                                    raw: @entangle('lines.'.$idx.'.annual_amount').live,
+                                    formatted: '',
+                                    scale: '',
+                                    updateFormatted() {
+                                        this.formatted = window.formatMoneyId(this.raw);
+                                        this.scale = window.getTerbilangScale(this.raw);
+                                    },
+                                    onInput(e) {
+                                        let clean = e.target.value.replace(/[^0-9]/g, '');
+                                        this.raw = clean === '' ? 0 : parseFloat(clean);
+                                        this.formatted = window.formatMoneyId(clean);
+                                        this.scale = window.getTerbilangScale(this.raw);
+                                    }
+                                }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())" class="relative">
+                                    <input 
+                                        type="text" 
+                                        inputmode="numeric"
+                                        x-model="formatted" 
+                                        @input="onInput($event)"
+                                        class="w-full text-right bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-xs font-bold font-mono text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                        placeholder="0"
+                                    >
+                                    <template x-if="scale">
+                                        <div class="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 text-right mt-0.5 tracking-tight truncate" x-text="scale"></div>
+                                    </template>
+                                </div>
                             </td>
 
                             <!-- Auto Split Button -->
@@ -154,7 +180,34 @@
                             @for ($m = 1; $m <= 12; $m++)
                                 @php $pad = str_pad((string)$m, 2, '0', STR_PAD_LEFT); @endphp
                                 <td class="px-2 py-2">
-                                    <input type="number" step="1000" wire:model.live.debounce.500ms="lines.{{ $idx }}.m{{ $pad }}_amount" wire:change="sumMonthlyToAnnual({{ $idx }})" class="w-20 text-right bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-1.5 py-1 text-[11px] text-gray-900 dark:text-white">
+                                    <div x-data="{
+                                        raw: @entangle('lines.'.$idx.'.m'.$pad.'_amount').live,
+                                        formatted: '',
+                                        scale: '',
+                                        updateFormatted() {
+                                            this.formatted = window.formatMoneyId(this.raw);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                        },
+                                        onInput(e) {
+                                            let clean = e.target.value.replace(/[^0-9]/g, '');
+                                            this.raw = clean === '' ? 0 : parseFloat(clean);
+                                            this.formatted = window.formatMoneyId(clean);
+                                            this.scale = window.getTerbilangScale(this.raw);
+                                            $wire.sumMonthlyToAnnual({{ $idx }});
+                                        }
+                                    }" x-init="updateFormatted(); $watch('raw', () => updateFormatted())" class="relative">
+                                        <input 
+                                            type="text" 
+                                            inputmode="numeric"
+                                            x-model="formatted" 
+                                            @input="onInput($event)"
+                                            class="w-28 text-right bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 text-[11px] font-mono text-gray-900 dark:text-white focus:ring-1 focus:ring-indigo-500"
+                                            placeholder="0"
+                                        >
+                                        <template x-if="scale">
+                                            <div class="text-[9px] font-semibold text-gray-500 dark:text-gray-400 text-right mt-0.5 tracking-tighter truncate" x-text="scale"></div>
+                                        </template>
+                                    </div>
                                 </td>
                             @endfor
 
