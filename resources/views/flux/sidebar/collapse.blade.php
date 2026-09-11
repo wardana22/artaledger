@@ -13,14 +13,12 @@
 
 @php
 $classes = Flux::classes()
-    ->add('w-10 h-8 shrink-0 flex items-center justify-center')
-    ->add('in-data-flux-sidebar-collapsed-desktop:mt-1 in-data-flux-sidebar-collapsed-desktop:w-auto')
+    ->add('w-8 h-8 shrink-0 flex items-center justify-center')
     ->add($inset ? Flux::applyInset($inset, top: '-mt-2.5', right: '-me-2.5', bottom: '-mb-2.5', left: '-ms-2.5') : '')
     ;
 
 $buttonClasses = Flux::classes()
-    ->add('size-8 relative items-center font-medium justify-center gap-2 whitespace-nowrap disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none text-sm rounded-lg inline-flex bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors cursor-pointer')
-    ->add('[&[collapsible="mobile"]]:in-data-flux-sidebar-on-desktop:hidden')
+    ->add('size-8 relative items-center font-medium justify-center gap-2 whitespace-nowrap disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none text-sm rounded-lg inline-flex bg-slate-100/80 hover:bg-indigo-50 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs border border-slate-200/60 dark:border-slate-700/60')
     ->add('rtl:rotate-180')
     ;
 @endphp

@@ -36,7 +36,7 @@ class Company extends Model
     public function getLogoUrlAttribute(): ?string
     {
         if ($this->logo_path && Storage::disk('public')->exists($this->logo_path)) {
-            return Storage::disk('public')->url($this->logo_path);
+            return '/storage/'.ltrim($this->logo_path, '/');
         }
 
         return null;

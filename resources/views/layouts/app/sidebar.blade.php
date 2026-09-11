@@ -9,13 +9,18 @@
                 $company = \App\Models\Company::first();
                 $appName = $company?->app_name ?? config('app.name', 'ArtaLedger');
             @endphp
-            <flux:sidebar.header class="flex items-center gap-2.5 px-3 py-2 in-data-flux-sidebar-collapsed-desktop:px-1 in-data-flux-sidebar-collapsed-desktop:justify-center">
-                <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
-                <a href="{{ route('dashboard') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight in-data-flux-sidebar-collapsed-desktop:hidden">
-                    <span class="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ $appName }}</span>
-                    <span class="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ $company?->name ?? 'PT ArtaLedger Enterprise' }}</span>
+            <flux:sidebar.header class="flex flex-col gap-2 p-2.5 in-data-flux-sidebar-collapsed-desktop:p-1 in-data-flux-sidebar-collapsed-desktop:items-center">
+                <!-- Baris Atas: Logo & Tombol Toggle Collapse -->
+                <div class="flex items-center justify-between w-full in-data-flux-sidebar-collapsed-desktop:flex-col in-data-flux-sidebar-collapsed-desktop:gap-2">
+                    <x-app-logo href="{{ route('dashboard') }}" wire:navigate class="shrink-0" />
+                    <flux:sidebar.collapse class="shrink-0" :tooltip="__('Toggle sidebar')" />
+                </div>
+
+                <!-- Baris Bawah: Nama Aplikasi & Perusahaan (Di bawah logo, sembunyi saat collapsed) -->
+                <a href="{{ route('dashboard') }}" wire:navigate class="flex flex-col overflow-hidden leading-tight in-data-flux-sidebar-collapsed-desktop:hidden pt-0.5 border-t border-slate-100 dark:border-slate-800/80 mt-1">
+                    <span class="text-xs font-extrabold tracking-tight text-slate-900 dark:text-white truncate">{{ $appName }}</span>
+                    <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">{{ $company?->name ?? 'PT ArtaLedger Enterprise' }}</span>
                 </a>
-                <flux:sidebar.collapse class="ms-auto" :tooltip="__('Toggle sidebar')" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav class="space-y-2">
