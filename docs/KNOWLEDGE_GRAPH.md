@@ -261,12 +261,16 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
   - Penentuan pagu plafon tahunan, fitur tombol auto-split 1/12 ke alokasi bulanan (M01-M12), penugasan ke unit bisnis spesifik atau konsolidasi, konfigurasi ambang batas serapan warning (default 80%).
 - **Laporan Analisis Varian Anggaran**: `/accounting/budgets/variance-report` $\rightarrow$ [BudgetVarianceReport.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Budgets/BudgetVarianceReport.php) $\rightarrow$ [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/budgets/budget-variance-report.blade.php)
   - Analisa perbandingan real-time antara plafon pagu dengan realisasi aktual di buku besar (`JournalLine` status `posted`).
+  - Kolom Data Inti: **Akun Biaya**, **Anggaran (Rp)**, **Realisasi (Rp)**, **Sisa Pagu (Rp)**, **Serapan (%)**, dan **Status**.
+  - Tri-Klasifikasi Status Serapan: 🟢 **Terkendali** ($< 80\%$), 🟡 **Mendekati** ($80\% - 99.9\%$), dan 🔴 **Melampaui** ($\ge 100\%$).
+  - Bilah Filter Terpadu: Filter Tahun Buku, Filter Status Serapan, Filter Unit Bisnis, Filter Periode Bulan (M01-M12 vs Setahun Penuh), dan Pencarian Akun Cepat.
   - Kartu KPI Glassmorphic: Total Anggaran, Total Realisasi Aktual, Sisa Pagu (Varian), dan Rasio Serapan Total (%) dengan visual progress bar.
+  - **Drill-down Modal Jurnal Pembentuk**: Menampilkan rincian transaksi jurnal posting spesifik (nomor jurnal, tanggal, unit, deskripsi, debit, kredit, netto) yang membentuk saldo realisasi akun terpilih.
 - **Ekspor Dokumen Anggaran**: [BudgetReportExportController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/BudgetReportExportController.php)
-  - Cetak PDF: Format A4 siap cetak via [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/pdf/budget-variance-report.blade.php).
-  - Unduh CSV / Excel: Lembar kerja spreadsheet komparasi anggaran berformula.
+  - Cetak PDF: Format A4 siap cetak dengan status Terkendali/Mendekati/Melampaui via [budget-variance-report.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/pdf/budget-variance-report.blade.php).
+  - Unduh CSV / Excel: Lembar kerja spreadsheet komparasi anggaran berformula sesuai parameter filter status & unit aktif.
 - **Domain Services**:
-  - [BudgetCalculationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetCalculationService.php): Agregasi realisasi buku besar dan perhitungan varian & rasio serapan.
+  - [BudgetCalculationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetCalculationService.php): Agregasi realisasi buku besar, kalkulasi varian & rasio serapan, penentuan status Terkendali/Mendekati/Melampaui, filter pencarian/status, serta query rincian jurnal drill-down (`getAccountJournalDetails`).
   - [BudgetGuardService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetGuardService.php): Evaluasi potensi kelebihan pagu anggaran (*budget overrun*) dan peringatan serapan secara langsung pada [JournalForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalForm.php).
 
 ### 8. Suite Pengujian Otomatis Pest PHP

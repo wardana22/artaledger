@@ -70,7 +70,7 @@ test('budget calculation service accurately compares budget and posted actual jo
     expect($res['summary']['total_budget'])->toEqual(120000000.0);
     expect($res['summary']['total_actual'])->toEqual(0.0);
     expect($res['summary']['total_variance'])->toEqual(120000000.0);
-    expect($res['items'][0]['status'])->toEqual('safe');
+    expect($res['items'][0]['status'])->toEqual('terkendali');
 
     // 2. Post a journal entry for Beban Operasional Kantor
     $entry = JournalEntry::create([
@@ -95,14 +95,20 @@ test('budget calculation service accurately compares budget and posted actual jo
     expect($resAnnual['summary']['total_actual'])->toEqual(85000000.0);
     expect($resAnnual['summary']['total_variance'])->toEqual(35000000.0);
     expect($resAnnual['items'][0]['absorption_rate'])->toEqual(70.83);
-    expect($resAnnual['items'][0]['status'])->toEqual('safe');
+    expect($resAnnual['items'][0]['status'])->toEqual('terkendali');
 
     // Test month 2 calculation (Budget = 10 Juta, Actual = 85 Juta -> Over budget)
     $resFeb = $service->calculateBudgetComparison($this->budget, 2);
     expect($resFeb['summary']['total_budget'])->toEqual(10000000.0);
     expect($resFeb['summary']['total_actual'])->toEqual(85000000.0);
     expect($resFeb['summary']['total_variance'])->toEqual(-75000000.0);
-    expect($resFeb['items'][0]['status'])->toEqual('exceeded');
+    expect($resFeb['items'][0]['status'])->toEqual('melampaui');
+
+    // Test Drill-down details
+    $drillDown = $service->getAccountJournalDetails($this->account->id, 2027);
+    expect($drillDown['lines'])->toHaveCount(1);
+    expect($drillDown['net_actual'])->toEqual(85000000.0);
+    expect($drillDown['lines'][0]['entry_number'])->toEqual('JU-2027-001');
 });
 
 test('budget guard service evaluates spending and warns when threshold or limit is exceeded', function () {

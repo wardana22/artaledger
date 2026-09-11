@@ -16,11 +16,13 @@ class BudgetReportExportController extends Controller
         $budgetId = (int) $request->query('budgetId');
         $month = $request->filled('month') ? (int) $request->query('month') : null;
         $unitId = $request->filled('unitId') ? (int) $request->query('unitId') : null;
+        $status = $request->query('status', 'all');
+        $search = $request->query('search', '');
 
         $budget = Budget::findOrFail($budgetId);
         $company = Company::first();
 
-        $reportData = $service->calculateBudgetComparison($budget, $month, $unitId);
+        $reportData = $service->calculateBudgetComparison($budget, $month, $unitId, $status, $search);
 
         $monthNames = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -46,9 +48,11 @@ class BudgetReportExportController extends Controller
         $budgetId = (int) $request->query('budgetId');
         $month = $request->filled('month') ? (int) $request->query('month') : null;
         $unitId = $request->filled('unitId') ? (int) $request->query('unitId') : null;
+        $status = $request->query('status', 'all');
+        $search = $request->query('search', '');
 
         $budget = Budget::findOrFail($budgetId);
-        $reportData = $service->calculateBudgetComparison($budget, $month, $unitId);
+        $reportData = $service->calculateBudgetComparison($budget, $month, $unitId, $status, $search);
 
         $periodLabel = $month ? "Bulan-{$month}" : 'Tahunan';
         $filename = "Laporan-Varian-Anggaran-{$budget->fiscal_year}-{$periodLabel}.csv";
@@ -91,6 +95,13 @@ class BudgetReportExportController extends Controller
 
             // Table rows
             foreach ($reportData['items'] as $item) {
+                $statusLabel = match ($item['status']) {
+                    'terkendali' => 'TERKENDALI',
+                    'mendekati' => 'MENDEKATI',
+                    'melampaui' => 'MELAMPAUI',
+                    default => strtoupper($item['status']),
+                };
+
                 fputcsv($handle, [
                     $item['account_code'],
                     $item['account_name'],
@@ -99,7 +110,7 @@ class BudgetReportExportController extends Controller
                     $item['actual_amount'],
                     $item['variance_amount'],
                     $item['absorption_rate'].'%',
-                    strtoupper($item['status']),
+                    $statusLabel,
                 ]);
             }
 

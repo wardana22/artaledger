@@ -167,7 +167,15 @@
                         {{ number_format($row['variance_amount'], 0, ',', '.') }}
                     </td>
                     <td class="text-center">
-                        <span class="status-{{ $row['status'] }}">{{ $row['absorption_rate'] }}%</span>
+                        @php
+                            $badgeLabel = match($row['status']) {
+                                'terkendali' => 'Terkendali',
+                                'mendekati' => 'Mendekati',
+                                'melampaui' => 'Melampaui',
+                                default => ucfirst($row['status'])
+                            };
+                        @endphp
+                        <span class="status-{{ $row['status'] }}">{{ $row['absorption_rate'] }}% ({{ $badgeLabel }})</span>
                     </td>
                 </tr>
             @empty
