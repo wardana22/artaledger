@@ -72,6 +72,7 @@
                 <option value="terkendali">🟢 Terkendali (&lt; 80%)</option>
                 <option value="mendekati">🟡 Mendekati (80% - 99.9%)</option>
                 <option value="melampaui">🔴 Melampaui (≥ 100%)</option>
+                <option value="anomali">⚫ Anomali (Realisasi Tidak Wajar)</option>
             </select>
         </div>
 
@@ -216,7 +217,7 @@
                                     </div>
                                 </td>
 
-                                <!-- Status: Terkendali / Mendekati / Melampaui -->
+                                {{-- Status: Terkendali / Mendekati / Melampaui / Anomali --}}
                                 <td class="px-4 py-4 text-center">
                                     @if ($item['status'] === 'terkendali')
                                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -228,10 +229,16 @@
                                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                                             Mendekati
                                         </span>
-                                    @else
+                                    @elseif ($item['status'] === 'melampaui')
                                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                                             <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                                             Melampaui
+                                        </span>
+                                    @else
+                                        {{-- Anomali: realisasi negatif atau tidak wajar, perlu diperiksa --}}
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700/80 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600" title="Realisasi bernilai negatif atau nol — kemungkinan akun pendapatan atau data perlu diperiksa">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                            Anomali
                                         </span>
                                     @endif
                                 </td>

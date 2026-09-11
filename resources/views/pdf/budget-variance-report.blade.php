@@ -92,6 +92,10 @@
             color: #991b1b;
             font-weight: bold;
         }
+        .status-anomali {
+            color: #6b7280;
+            font-weight: bold;
+        }
         .footer {
             position: fixed;
             bottom: 0;
@@ -172,6 +176,7 @@
                                 'terkendali' => 'Terkendali',
                                 'mendekati' => 'Mendekati',
                                 'melampaui' => 'Melampaui',
+                                'anomali' => 'Anomali (!)',
                                 default => ucfirst($row['status'])
                             };
                         @endphp

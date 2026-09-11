@@ -99,6 +99,7 @@ class BudgetReportExportController extends Controller
                     'terkendali' => 'TERKENDALI',
                     'mendekati' => 'MENDEKATI',
                     'melampaui' => 'MELAMPAUI',
+                    'anomali' => 'ANOMALI (!)',
                     default => strtoupper($item['status']),
                 };
 

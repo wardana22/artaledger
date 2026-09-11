@@ -109,6 +109,22 @@ test('budget calculation service accurately compares budget and posted actual jo
     expect($drillDown['lines'])->toHaveCount(1);
     expect($drillDown['net_actual'])->toEqual(85000000.0);
     expect($drillDown['lines'][0]['entry_number'])->toEqual('JU-2027-001');
+
+    // Test status 'anomali' — ketika realisasi bernilai negatif (posting kredit lebih besar dari debit)
+    // Simulasi: ada koreksi kredit besar sehingga net debit-credit menjadi negatif
+    JournalLine::create([
+        'journal_entry_id' => $entry->id,
+        'line_no' => 2,
+        'account_id' => $this->account->id,
+        'debit' => 0,
+        'credit' => 200000000, // Kredit 200 Juta > Debit 85 Juta → net negatif
+    ]);
+
+    $resAnomali = $service->calculateBudgetComparison($this->budget);
+    // Net = 85_000_000 debit - 200_000_000 credit = -115_000_000 (negatif)
+    expect($resAnomali['items'][0]['actual_amount'])->toBeLessThan(0);
+    expect($resAnomali['items'][0]['absorption_rate'])->toBeLessThanOrEqual(0.0);
+    expect($resAnomali['items'][0]['status'])->toEqual('anomali');
 });
 
 test('budget guard service evaluates spending and warns when threshold or limit is exceeded', function () {

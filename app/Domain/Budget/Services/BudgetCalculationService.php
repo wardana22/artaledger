@@ -12,7 +12,7 @@ class BudgetCalculationService
      * Calculate variance and actual absorption for a given budget, optionally filtered by month, unit, status, and search query.
      *
      * @param  int|null  $month  1-12 or null for full annual year
-     * @param  string  $statusFilter  'all', 'terkendali', 'mendekati', 'melampaui'
+     * @param  string  $statusFilter  'all', 'terkendali', 'mendekati', 'melampaui', 'anomali'
      */
     public function calculateBudgetComparison(
         Budget $budget,
@@ -71,12 +71,19 @@ class BudgetCalculationService
             $variance = $budgetAmount - $actualAmount; // positive: surplus/remaining, negative: deficit
             $absorptionRate = $budgetAmount > 0 ? ($actualAmount / $budgetAmount) * 100 : ($actualAmount > 0 ? 100.0 : 0.0);
 
-            // Status category: 'terkendali' (<80%), 'mendekati' (80-99.9%), 'melampaui' (>=100%)
-            $status = 'terkendali';
-            if ($absorptionRate >= 100.0) {
+            // Status category:
+            // 'anomali'    : serapan < 0% — realisasi negatif, kemungkinan akun pendapatan atau data terbalik
+            // 'terkendali' : serapan 0% s.d. < threshold (default 80%)
+            // 'mendekati'  : serapan >= threshold dan < 100%
+            // 'melampaui'  : serapan >= 100%
+            if ($absorptionRate < 0.0) {
+                $status = 'anomali';
+            } elseif ($absorptionRate >= 100.0) {
                 $status = 'melampaui';
             } elseif ($absorptionRate >= (float) $budget->warning_threshold_pct) {
                 $status = 'mendekati';
+            } else {
+                $status = 'terkendali';
             }
 
             // Apply search filter if provided
