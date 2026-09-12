@@ -4,7 +4,7 @@
     'label' => 'Cetak / Ekspor',
 ])
 
-<div x-data="{ open: false }" @click.outside="open = false" class="relative inline-block text-left z-20">
+<div x-data="{ open: false }" @click.outside="open = false" class="relative inline-block text-left z-10">
     <!-- Trigger Button -->
     <button 
         @click="open = !open" 

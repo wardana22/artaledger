@@ -3,6 +3,7 @@
 namespace App\Livewire\Dashboard;
 
 use App\Domain\Dashboard\Services\DashboardMetricService;
+use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\AccountingPeriod;
 use App\Models\Company;
 use App\Models\DashboardChart;
@@ -18,6 +19,8 @@ use Livewire\Component;
 #[Title('Dashboard Finansial Eksekutif')]
 class DashboardIndex extends Component
 {
+    use SyncsGlobalPeriod;
+
     public ?Company $company = null;
 
     public ?DashboardSetting $setting = null;
@@ -40,39 +43,24 @@ class DashboardIndex extends Component
             'app_name' => 'ArtaLedger',
         ]);
 
-        $this->setting = DashboardSetting::firstOrCreate(
-            ['company_id' => $this->company->id],
-            [
-                'show_kpi_cards' => true,
-                'show_revenue_expense_chart' => true,
-                'show_recent_journals' => true,
-                'show_quick_actions' => true,
-                'show_period_status' => true,
-                'show_cash_bank_summary' => true,
-                'chart_type' => 'bar',
-                'recent_journals_count' => 5,
-            ]
-        );
+        $this->setting = DashboardSetting::firstOrCreate([
+            'company_id' => $this->company->id,
+        ], [
+            'show_kpi_cards' => true,
+            'show_recent_journals' => true,
+            'recent_journals_count' => 10,
+        ]);
 
-        // Multi-Tenant Isolation unit assignment
-        if (auth()->check() && ! auth()->user()->hasGlobalUnitAccess()) {
-            $userUnitIds = auth()->user()->units->pluck('id')->toArray();
+        // Default scoping unit
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $userUnitIds = $user->allowedUnitIds();
             if (! empty($userUnitIds)) {
                 $this->selectedUnitId = $userUnitIds[0];
             }
         }
 
-        // Set startDate/endDate dari periode aktif, atau default awal-akhir tahun ini
-        $activePeriod = AccountingPeriod::where('company_id', $this->company->id)
-            ->where('status', 'open')
-            ->orderByDesc('start_date')
-            ->first();
-
-        $this->startDate = $activePeriod?->start_date?->format('Y-m-d')
-            ?? now()->startOfYear()->format('Y-m-d');
-
-        $this->endDate = $activePeriod?->end_date?->format('Y-m-d')
-            ?? now()->format('Y-m-d');
+        $this->initializeGlobalPeriod();
     }
 
     public function refreshData(DashboardMetricService $metricService): void
@@ -148,6 +136,8 @@ class DashboardIndex extends Component
         }
 
         $units = Unit::all();
+
+        $this->dispatch('charts-updated', chartData: $chartData, year: $trendYear);
 
         return view('livewire.dashboard.dashboard-index', [
             'kpiCards' => $kpiCards,

@@ -19,13 +19,15 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <button wire:click="openCategoryManagerModal" 
-                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
-                <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                </svg>
-                Kelola Kategori
-            </button>
+            @can('assets.create')
+                <button wire:click="openCategoryManagerModal" 
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm">
+                    <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                    Kelola Kategori
+                </button>
+            @endcan
 
             <button wire:click="openBatchLabelModal"
                     title="Cetak label barcode semua aset yang difilter"
@@ -36,21 +38,25 @@
                 Print Label
             </button>
 
-            <a href="{{ route('accounting.fixed-assets.depreciation') }}" 
-               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold text-sm hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all shadow-sm">
-                <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                Eksekusi Penyusutan Bulanan
-            </a>
+            @can('assets.depreciate')
+                <a href="{{ route('accounting.fixed-assets.depreciation') }}" 
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold text-sm hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all shadow-sm">
+                    <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Eksekusi Penyusutan Bulanan
+                </a>
+            @endcan
 
-            <button wire:click="openCreateModal" 
-                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Tambah Aset Tetap
-            </button>
+            @can('assets.create')
+                <button wire:click="openCreateModal" 
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Tambah Aset Tetap
+                </button>
+            @endcan
         </div>
     </div>
 
@@ -270,19 +276,23 @@
                                     </button>
 
                                     <!-- Tombol Edit -->
-                                    <button wire:click="openEditModal({{ $asset->id }})" 
-                                            title="Edit Data Aset"
-                                            class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-2xs hover:shadow-md hover:shadow-indigo-500/20">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                    </button>
+                                    @can('assets.edit')
+                                        <button wire:click="openEditModal({{ $asset->id }})" 
+                                                title="Edit Data Aset"
+                                                class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-2xs hover:shadow-md hover:shadow-indigo-500/20">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </button>
+                                    @endcan
 
                                     <!-- Tombol Hapus -->
-                                    <button wire:click="deleteAsset({{ $asset->id }})" 
-                                            wire:confirm="Yakin ingin menghapus aset ini? Pastikan belum ada transaksi jurnal penyusutan."
-                                            title="Hapus Aset"
-                                            class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 shadow-2xs hover:shadow-md hover:shadow-rose-500/20">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
+                                    @can('assets.delete')
+                                        <button wire:click="deleteAsset({{ $asset->id }})" 
+                                                wire:confirm="Yakin ingin menghapus aset ini? Pastikan belum ada transaksi jurnal penyusutan."
+                                                title="Hapus Aset"
+                                                class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 transition-all duration-200 hover:bg-rose-600 hover:text-white hover:border-rose-600 shadow-2xs hover:shadow-md hover:shadow-rose-500/20">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -970,7 +980,7 @@
                             <div class="flex items-start gap-2.5 mb-2" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
                                 {{-- QR Code --}}
                                 <div class="flex flex-col items-center flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
-                                    <div id="qr-single" style="width: 58px; height: 58px;"></div>
+                                    <div id="qr-single" class="bg-white p-0.5 rounded" style="width: 64px; height: 64px; background: #ffffff; padding: 2px; border-radius: 4px; box-sizing: border-box;"></div>
                                     <span class="text-[8px] font-bold text-slate-500 uppercase mt-0.5" style="font-size: 5.5pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
                                 </div>
 
@@ -1096,7 +1106,7 @@
                                     <div class="flex items-start gap-2.5 mb-2" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
                                         {{-- QR Code --}}
                                         <div class="flex flex-col items-center flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
-                                            <div id="qr-batch-a4-{{ $idx }}" style="width: 58px; height: 58px;"></div>
+                                            <div id="qr-batch-a4-{{ $idx }}" class="bg-white p-0.5 rounded" style="width: 64px; height: 64px; background: #ffffff; padding: 2px; border-radius: 4px; box-sizing: border-box;"></div>
                                             <span class="text-[8px] font-bold text-slate-500 uppercase mt-0.5" style="font-size: 5.5pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
                                         </div>
 
@@ -1142,7 +1152,7 @@
                                     <div class="flex items-start gap-2.5 mb-2" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
                                         {{-- QR Code --}}
                                         <div class="flex flex-col items-center flex-shrink-0" style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
-                                            <div id="qr-batch-th-{{ $idx }}" style="width: 58px; height: 58px;"></div>
+                                            <div id="qr-batch-th-{{ $idx }}" class="bg-white p-0.5 rounded" style="width: 64px; height: 64px; background: #ffffff; padding: 2px; border-radius: 4px; box-sizing: border-box;"></div>
                                             <span class="text-[8px] font-bold text-slate-500 uppercase mt-0.5" style="font-size: 5.5pt; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 1px;">Scan Info</span>
                                         </div>
 
@@ -1397,6 +1407,13 @@
                 .text-center { text-align: center !important; }
 
                 img { max-width: 100% !important; height: auto !important; }
+                div[id*="qr-"] img, div[id*="qr-"] canvas {
+                    width: 100% !important;
+                    height: 100% !important;
+                    image-rendering: -webkit-optimize-contrast !important;
+                    image-rendering: pixelated !important;
+                    display: block !important;
+                }
             `;
 
             frameDoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>ArtaLedger Label</title><style>' + pageRule + baseCss + '</style></head><body>' + printableHtml + '</body></html>');
@@ -1410,7 +1427,10 @@
 
         function generateSingleLabel(data) {
             const payload = data?.data || data;
-            if (!payload || !payload.code) return;
+            let targetUrl = payload.scan_url || (window.location.origin + '/a/' + encodeURIComponent(payload.code));
+            if (targetUrl.includes('localhost') && !window.location.host.includes('localhost')) {
+                targetUrl = window.location.origin + '/a/' + encodeURIComponent(payload.code);
+            }
 
             let attempts = 0;
             const tryRender = () => {
@@ -1420,13 +1440,20 @@
                 if (window.QRCode && window.JsBarcode && qrEl && bcEl) {
                     qrEl.innerHTML = '';
                     new QRCode(qrEl, {
-                        text: payload.scan_url || payload.code,
-                        width: 58,
-                        height: 58,
-                        colorDark: '#0f172a',
+                        text: targetUrl,
+                        width: 120,
+                        height: 120,
+                        colorDark: '#000000',
                         colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.M,
+                        correctLevel: QRCode.CorrectLevel.L,
                     });
+                    const qrImg = qrEl.querySelector('img') || qrEl.querySelector('canvas');
+                    if (qrImg) {
+                        qrImg.style.width = '100%';
+                        qrImg.style.height = '100%';
+                        qrImg.style.imageRendering = 'pixelated';
+                        qrImg.style.display = 'block';
+                    }
 
                     try {
                         JsBarcode(bcEl, payload.code, {
@@ -1460,19 +1487,31 @@
             const tryRender = () => {
                 if (window.QRCode && window.JsBarcode) {
                     list.forEach(function (item, index) {
+                        let targetUrl = item.scan_url || (window.location.origin + '/a/' + encodeURIComponent(item.code));
+                        if (targetUrl.includes('localhost') && !window.location.host.includes('localhost')) {
+                            targetUrl = window.location.origin + '/a/' + encodeURIComponent(item.code);
+                        }
+
                         // 1. A4 Barcodes (now 80x50mm size!)
                         const qrA4 = document.getElementById('qr-batch-a4-' + index);
                         const bcA4 = document.getElementById('barcode-batch-a4-' + index);
                         if (qrA4) {
                             qrA4.innerHTML = '';
                             new QRCode(qrA4, {
-                                text: item.scan_url || item.code,
-                                width: 58,
-                                height: 58,
-                                colorDark: '#0f172a',
+                                text: targetUrl,
+                                width: 120,
+                                height: 120,
+                                colorDark: '#000000',
                                 colorLight: '#ffffff',
-                                correctLevel: QRCode.CorrectLevel.M,
+                                correctLevel: QRCode.CorrectLevel.L,
                             });
+                            const qrImgA4 = qrA4.querySelector('img') || qrA4.querySelector('canvas');
+                            if (qrImgA4) {
+                                qrImgA4.style.width = '100%';
+                                qrImgA4.style.height = '100%';
+                                qrImgA4.style.imageRendering = 'pixelated';
+                                qrImgA4.style.display = 'block';
+                            }
                         }
                         if (bcA4) {
                             try {
@@ -1496,13 +1535,20 @@
                         if (qrTh) {
                             qrTh.innerHTML = '';
                             new QRCode(qrTh, {
-                                text: item.scan_url || item.code,
-                                width: 58,
-                                height: 58,
-                                colorDark: '#0f172a',
+                                text: targetUrl,
+                                width: 120,
+                                height: 120,
+                                colorDark: '#000000',
                                 colorLight: '#ffffff',
-                                correctLevel: QRCode.CorrectLevel.M,
+                                correctLevel: QRCode.CorrectLevel.L,
                             });
+                            const qrImgTh = qrTh.querySelector('img') || qrTh.querySelector('canvas');
+                            if (qrImgTh) {
+                                qrImgTh.style.width = '100%';
+                                qrImgTh.style.height = '100%';
+                                qrImgTh.style.imageRendering = 'pixelated';
+                                qrImgTh.style.display = 'block';
+                            }
                         }
                         if (bcTh) {
                             try {

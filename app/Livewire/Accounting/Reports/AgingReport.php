@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Domain\Accounting\Services\AgingInvoiceManagerService;
 use App\Domain\Accounting\Services\AgingReportService;
+use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\Account;
 use App\Models\ApArInvoice;
 use App\Models\ApArSettlement;
@@ -18,6 +19,8 @@ use Livewire\Component;
 #[Title('Laporan Aging Hutang & Piutang')]
 class AgingReport extends Component
 {
+    use SyncsGlobalPeriod;
+
     public string $activeTab = 'receivable'; // 'receivable' | 'payable'
 
     public string $asOfDate = '';
@@ -26,7 +29,16 @@ class AgingReport extends Component
 
     public bool $hideZeroBalances = true;
 
-    // Edit Invoice State
+    // Filter baris pelunasan existing
+    public string $settleDateFilterStart = '';
+
+    public string $settleDateFilterEnd = '';
+
+    public string $settleSearchQuery = '';
+
+    public bool $hideFullyAllocatedPayments = true;
+
+    // Edit Invoice Modal State
     public bool $showEditModal = false;
 
     public ?int $editingInvoiceId = null;
@@ -58,24 +70,13 @@ class AgingReport extends Component
 
     public float $settleAmount = 0.0;
 
-    public string $settleDate = '';
-
     public ?int $settleCashAccountId = null;
 
-    public ?int $settlePaymentLineId = null;
+    public string $settleDate = '';
 
     public string $settleNotes = '';
 
-    public float $settleRemainingBalance = 0.0;
-
-    // Smart Payment Line Picker Search & Filter State
-    public string $settleSearchQuery = '';
-
-    public string $settleDateFilterStart = '';
-
-    public string $settleDateFilterEnd = '';
-
-    public bool $hideFullyAllocatedPayments = true;
+    public ?int $settleExistingLineId = null;
 
     // Assign / Split Modal State
     /** @var array<int, bool> */
@@ -133,7 +134,7 @@ class AgingReport extends Component
             abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat Laporan Keuangan.');
         }
 
-        $this->asOfDate = date('Y-m-d');
+        $this->initializeGlobalPeriod();
     }
 
     public function setTab(string $tab): void

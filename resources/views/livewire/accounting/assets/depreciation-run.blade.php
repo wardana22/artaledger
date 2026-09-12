@@ -109,17 +109,19 @@
             <!-- Action Button -->
             <div class="flex flex-col items-center justify-center text-center p-4">
                 @if($pendingAssets->count() > 0)
-                    <button wire:click="openConfirmModal" 
-                            wire:loading.attr="disabled"
-                            class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 transition-all flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Jalankan Penyusutan & Posting Jurnal
-                    </button>
-                    <p class="text-xs text-slate-400 mt-2">
-                        Idempoten: Aman dari dobel depresiasi.
-                    </p>
+                    @can('assets.depreciate')
+                        <button wire:click="openConfirmModal" 
+                                wire:loading.attr="disabled"
+                                class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 transition-all flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Jalankan Penyusutan & Posting Jurnal
+                        </button>
+                        <p class="text-xs text-slate-400 mt-2">
+                            Idempoten: Aman dari dobel depresiasi.
+                        </p>
+                    @endcan
                 @else
                     <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center w-full">
                         <svg class="w-8 h-8 mx-auto text-emerald-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

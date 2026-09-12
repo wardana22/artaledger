@@ -22,7 +22,7 @@ class DepreciationRun extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()?->can('assets.depreciate') || auth()->user()?->can('reports.view'), 403, 'Akses Ditolak.');
+        abort_unless(auth()->user()?->can('assets.depreciate'), 403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengakses halaman eksekusi penyusutan.');
 
         // Default ke bulan berjalan atau Januari 2025 jika data awal dimulai Januari 2025
         $this->period = '2025-01';

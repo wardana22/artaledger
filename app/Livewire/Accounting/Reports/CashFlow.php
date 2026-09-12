@@ -3,6 +3,7 @@
 namespace App\Livewire\Accounting\Reports;
 
 use App\Domain\Accounting\Services\CashFlowService;
+use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\Account;
 use App\Models\AccountGroup;
 use App\Models\CashFlowRow;
@@ -16,18 +17,19 @@ use Livewire\Component;
 #[Title('Laporan Arus Kas (Cash Flow Statement)')]
 class CashFlow extends Component
 {
+    use SyncsGlobalPeriod;
+
     public string $startDate = '';
 
     public string $endDate = '';
 
     public string $unitFilter = 'all';
 
-    // Interactive drilldown state
     public array $expandedRows = [];
 
     public array $rowBreakdowns = [];
 
-    // CRUD Row Management Modal State
+    // Modal Builder State
     public bool $showManageModal = false;
 
     public bool $showRowFormModal = false;
@@ -58,9 +60,7 @@ class CashFlow extends Component
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
         }
 
-        // Default to January 2025 if current date is 2026 pre-deploy test, or default to current year
-        $this->startDate = '2025-01-01';
-        $this->endDate = '2025-01-31';
+        $this->initializeGlobalPeriod();
     }
 
     public function toggleRow(int $rowId, ?CashFlowService $service = null): void

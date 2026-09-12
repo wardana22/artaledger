@@ -172,7 +172,7 @@
                             </div>
                             <div>
                                 <h4 class="text-sm font-bold text-slate-900 dark:text-white">{{ $chart->name }}</h4>
-                                <p class="text-[11px] text-slate-400">Tren multi-series bulanan tahun {{ date('Y', strtotime($startDate)) }}</p>
+                                <p class="chart-year-label text-[11px] text-slate-400">Tren multi-series bulanan tahun {{ date('Y', strtotime($startDate)) }}</p>
                             </div>
                         </div>
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
@@ -300,13 +300,27 @@
         </div>
     </div>
 
-    <!-- Script ApexCharts -->
+    <!-- Script ApexCharts Reaktif -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
+        window.renderedCharts = window.renderedCharts || {};
+
         document.addEventListener('livewire:navigated', initDashboardCharts);
         document.addEventListener('DOMContentLoaded', initDashboardCharts);
 
-        let renderedCharts = {};
+        // Listener saat event charts-updated di-dispatch oleh backend Livewire
+        window.addEventListener('charts-updated', event => {
+            const chartData = event.detail.chartData || (Array.isArray(event.detail) ? event.detail[0]?.chartData : null);
+            const year = event.detail.year || (Array.isArray(event.detail) ? event.detail[0]?.year : null);
+            if (chartData) {
+                updateDashboardCharts(chartData);
+            }
+            if (year) {
+                document.querySelectorAll('.chart-year-label').forEach(el => {
+                    el.textContent = 'Tren multi-series bulanan tahun ' + year;
+                });
+            }
+        });
 
         function initDashboardCharts() {
             const chartDataRaw = @json($chartData);
@@ -319,7 +333,9 @@
                 if (!containerEl) return;
 
                 if (renderedCharts[cfg.id]) {
-                    renderedCharts[cfg.id].destroy();
+                    try {
+                        renderedCharts[cfg.id].destroy();
+                    } catch (e) {}
                 }
 
                 const cData = chartDataRaw[cfg.id] || { categories: [], series: [] };
@@ -381,6 +397,31 @@
                 const chartInstance = new ApexCharts(containerEl, options);
                 chartInstance.render();
                 renderedCharts[cfg.id] = chartInstance;
+            });
+        }
+
+        function updateDashboardCharts(chartDataRaw) {
+            const chartsConfig = @json($charts);
+            const isDark = document.documentElement.classList.contains('dark');
+
+            chartsConfig.forEach(cfg => {
+                const cData = chartDataRaw[cfg.id];
+                if (!cData) return;
+
+                if (renderedCharts[cfg.id]) {
+                    // Update series dan kategori secara reaktif tanpa merusak canvas
+                    renderedCharts[cfg.id].updateOptions({
+                        colors: (cData.series || []).map(s => s.color || '#6366f1'),
+                        xaxis: {
+                            categories: cData.categories || []
+                        }
+                    }, false, true);
+
+                    renderedCharts[cfg.id].updateSeries(cData.series || [], true);
+                } else {
+                    // Jika belum ter-render, render ulang
+                    initDashboardCharts();
+                }
             });
         }
     </script>

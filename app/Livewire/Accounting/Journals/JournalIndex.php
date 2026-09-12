@@ -4,6 +4,7 @@ namespace App\Livewire\Accounting\Journals;
 
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Domain\Accounting\Services\JournalReversalService;
+use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\JournalEntry;
 use App\Models\Unit;
 use Livewire\Attributes\Layout;
@@ -16,6 +17,7 @@ use Livewire\WithPagination;
 #[Title('Jurnal Umum (General Journal)')]
 class JournalIndex extends Component
 {
+    use SyncsGlobalPeriod;
     use WithPagination;
 
     #[Url(as: 'status')]
@@ -52,6 +54,8 @@ class JournalIndex extends Component
                 $this->unitFilter = (string) $allowedIds[0];
             }
         }
+
+        $this->initializeGlobalPeriod();
     }
 
     public function viewJournalDetail(int $id): void

@@ -4,14 +4,20 @@ namespace App\Livewire\Accounting\Journals;
 
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Domain\Accounting\Services\JournalReversalService;
+use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\Company;
 use App\Models\JournalEntry;
 use Exception;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
+#[Title('Jurnal Penyesuaian (Adjusting Journal Entries)')]
 class AdjustmentIndex extends Component
 {
+    use SyncsGlobalPeriod;
     use WithPagination;
 
     public string $search = '';
@@ -27,6 +33,8 @@ class AdjustmentIndex extends Component
         if (auth()->check() && ! auth()->user()->can('journals.view')) {
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
         }
+
+        $this->initializeGlobalPeriod();
     }
 
     public function updatedSearch(): void

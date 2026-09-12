@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Accounting\Reports;
 
+use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\Account;
 use App\Models\JournalLine;
 use App\Models\Unit;
@@ -13,6 +14,8 @@ use Livewire\Component;
 #[Title('Neraca Saldo (Trial Balance)')]
 class TrialBalance extends Component
 {
+    use SyncsGlobalPeriod;
+
     public string $startDate = '';
 
     public string $endDate = '';
@@ -27,8 +30,7 @@ class TrialBalance extends Component
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
         }
 
-        $this->startDate = date('Y-01-01');
-        $this->endDate = date('Y-12-31');
+        $this->initializeGlobalPeriod();
 
         $user = auth()->user();
         if ($user && ! $user->hasGlobalUnitAccess()) {

@@ -80,7 +80,7 @@ select:focus[data-flux-control] {
 
 /* Enterprise Sidebar Navigation & Tooltip Enhancement */
 [data-flux-sidebar-item] {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s ease-in-out;
 }
 
 [data-flux-sidebar-item]:hover:not([data-current]) {
@@ -88,7 +88,7 @@ select:focus[data-flux-control] {
 }
 
 [data-flux-sidebar-item][data-current] {
-    box-shadow: 0 1px 3px 0 rgba(79, 70, 229, 0.1), 0 1px 2px -1px rgba(79, 70, 229, 0.1);
+    box-shadow: none !important;
 }
 
 /* Tooltip Animation Enhancement */
@@ -117,4 +117,37 @@ select:focus[data-flux-control] {
     gap: 0.5rem !important;
 }
 
+/* Mobile Responsiveness Override for Flux Layout (< 1024px) */
+@media (max-width: 1023px) {
+    body:has(>[data-flux-main]) {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+    }
 
+    [data-flux-main] {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    [data-flux-header] {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    /* Prevent closed drawer from reserving grid space or interfering with viewport */
+    ui-sidebar[data-flux-sidebar] {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        z-index: 50 !important;
+    }
+}

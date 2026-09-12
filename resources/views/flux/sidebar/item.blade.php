@@ -34,15 +34,12 @@ $classes = Flux::classes()
     ->add('py-0 text-start w-full px-3 has-data-flux-navlist-badge:not-in-data-flux-sidebar-collapsed-desktop:pe-1.5 my-0.5')
     ->add('text-slate-600 dark:text-slate-400 font-medium text-sm')
     ->add([
-        // Active / Current State
-        'data-current:bg-indigo-50/90 dark:data-current:bg-indigo-950/60',
-        'data-current:text-indigo-600 dark:data-current:text-indigo-400 font-semibold',
-        'data-current:border-l-3 data-current:border-indigo-600 dark:data-current:border-indigo-500',
-        'data-current:shadow-xs data-current:shadow-indigo-500/10',
-        // Hover State (non-active)
-        'hover:text-indigo-600 dark:hover:text-indigo-400',
-        'hover:bg-slate-100/80 dark:hover:bg-slate-800/80',
-        'border-l-3 border-transparent',
+        // Active / Current State: Solid Green (Emerald), Clean No Glow
+        'data-current:bg-emerald-600 dark:data-current:bg-emerald-600',
+        'data-current:text-white! font-semibold',
+        // Hover State (non-active): Solid Orange (Amber), Clean No Glow
+        'hover:bg-amber-500 dark:hover:bg-amber-500',
+        'hover:text-white!',
     ])
     // Override the default styles to match dropdowns for when the item is inside a collapsed group dropdown...
     ->add('in-data-flux-sidebar-group-dropdown:w-auto! in-data-flux-sidebar-group-dropdown:px-2!')

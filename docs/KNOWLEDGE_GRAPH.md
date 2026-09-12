@@ -325,11 +325,13 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Banking/BankReconciliationMultiMatchTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Banking/BankReconciliationMultiMatchTest.php) (Pencocokan Multi N:M & Toleransi)
 - [tests/Feature/Banking/BankReconciliationCrossPeriodTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Banking/BankReconciliationCrossPeriodTest.php) (Pencatatan Lintas Periode)
 - [tests/Feature/Asset/FixedAssetTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Asset/FixedAssetTest.php) (Depresiasi & Label Aset Tetap)
+- [tests/Feature/Accounting/FixedAssetAuthorizationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FixedAssetAuthorizationTest.php) (Validasi Otorisasi RBAC Modul Aset Tetap: Proteksi Tombol Mutasi, Akses Read-Only Staf Keuangan, dan Penguncian Eksekusi Depresiasi 403)
 - [tests/Feature/Accounting/CompanySettingsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/CompanySettingsTest.php) (Pengaturan Branding & Signers)
 - [tests/Feature/Accounting/FinancialReportsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportsTest.php) (Pengujian Komponen Laporan Keuangan & Validasi Penempatan Kolom Strict Neraca Lajur)
 - [tests/Feature/Accounting/OpeningBalanceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/OpeningBalanceTest.php)
 - [tests/Feature/Accounting/ImportJournalTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/ImportJournalTest.php)
 - [tests/Feature/Accounting/SubModuleAuthorizationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/SubModuleAuthorizationTest.php) (Validasi Otorisasi RBAC Sub-modul & Proteksi Jurnal Terkunci is_locked)
+- [tests/Feature/Accounting/GlobalPeriodSyncTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/GlobalPeriodSyncTest.php) (Validasi Sinkronisasi Periode Global Lintas Menu: Default 1 Jan tahun berjalan, Two-Way State Sync antara Dashboard, Jurnal, dan Laporan Keuangan)
 - [tests/Feature/Accounting/InitialBalanceWizardTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/InitialBalanceWizardTest.php) (Validasi Setup Saldo Awal, Auto-Balance Retained Earnings, & Hardening Buka Kunci Super Admin)
 
 ### 8. Tata Kelola Antarmuka UI/UX Enterprise (Navigation & Layout)

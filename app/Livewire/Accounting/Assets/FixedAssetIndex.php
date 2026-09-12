@@ -156,6 +156,8 @@ class FixedAssetIndex extends Component
 
     public function openCreateModal(): void
     {
+        abort_unless(auth()->user()?->can('assets.create'), 403, 'Akses Ditolak: Anda tidak memiliki izin menambah Aset Tetap.');
+
         $this->resetValidation();
         $this->editingAssetId = null;
         $this->name = '';
@@ -181,6 +183,8 @@ class FixedAssetIndex extends Component
 
     public function openEditModal(int $id): void
     {
+        abort_unless(auth()->user()?->can('assets.edit'), 403, 'Akses Ditolak: Anda tidak memiliki izin mengedit Aset Tetap.');
+
         $this->resetValidation();
         $asset = FixedAsset::findOrFail($id);
         $this->editingAssetId = $asset->id;
@@ -343,7 +347,7 @@ class FixedAssetIndex extends Component
             'serial' => $asset->serial_number ?? '-',
             'pic' => $asset->person_in_charge ?? '-',
             'acquisition' => $asset->acquisition_date->format('d/m/Y'),
-            'scan_url' => route('assets.scan.public', ['code' => $asset->asset_code]),
+            'scan_url' => url('/a/'.$asset->asset_code),
             'status' => match ($asset->status) {
                 'active' => 'Aktif',
                 'fully_depreciated' => 'Habis Disusutkan',
@@ -398,7 +402,7 @@ class FixedAssetIndex extends Component
             'serial' => $a->serial_number ?? '-',
             'pic' => $a->person_in_charge ?? '-',
             'acquisition' => $a->acquisition_date ? $a->acquisition_date->format('d/m/Y') : '-',
-            'scan_url' => route('assets.scan.public', ['code' => $a->asset_code]),
+            'scan_url' => url('/a/'.$a->asset_code),
         ])->toArray();
 
         $this->showBatchLabelModal = true;
@@ -413,6 +417,8 @@ class FixedAssetIndex extends Component
 
     public function openCategoryManagerModal(): void
     {
+        abort_unless(auth()->user()?->can('assets.create') || auth()->user()?->can('settings.manage'), 403, 'Akses Ditolak: Anda tidak memiliki izin mengelola Kategori Aset.');
+
         $this->showCategoryManagerModal = true;
     }
 
@@ -423,6 +429,8 @@ class FixedAssetIndex extends Component
 
     public function openCreateCategoryModal(): void
     {
+        abort_unless(auth()->user()?->can('assets.create') || auth()->user()?->can('settings.manage'), 403, 'Akses Ditolak: Anda tidak memiliki izin menambah Kategori Aset.');
+
         $this->resetValidation();
         $this->editingCategoryId = null;
         $this->cat_code = '';
@@ -440,6 +448,8 @@ class FixedAssetIndex extends Component
 
     public function openEditCategoryModal(int $id): void
     {
+        abort_unless(auth()->user()?->can('assets.create') || auth()->user()?->can('settings.manage'), 403, 'Akses Ditolak: Anda tidak memiliki izin mengedit Kategori Aset.');
+
         $this->resetValidation();
         $cat = AssetCategory::findOrFail($id);
         $this->editingCategoryId = $cat->id;
@@ -464,6 +474,8 @@ class FixedAssetIndex extends Component
 
     public function saveCategory(): void
     {
+        abort_unless(auth()->user()?->can('assets.create') || auth()->user()?->can('settings.manage'), 403, 'Akses Ditolak: Anda tidak memiliki izin menyimpan Kategori Aset.');
+
         $uniqueRule = 'unique:asset_categories,code';
         if ($this->editingCategoryId) {
             $uniqueRule .= ','.$this->editingCategoryId;
@@ -517,6 +529,8 @@ class FixedAssetIndex extends Component
 
     public function deleteCategory(int $id): void
     {
+        abort_unless(auth()->user()?->can('assets.delete') || auth()->user()?->can('settings.manage'), 403, 'Akses Ditolak: Anda tidak memiliki izin menghapus Kategori Aset.');
+
         $cat = AssetCategory::withCount('fixedAssets')->findOrFail($id);
 
         if ($cat->fixed_assets_count > 0) {

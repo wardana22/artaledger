@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Accounting\Reports;
 
+use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\Account;
 use App\Models\JournalLine;
 use App\Models\Unit;
@@ -10,9 +11,11 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
-#[Title('Laporan Neraca (Balance Sheet)')]
+#[Title('Neraca Keuangan (Balance Sheet)')]
 class BalanceSheet extends Component
 {
+    use SyncsGlobalPeriod;
+
     public string $asOfDate = '';
 
     public string $unitFilter = 'all';
@@ -25,7 +28,7 @@ class BalanceSheet extends Component
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
         }
 
-        $this->asOfDate = date('Y-12-31');
+        $this->initializeGlobalPeriod();
 
         $user = auth()->user();
         if ($user && ! $user->hasGlobalUnitAccess()) {
