@@ -79,8 +79,10 @@
         <!-- Filter Unit Bisnis -->
         <div>
             <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Unit Bisnis</label>
-            <select wire:model.live="filterUnitId" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs py-2 px-3 text-gray-900 dark:text-white focus:ring-emerald-500">
-                <option value="">Semua Unit</option>
+            <select wire:model.live="filterUnitId" {{ ! $isGlobalUnit && count($units) <= 1 ? 'disabled' : '' }} class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs py-2 px-3 text-gray-900 dark:text-white focus:ring-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed">
+                @if ($isGlobalUnit)
+                    <option value="">Semua Unit</option>
+                @endif
                 @foreach ($units as $u)
                     <option value="{{ $u->id }}">{{ $u->name }}</option>
                 @endforeach

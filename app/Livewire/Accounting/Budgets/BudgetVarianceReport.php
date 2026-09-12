@@ -63,12 +63,31 @@ class BudgetVarianceReport extends Component
             $this->filterYear = $years->contains($currentYr) ? (string) $currentYr : (string) $years->first();
         }
 
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds) && (! $this->filterUnitId || ! in_array((int) $this->filterUnitId, $allowedIds))) {
+                $this->filterUnitId = (int) $allowedIds[0];
+            }
+        }
+
         $this->syncSelectedBudget();
     }
 
     public function updatedFilterYear(): void
     {
         $this->syncSelectedBudget();
+    }
+
+    public function updatedFilterUnitId(): void
+    {
+        $user = auth()->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds) && (! $this->filterUnitId || ! in_array((int) $this->filterUnitId, $allowedIds))) {
+                $this->filterUnitId = (int) $allowedIds[0];
+            }
+        }
     }
 
     protected function syncSelectedBudget(): void
@@ -94,7 +113,15 @@ class BudgetVarianceReport extends Component
 
         $year = (int) ($this->filterYear ?: date('Y'));
         $month = $this->filterMonth ? (int) $this->filterMonth : null;
+
+        $user = auth()->user();
         $unitId = $this->filterUnitId ? (int) $this->filterUnitId : null;
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds) && (! $unitId || ! in_array($unitId, $allowedIds))) {
+                $unitId = (int) $allowedIds[0];
+            }
+        }
 
         $this->drillDownData = $calculationService->getAccountJournalDetails($accountId, $year, $month, $unitId);
         $this->showDrillDownModal = true;
@@ -111,8 +138,19 @@ class BudgetVarianceReport extends Component
 
     public function render(BudgetCalculationService $calculationService)
     {
+        $user = auth()->user();
+        $isGlobalUnit = $user ? $user->hasGlobalUnitAccess() : true;
+        $units = $user ? $user->allowedUnits() : Unit::all();
+
+        // Enforce unit filter for non-global users
+        if (! $isGlobalUnit && $user) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds) && (! $this->filterUnitId || ! in_array((int) $this->filterUnitId, $allowedIds))) {
+                $this->filterUnitId = (int) $allowedIds[0];
+            }
+        }
+
         $years = Budget::distinct()->orderBy('fiscal_year', 'desc')->pluck('fiscal_year');
-        $units = Unit::all();
 
         $selectedBudget = $this->selectedBudgetId ? Budget::find($this->selectedBudgetId) : null;
         $reportData = null;
@@ -136,6 +174,7 @@ class BudgetVarianceReport extends Component
         return view('livewire.accounting.budgets.budget-variance-report', [
             'years' => $years,
             'units' => $units,
+            'isGlobalUnit' => $isGlobalUnit,
             'selectedBudget' => $selectedBudget,
             'reportData' => $reportData,
             'monthNames' => $monthNames,

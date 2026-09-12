@@ -27,6 +27,14 @@ class BudgetReportExportController extends Controller
         $status = $request->query('status', 'all');
         $search = $request->query('search', '');
 
+        $user = $request->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds) && (! $unitId || ! in_array($unitId, $allowedIds))) {
+                $unitId = (int) $allowedIds[0];
+            }
+        }
+
         $budget = Budget::findOrFail($budgetId);
         $company = Company::first();
 
@@ -66,6 +74,14 @@ class BudgetReportExportController extends Controller
         $unitId = $request->filled('unitId') ? (int) $request->query('unitId') : null;
         $status = $request->query('status', 'all');
         $search = $request->query('search', '');
+
+        $user = $request->user();
+        if ($user && ! $user->hasGlobalUnitAccess()) {
+            $allowedIds = $user->allowedUnitIds();
+            if (! empty($allowedIds) && (! $unitId || ! in_array($unitId, $allowedIds))) {
+                $unitId = (int) $allowedIds[0];
+            }
+        }
 
         $budget = Budget::findOrFail($budgetId);
         $reportData = $service->calculateBudgetComparison($budget, $month, $unitId, $status, $search);

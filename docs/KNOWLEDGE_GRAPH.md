@@ -307,6 +307,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - **Navigasi Tab Terpadu**: [user-access-nav.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/components/user-access-nav.blade.php) dengan pill counter dinamis dan status badge RBAC aktif.
 
 ### 9. Suite Pengujian Otomatis Pest PHP
+- [tests/Feature/Accounting/BudgetVarianceMultiUnitTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/BudgetVarianceMultiUnitTest.php) (Validasi Multi-Unit Scoping pada Laporan Varian Anggaran: Auto-lock unit penugasan, pembatasan dropdown, dan pencegahan bypass unit)
 - [tests/Feature/Admin/UserManagementTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Admin/UserManagementTest.php) (Validasi CRUD pengguna, penugasan unit, proteksi anti-self delete, dan pencarian)
 - [tests/Feature/Admin/RoleManagementTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Admin/RoleManagementTest.php) (Validasi pembuatan peran kustom, proteksi peran Super Admin, dan otorisasi 403 Forbidden)
 - [tests/Feature/Admin/AuditLogTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Admin/AuditLogTest.php) (Validasi pencatatan aktivitas audit log)
