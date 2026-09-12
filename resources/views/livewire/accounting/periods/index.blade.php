@@ -19,14 +19,16 @@
                 @endfor
             </select>
 
-            <button 
-                wire:click="generateYearPeriods"
-                class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-500/20 gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Generate 12 Bulan
-            </button>
+            @if (auth()->user()?->can('periods.manage') || auth()->user()?->hasRole('Super Admin'))
+                <button 
+                    wire:click="generateYearPeriods"
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-500/20 gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Generate 12 Bulan
+                </button>
+            @endif
         </div>
     </div>
 
@@ -98,37 +100,39 @@
                 </div>
 
                 <!-- PERIOD ACTION BUTTONS -->
-                <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-1.5 flex-wrap">
-                    @if ($period->status === 'open')
-                        <button 
-                            wire:click="closePeriod({{ $period->id }})"
-                            wire:confirm="Apakah Anda yakin ingin MENUTUP periode {{ $period->name }}? Sistem akan secara otomatis meng-generate Kunci Keamanan Rahasia (Lock Key)."
-                            class="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                            🔒 Tutup Periode
-                        </button>
-                    @else
-                        @if ($period->status === 'closed')
+                @if (auth()->user()?->can('periods.manage') || auth()->user()?->hasRole('Super Admin'))
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-1.5 flex-wrap">
+                        @if ($period->status === 'open')
                             <button 
-                                wire:click="lockPeriod({{ $period->id }})"
-                                wire:confirm="Apakah Anda yakin ingin MENGUNCI TOTAL (LOCKED) periode ini?"
-                                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all">
-                                🔐 Lock Total
+                                wire:click="closePeriod({{ $period->id }})"
+                                wire:confirm="Apakah Anda yakin ingin MENUTUP periode {{ $period->name }}? Sistem akan secara otomatis meng-generate Kunci Keamanan Rahasia (Lock Key)."
+                                class="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                🔒 Tutup Periode
+                            </button>
+                        @else
+                            @if ($period->status === 'closed')
+                                <button 
+                                    wire:click="lockPeriod({{ $period->id }})"
+                                    wire:confirm="Apakah Anda yakin ingin MENGUNCI TOTAL (LOCKED) periode ini?"
+                                    class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                                    🔐 Lock Total
+                                </button>
+                            @endif
+
+                            <button 
+                                wire:click="openReopenModal({{ $period->id }})"
+                                class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                                </svg>
+                                🔓 Buka Periode
                             </button>
                         @endif
-
-                        <button 
-                            wire:click="openReopenModal({{ $period->id }})"
-                            class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
-                            </svg>
-                            🔓 Buka Periode
-                        </button>
-                    @endif
-                </div>
+                    </div>
+                @endif
             </div>
         @empty
             <div class="col-span-full p-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center text-slate-400">

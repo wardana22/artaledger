@@ -46,6 +46,13 @@ class PeriodIndex extends Component
 
     public function generateYearPeriods(): void
     {
+        abort_unless(
+            auth()->user()?->can('periods.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak memiliki izin untuk mengelola periode akuntansi.'
+        );
+
         $company = Company::first();
         if (! $company) {
             return;
@@ -74,6 +81,13 @@ class PeriodIndex extends Component
 
     public function closePeriod(int $periodId): void
     {
+        abort_unless(
+            auth()->user()?->can('periods.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak memiliki izin untuk menutup periode akuntansi.'
+        );
+
         $period = AccountingPeriod::findOrFail($periodId);
 
         if ($period->status !== 'open') {
@@ -102,6 +116,13 @@ class PeriodIndex extends Component
 
     public function lockPeriod(int $periodId): void
     {
+        abort_unless(
+            auth()->user()?->can('periods.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak memiliki izin untuk mengunci total periode akuntansi.'
+        );
+
         $period = AccountingPeriod::findOrFail($periodId);
 
         if ($period->status !== 'closed') {
@@ -125,6 +146,13 @@ class PeriodIndex extends Component
 
     public function openReopenModal(int $periodId): void
     {
+        abort_unless(
+            auth()->user()?->can('periods.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak memiliki izin untuk membuka kembali periode akuntansi.'
+        );
+
         $this->resetReopenForm();
         $this->reopenPeriodId = $periodId;
         $this->showReopenModal = true;
@@ -132,6 +160,13 @@ class PeriodIndex extends Component
 
     public function confirmReopenPeriod(): void
     {
+        abort_unless(
+            auth()->user()?->can('periods.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak memiliki izin untuk membuka kembali periode akuntansi.'
+        );
+
         $this->validate([
             'inputLockKey' => 'required|string',
             'reopenReason' => 'required|string|min:5',

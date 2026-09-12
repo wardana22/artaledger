@@ -2,6 +2,7 @@
 
 use App\Domain\Accounting\Services\JournalPostingService;
 use App\Livewire\Accounting\Accounts\AccountIndex;
+use App\Livewire\Accounting\Periods\PeriodIndex;
 use App\Livewire\Accounting\Settings\JournalTypeIndex;
 use App\Livewire\Accounting\Settings\UnitIndex;
 use App\Models\Account;
@@ -249,4 +250,64 @@ test('user without journals.import cannot access journal import wizard', functio
     $this->actingAs($user)
         ->get(route('accounting.import.index'))
         ->assertStatus(403);
+});
+
+test('user with only periods.view cannot close, lock, or generate accounting periods', function () {
+    Permission::firstOrCreate(['name' => 'periods.view']);
+    Permission::firstOrCreate(['name' => 'periods.manage']);
+
+    $viewerRole = Role::create(['name' => 'Period Viewer Only']);
+    $viewerRole->givePermissionTo(['periods.view']);
+
+    $user = User::factory()->create();
+    $user->assignRole($viewerRole);
+
+    $company = Company::first() ?? Company::create(['code' => 'ALT', 'name' => 'Arta']);
+    $period = AccountingPeriod::firstOrCreate(
+        ['company_id' => $company->id, 'year' => 2026, 'month' => 10],
+        ['start_date' => '2026-10-01', 'end_date' => '2026-10-31', 'status' => 'open']
+    );
+
+    // Can view
+    $this->actingAs($user)
+        ->get(route('accounting.periods.index'))
+        ->assertStatus(200);
+
+    // Cannot close period
+    Livewire::actingAs($user)
+        ->test(PeriodIndex::class)
+        ->call('closePeriod', $period->id)
+        ->assertForbidden();
+
+    expect($period->fresh()->status)->toBe('open');
+
+    // Cannot generate periods
+    Livewire::actingAs($user)
+        ->test(PeriodIndex::class)
+        ->call('generateYearPeriods')
+        ->assertForbidden();
+});
+
+test('user with periods.manage can close and lock accounting periods', function () {
+    Permission::firstOrCreate(['name' => 'periods.view']);
+    Permission::firstOrCreate(['name' => 'periods.manage']);
+
+    $managerRole = Role::create(['name' => 'Period Manager Role']);
+    $managerRole->givePermissionTo(['periods.view', 'periods.manage']);
+
+    $user = User::factory()->create();
+    $user->assignRole($managerRole);
+
+    $company = Company::first() ?? Company::create(['code' => 'ALT', 'name' => 'Arta']);
+    $period = AccountingPeriod::firstOrCreate(
+        ['company_id' => $company->id, 'year' => 2026, 'month' => 11],
+        ['start_date' => '2026-11-01', 'end_date' => '2026-11-30', 'status' => 'open']
+    );
+
+    Livewire::actingAs($user)
+        ->test(PeriodIndex::class)
+        ->call('closePeriod', $period->id)
+        ->assertSuccessful();
+
+    expect($period->fresh()->status)->toBe('closed');
 });
