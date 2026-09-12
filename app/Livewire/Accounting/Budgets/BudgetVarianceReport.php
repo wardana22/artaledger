@@ -47,6 +47,14 @@ class BudgetVarianceReport extends Component
 
     public function mount(): void
     {
+        abort_unless(
+            auth()->user()?->can('budgets.view') ||
+            auth()->user()?->can('reports.view') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'THIS ACTION IS UNAUTHORIZED.'
+        );
+
         $years = Budget::distinct()->orderBy('fiscal_year', 'desc')->pluck('fiscal_year');
 
         if (! $this->filterYear && $years->isNotEmpty()) {

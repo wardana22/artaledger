@@ -48,6 +48,8 @@ class BudgetForm extends Component
 
     public function mount(?int $id = null): void
     {
+        abort_unless(auth()->user()?->can('budgets.manage') || auth()->user()?->hasRole('Super Admin'), 403, 'Akses Ditolak.');
+
         $this->fiscal_year = (int) date('Y');
 
         if ($id) {
@@ -156,6 +158,8 @@ class BudgetForm extends Component
 
     public function save()
     {
+        abort_unless(auth()->user()?->can('budgets.manage') || auth()->user()?->hasRole('Super Admin'), 403, 'Akses Ditolak.');
+
         $this->validate();
 
         $data = [

@@ -69,7 +69,7 @@ class JournalIndex extends Component
 
     public function postJournal(int $id): void
     {
-        if (auth()->check() && ! auth()->user()->hasPermissionTo('journals.post')) {
+        if (auth()->check() && ! auth()->user()->can('journals.post') && ! auth()->user()->hasRole('Super Admin')) {
             session()->flash('error', 'Akses ditolak! Anda tidak memiliki izin [journals.post] untuk memposting jurnal.');
 
             return;

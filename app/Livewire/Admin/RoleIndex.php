@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Services\AuditLogService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -75,6 +76,10 @@ class RoleIndex extends Component
         'assets.delete' => 'Hapus Data Aset Tetap',
         'assets.depreciate' => 'Eksekusi & Posting Penyusutan Aset Tetap',
 
+        // Anggaran & Kontrol Biaya Modul
+        'budgets.view' => 'Lihat Data Anggaran & Laporan Varian',
+        'budgets.manage' => 'Kelola, Buat, Aktifkan, & Tutup Anggaran',
+
         // Master Pengaturan Modul
         'settings.view' => 'Lihat Pengaturan System',
         'settings.company' => 'Kelola Branding & Pengaturan Perusahaan',
@@ -92,19 +97,19 @@ class RoleIndex extends Component
 
     public function mount(): void
     {
-        if (auth()->check() && ! auth()->user()->can('admin.roles') && ! auth()->user()->can('settings.manage_roles')) {
-            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
-        }
+        $this->authorizeAdminRoles();
     }
 
     public function openCreateRoleModal(): void
     {
+        $this->authorizeAdminRoles();
         $this->resetRoleForm();
         $this->showRoleModal = true;
     }
 
     public function openEditRoleModal(int $roleId): void
     {
+        $this->authorizeAdminRoles();
         $this->resetRoleForm();
         $role = Role::findOrFail($roleId);
         $this->editingRoleId = $role->id;
@@ -113,19 +118,58 @@ class RoleIndex extends Component
         $this->showRoleModal = true;
     }
 
+    public function toggleModulePermissions(array $permissionNames): void
+    {
+        $hasAll = count(array_intersect($permissionNames, $this->selectedPermissions)) === count($permissionNames);
+        if ($hasAll) {
+            $this->selectedPermissions = array_values(array_diff($this->selectedPermissions, $permissionNames));
+        } else {
+            $this->selectedPermissions = array_values(array_unique(array_merge($this->selectedPermissions, $permissionNames)));
+        }
+    }
+
+    public function selectAllSystemPermissions(): void
+    {
+        $this->selectedPermissions = Permission::pluck('name')->toArray();
+    }
+
+    public function clearAllSystemPermissions(): void
+    {
+        $this->selectedPermissions = [];
+    }
+
     public function saveRole(): void
     {
+        $this->authorizeAdminRoles();
+
+        // System Protection: Super Admin role permissions cannot be modified
+        if ($this->editingRoleId) {
+            $targetRole = Role::findOrFail($this->editingRoleId);
+            if ($targetRole->name === 'Super Admin') {
+                session()->flash('error', 'Perlindungan Sistem: Hak akses peran bawaan Super Admin tidak dapat diubah.');
+
+                return;
+            }
+        }
+
         $this->validate([
             'roleName' => 'required|string|max:100|unique:roles,name,'.$this->editingRoleId,
             'selectedPermissions' => 'array',
         ]);
 
+        $isNew = ! $this->editingRoleId;
         $role = Role::updateOrCreate(
             ['id' => $this->editingRoleId],
             ['name' => trim($this->roleName), 'guard_name' => 'web']
         );
 
         $role->syncPermissions($this->selectedPermissions);
+
+        AuditLogService::record(
+            $isNew ? 'role.created' : 'role.updated',
+            ($isNew ? 'Membuat peran dinamis baru: ' : 'Memperbarui hak akses peran: ').$role->name,
+            $role
+        );
 
         session()->flash('message', $this->editingRoleId ? "Peran '{$role->name}' berhasil diperbarui." : "Peran baru '{$role->name}' berhasil dibuat.");
         $this->showRoleModal = false;
@@ -134,6 +178,8 @@ class RoleIndex extends Component
 
     public function deleteRole(int $roleId): void
     {
+        $this->authorizeAdminRoles();
+
         $role = Role::findOrFail($roleId);
 
         if ($role->name === 'Super Admin') {
@@ -142,8 +188,16 @@ class RoleIndex extends Component
             return;
         }
 
+        $roleName = $role->name;
         $role->delete();
-        session()->flash('message', "Peran '{$role->name}' berhasil dihapus.");
+
+        AuditLogService::record(
+            'role.deleted',
+            "Menghapus peran: {$roleName}",
+            $role
+        );
+
+        session()->flash('message', "Peran '{$roleName}' berhasil dihapus.");
     }
 
     public function resetRoleForm(): void
@@ -152,6 +206,13 @@ class RoleIndex extends Component
         $this->roleName = '';
         $this->selectedPermissions = [];
         $this->resetValidation();
+    }
+
+    protected function authorizeAdminRoles(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('admin.roles') && ! auth()->user()->can('settings.manage_roles')) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki wewenang untuk mengelola peran dan hak akses sistem.');
+        }
     }
 
     public function render()
@@ -165,30 +226,38 @@ class RoleIndex extends Component
 
         $groupedPermissions = [
             '📁 MODUL 1: MASTER AKUNTANSI & PENGATURAN' => [
-                '🔹 Tab: Master COA (Chart of Accounts)' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'accounts.')),
-                '🔹 Tab: Master Jenis Jurnal' => $allPermissions->filter(fn ($p) => $p->name === 'settings.journal_types'),
-                '🔹 Tab: Master Unit Perusahaan' => $allPermissions->filter(fn ($p) => $p->name === 'settings.units'),
+                '🔹 Master COA (Chart of Accounts)' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'accounts.')),
+                '🔹 Master Jenis Jurnal' => $allPermissions->filter(fn ($p) => $p->name === 'settings.journal_types'),
+                '🔹 Master Unit Perusahaan' => $allPermissions->filter(fn ($p) => $p->name === 'settings.units'),
             ],
             '📁 MODUL 2: TRANSAKSI JURNAL & IMPORT' => [
-                '🔹 Tab: Jurnal Umum & Penyesuaian' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'journals.') && $p->name !== 'journals.import'),
-                '🔹 Sub-Menu: Import Jurnal Excel' => $allPermissions->filter(fn ($p) => $p->name === 'journals.import'),
-                '🔹 Sub-Menu: Template Jurnal Berulang' => $allPermissions->filter(fn ($p) => $p->name === 'settings.templates'),
+                '🔹 Jurnal Umum & Penyesuaian' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'journals.') && ! in_array($p->name, ['journals.import', 'settings.templates'])),
+                '🔹 Import Jurnal Excel' => $allPermissions->filter(fn ($p) => $p->name === 'journals.import'),
+                '🔹 Template Jurnal Berulang' => $allPermissions->filter(fn ($p) => $p->name === 'settings.templates'),
             ],
             '📁 MODUL 3: PERIODE AKUNTANSI & PENUTUPAN' => [
-                '🔹 Sub-Modul: Periode Akuntansi & Lock Key' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'periods.')),
+                '🔹 Periode Akuntansi & Lock Key' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'periods.')),
             ],
-            '📁 MODUL 4: LAPORAN KEUANGAN (PER SUB-MODUL & TAB MENU)' => [
-                '🔹 Sub-Modul: Buku Besar (General Ledger)' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.general_ledger', 'reports.subsidiary_ledger'])),
-                '🔹 Sub-Modul: Neraca & Kertas Kerja' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.worksheet', 'reports.trial_balance', 'reports.balance_sheet'])),
-                '🔹 Sub-Modul: Laba Rugi (Profit & Loss)' => $allPermissions->filter(fn ($p) => $p->name === 'reports.profit_loss'),
-                '🔹 Sub-Modul: Arus Kas, Saldo Awal, & Perubahan Ekuitas' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.cash_flow', 'reports.opening_balance', 'reports.changes_in_equity'])),
-                '🔹 Fitur Umum Laporan Keuangan' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.view', 'reports.export'])),
+            '📁 MODUL 4: ANGGARAN & KONTROL BIAYA' => [
+                '🔹 Rencana Anggaran & Varian Biaya' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'budgets.')),
             ],
-            '📁 MODUL 5: PENGATURAN SYSTEM' => [
-                '🔹 Sub-Modul: Pengaturan Sistem Umum' => $allPermissions->filter(fn ($p) => in_array($p->name, ['settings.view', 'settings.manage'])),
+            '📁 MODUL 5: REKONSILIASI BANK & ASET TETAP' => [
+                '🔹 Rekonsiliasi Rekening Koran Bank' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'reconciliation.')),
+                '🔹 Register Aset Tetap & Penyusutan' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'assets.')),
             ],
-            '📁 MODUL 6: MANAJEMEN PENGGUNA & SECURITY AUDIT' => [
-                '🔹 Sub-Modul: User, Multi-Tenant Unit, Dynamic RBAC, & Audit Log' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'admin.') || $p->name === 'settings.manage_roles'),
+            '📁 MODUL 6: LAPORAN KEUANGAN' => [
+                '🔹 Buku Besar (General & Subsidiary)' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.general_ledger', 'reports.subsidiary_ledger'])),
+                '🔹 Neraca & Kertas Kerja' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.worksheet', 'reports.trial_balance', 'reports.balance_sheet'])),
+                '🔹 Laba Rugi (Profit & Loss)' => $allPermissions->filter(fn ($p) => $p->name === 'reports.profit_loss'),
+                '🔹 Arus Kas, Saldo Awal, & Ekuitas' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.cash_flow', 'reports.opening_balance', 'reports.changes_in_equity'])),
+                '🔹 Fitur Umum & Ekspor Laporan' => $allPermissions->filter(fn ($p) => in_array($p->name, ['reports.view', 'reports.export'])),
+            ],
+            '📁 MODUL 7: PENGATURAN SYSTEM' => [
+                '🔹 Pengaturan Sistem Umum & Branding' => $allPermissions->filter(fn ($p) => in_array($p->name, ['settings.view', 'settings.manage', 'settings.company'])),
+                '🔹 Pengaturan Dashboard & KPI' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'dashboard.')),
+            ],
+            '📁 MODUL 8: MANAJEMEN PENGGUNA & SECURITY AUDIT' => [
+                '🔹 Pengguna, Role Dinamis & Audit Log' => $allPermissions->filter(fn ($p) => str_starts_with($p->name, 'admin.') || $p->name === 'settings.manage_roles'),
             ],
         ];
 

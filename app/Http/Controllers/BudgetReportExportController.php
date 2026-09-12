@@ -13,6 +13,14 @@ class BudgetReportExportController extends Controller
 {
     public function exportPdf(Request $request, BudgetCalculationService $service)
     {
+        abort_unless(
+            $request->user()?->can('budgets.view') ||
+            $request->user()?->can('reports.view') ||
+            $request->user()?->hasRole('Super Admin'),
+            403,
+            'THIS ACTION IS UNAUTHORIZED.'
+        );
+
         $budgetId = (int) $request->query('budgetId');
         $month = $request->filled('month') ? (int) $request->query('month') : null;
         $unitId = $request->filled('unitId') ? (int) $request->query('unitId') : null;
@@ -45,6 +53,14 @@ class BudgetReportExportController extends Controller
 
     public function exportExcel(Request $request, BudgetCalculationService $service): StreamedResponse
     {
+        abort_unless(
+            $request->user()?->can('budgets.view') ||
+            $request->user()?->can('reports.view') ||
+            $request->user()?->hasRole('Super Admin'),
+            403,
+            'THIS ACTION IS UNAUTHORIZED.'
+        );
+
         $budgetId = (int) $request->query('budgetId');
         $month = $request->filled('month') ? (int) $request->query('month') : null;
         $unitId = $request->filled('unitId') ? (int) $request->query('unitId') : null;

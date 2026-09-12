@@ -57,9 +57,11 @@
                                 {{ __('Aset Tetap & Depresiasi') }}
                             </flux:sidebar.item>
                         @endif
-                        <flux:sidebar.item icon="chart-bar" :href="route('accounting.budgets.index')" :current="request()->routeIs('accounting.budgets.*')" wire:navigate>
-                            {{ __('Anggaran & Kontrol Biaya') }}
-                        </flux:sidebar.item>
+                        @if (auth()->user()?->can('budgets.view') || auth()->user()?->hasRole('Super Admin'))
+                            <flux:sidebar.item icon="chart-bar" :href="route('accounting.budgets.index')" :current="request()->routeIs('accounting.budgets.*')" wire:navigate>
+                                {{ __('Anggaran & Kontrol Biaya') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
 
                     <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />
@@ -116,6 +118,8 @@
                             <flux:sidebar.item icon="clock" :href="route('accounting.reports.aging')" :current="request()->routeIs('accounting.reports.aging')" wire:navigate>
                                 {{ __('Aging Hutang / Piutang') }}
                             </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('reports.view') || auth()->user()?->can('budgets.view') || auth()->user()?->hasRole('Super Admin'))
                             <flux:sidebar.item icon="chart-pie" :href="route('accounting.budgets.variance-report')" :current="request()->routeIs('accounting.budgets.variance-report')" wire:navigate>
                                 {{ __('Laporan Varian Anggaran') }}
                             </flux:sidebar.item>

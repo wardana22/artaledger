@@ -35,6 +35,13 @@ class DepreciationRun extends Component
 
     public function executeDepreciation(FixedAssetDepreciationService $service): void
     {
+        abort_unless(
+            auth()->user()?->can('assets.depreciate') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak memiliki izin untuk mengeksekusi penyusutan aset.'
+        );
+
         $this->isExecuting = true;
         $unitId = $this->unit_id ? (int) $this->unit_id : null;
 

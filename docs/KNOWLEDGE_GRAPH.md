@@ -143,6 +143,23 @@ graph TD
         S_BGUARD --> M_ACC
         C_BDGE --> S_BCALC
     end
+
+    subgraph SG_Admin["8. Manajemen Pengguna & Hak Akses (RBAC)"]
+        A_ADM_USR["Route: /admin/users"] --> B_ADM_USR["Livewire: UserIndex"]
+        A_ADM_ROL["Route: /admin/roles"] --> B_ADM_ROL["Livewire: RoleIndex"]
+        A_ADM_LOG["Route: /admin/audit-logs"] --> B_ADM_LOG["Livewire: AuditLogIndex"]
+
+        B_ADM_USR --> M_USER["Model: User"]
+        B_ADM_USR --> M_UNT
+        B_ADM_USR --> M_ROLE["Model: Spatie Role"]
+        B_ADM_USR --> S_AUDIT["Service: AuditLogService"]
+
+        B_ADM_ROL --> M_ROLE
+        B_ADM_ROL --> M_PERM["Model: Spatie Permission"]
+        B_ADM_ROL --> S_AUDIT
+
+        B_ADM_LOG --> M_AUD["Model: AuditLog"]
+    end
 ```
 
 ---
@@ -276,7 +293,24 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
   - [BudgetCalculationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetCalculationService.php): Agregasi realisasi buku besar dengan normalisasi `normal_balance` (debit vs credit), kalkulasi varian & rasio serapan, penentuan 4 kategori status, filter pencarian/status, serta query rincian jurnal drill-down (`getAccountJournalDetails`).
   - [BudgetGuardService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Budget/Services/BudgetGuardService.php): Evaluasi potensi kelebihan pagu anggaran (*budget overrun*) dan peringatan serapan secara langsung pada [JournalForm.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalForm.php) dengan penyesuaian saldo normal akun.
 
-### 8. Suite Pengujian Otomatis Pest PHP
+### 8. Manajemen Pengguna & Hak Akses (Dynamic RBAC & Multi-Unit)
+- **Manajemen Pengguna**: `/admin/users` $\rightarrow$ [UserIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Admin/UserIndex.php) $\rightarrow$ [user-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/admin/user-index.blade.php)
+  - Dilengkapi 4 Kartu KPI Eksekutif (Total Pengguna, Akses Multi-Unit, Penugasan Spesifik, dan Total Peran Dinamis).
+  - Modal multi-tab segmented (*Akun*, *Peran*, *Penugasan Unit*) dengan toggle akses global semua unit (*isGlobalUnit*).
+  - Fitur Reset Password instan dan proteksi *anti-privilege escalation* (mencegah non-SuperAdmin memberikan role Super Admin).
+  - Proteksi *anti-self lockout* (mencegah admin menghapus atau mencabut peran akunnya sendiri).
+- **Manajemen Peran & Hak Akses**: `/admin/roles` $\rightarrow$ [RoleIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Admin/RoleIndex.php) $\rightarrow$ [role-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/admin/role-index.blade.php)
+  - Matriks otorisasi hak akses (*Permissions*) per modul dengan pengelompokan sistematis (Master Data, Jurnal, Impor, Rekonsiliasi Bank, Aset Tetap, Anggaran, Pengaturan, Admin RBAC).
+  - Tombol aksi batch per modul (*Pilih Seluruh Izin Modul Ini* / *Batalkan Seluruh Izin Modul Ini*) dan aksi sistem (*Pilih Semua* / *Kosongkan Semua*).
+  - Proteksi mutlak integritas sistem: Peran `Super Admin` dilindungi di tingkat backend dan frontend dari penghapusan ataupun pengubahan izin.
+- **Audit Log Terpadu**: `/admin/audit-logs` $\rightarrow$ [AuditLogIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Admin/AuditLogIndex.php) $\rightarrow$ [AuditLogService.php](file:///d:/Belajar%20Laravel/artaledger/app/Services/AuditLogService.php)
+- **Navigasi Tab Terpadu**: [user-access-nav.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/components/user-access-nav.blade.php) dengan pill counter dinamis dan status badge RBAC aktif.
+
+### 9. Suite Pengujian Otomatis Pest PHP
+- [tests/Feature/Admin/UserManagementTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Admin/UserManagementTest.php) (Validasi CRUD pengguna, penugasan unit, proteksi anti-self delete, dan pencarian)
+- [tests/Feature/Admin/RoleManagementTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Admin/RoleManagementTest.php) (Validasi pembuatan peran kustom, proteksi peran Super Admin, dan otorisasi 403 Forbidden)
+- [tests/Feature/Admin/AuditLogTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Admin/AuditLogTest.php) (Validasi pencatatan aktivitas audit log)
+- [tests/Feature/Accounting/BudgetAuthorizationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/BudgetAuthorizationTest.php) (Validasi otorisasi RBAC modul anggaran: Index, Form, Report, dan Ekspor PDF/Excel)
 - [tests/Feature/BudgetServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/BudgetServiceTest.php) (Validasi akurasi perhitungan varian BudgetCalculationService dan deteksi proteksi pelampauan pagu BudgetGuardService)
 - [tests/Feature/Accounting/AgingReportServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportServiceTest.php) (Validasi Single Assign, Split Invoicing 1-ke-Banyak, Specific Invoice Settlement, dan Akurasi Bucket Umur)
 - [tests/Feature/Accounting/AgingReportLivewireTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportLivewireTest.php) (Uji UI Livewire AgingReport, Tab Switcher, Modal Penugasan Invoice, serta Ekspor PDF & Excel)

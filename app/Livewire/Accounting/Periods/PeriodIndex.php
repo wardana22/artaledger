@@ -172,6 +172,13 @@ class PeriodIndex extends Component
 
     public function toggleRevealKey(int $periodId): void
     {
+        abort_unless(
+            auth()->user()?->can('periods.manage_keys') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak berhak melihat kunci rahasia pembukaan periode.'
+        );
+
         if ($this->revealedKeyPeriodId === $periodId) {
             $this->revealedKeyPeriodId = null;
         } else {

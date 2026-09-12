@@ -30,6 +30,13 @@ class BudgetIndex extends Component
         'filterStatus' => ['except' => ''],
     ];
 
+    public function mount(): void
+    {
+        if (auth()->check() && ! auth()->user()->can('budgets.view') && ! auth()->user()->hasRole('Super Admin')) {
+            abort(403, 'THIS ACTION IS UNAUTHORIZED.');
+        }
+    }
+
     public function updatingSearch()
     {
         $this->resetPage();
@@ -37,6 +44,8 @@ class BudgetIndex extends Component
 
     public function activateBudget(int $id): void
     {
+        abort_unless(auth()->user()?->can('budgets.manage') || auth()->user()?->hasRole('Super Admin'), 403, 'Akses Ditolak.');
+
         $budget = Budget::findOrFail($id);
 
         // Deactivate other budgets for the same fiscal year
@@ -51,6 +60,8 @@ class BudgetIndex extends Component
 
     public function closeBudget(int $id): void
     {
+        abort_unless(auth()->user()?->can('budgets.manage') || auth()->user()?->hasRole('Super Admin'), 403, 'Akses Ditolak.');
+
         $budget = Budget::findOrFail($id);
         $budget->update(['status' => 'closed']);
         session()->flash('success', "Anggaran '{$budget->name}' telah ditutup.");
@@ -58,12 +69,16 @@ class BudgetIndex extends Component
 
     public function confirmDelete(int $id): void
     {
+        abort_unless(auth()->user()?->can('budgets.manage') || auth()->user()?->hasRole('Super Admin'), 403, 'Akses Ditolak.');
+
         $this->budgetToDeleteId = $id;
         $this->confirmingDeletion = true;
     }
 
     public function deleteBudget(): void
     {
+        abort_unless(auth()->user()?->can('budgets.manage') || auth()->user()?->hasRole('Super Admin'), 403, 'Akses Ditolak.');
+
         if ($this->budgetToDeleteId) {
             $budget = Budget::find($this->budgetToDeleteId);
             if ($budget) {
@@ -79,6 +94,8 @@ class BudgetIndex extends Component
 
     public function duplicateBudget(int $id): void
     {
+        abort_unless(auth()->user()?->can('budgets.manage') || auth()->user()?->hasRole('Super Admin'), 403, 'Akses Ditolak.');
+
         $source = Budget::with('lines')->findOrFail($id);
         $newYear = $source->fiscal_year + 1;
 

@@ -41,6 +41,14 @@ class JournalTemplateIndex extends Component
 
     public function mount(): void
     {
+        abort_unless(
+            auth()->user()?->can('settings.templates') ||
+            auth()->user()?->can('settings.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'THIS ACTION IS UNAUTHORIZED.'
+        );
+
         $defaultType = JournalType::where('code', 'JK')->first() ?? JournalType::first();
         if ($defaultType) {
             $this->journal_type_id = $defaultType->id;
@@ -49,6 +57,14 @@ class JournalTemplateIndex extends Component
 
     public function openCreateModal(): void
     {
+        abort_unless(
+            auth()->user()?->can('settings.templates') ||
+            auth()->user()?->can('settings.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak.'
+        );
+
         $this->resetTemplateForm();
         $this->generateTemplateCode();
         $this->addLine();
@@ -58,6 +74,13 @@ class JournalTemplateIndex extends Component
 
     public function openEditModal(int $id): void
     {
+        abort_unless(
+            auth()->user()?->can('settings.templates') ||
+            auth()->user()?->can('settings.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak.'
+        );
         $this->resetTemplateForm();
         $template = JournalTemplate::with('lines')->findOrFail($id);
 
@@ -110,6 +133,14 @@ class JournalTemplateIndex extends Component
 
     public function saveTemplate(): void
     {
+        abort_unless(
+            auth()->user()?->can('settings.templates') ||
+            auth()->user()?->can('settings.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak.'
+        );
+
         $this->validate([
             'template_code' => 'required|string|max:50|unique:journal_templates,template_code,'.$this->editingTemplateId,
             'name' => 'required|string|max:150',
@@ -158,6 +189,14 @@ class JournalTemplateIndex extends Component
 
     public function deleteTemplate(int $id): void
     {
+        abort_unless(
+            auth()->user()?->can('settings.templates') ||
+            auth()->user()?->can('settings.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak.'
+        );
+
         $template = JournalTemplate::findOrFail($id);
         $template->delete();
 

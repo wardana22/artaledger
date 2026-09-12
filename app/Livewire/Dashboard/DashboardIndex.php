@@ -31,7 +31,7 @@ class DashboardIndex extends Component
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('dashboard.view') && ! auth()->user()->can('reports.view') && ! auth()->user()->hasRole('Super Admin')) {
-            // Fallback for authorized users
+            abort(403, 'Akses Ditolak. Anda tidak memiliki izin mengakses Dashboard.');
         }
 
         $this->company = Company::firstOrCreate([], [

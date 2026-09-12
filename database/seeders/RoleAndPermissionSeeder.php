@@ -66,6 +66,10 @@ class RoleAndPermissionSeeder extends Seeder
             'assets.delete' => 'Hapus Data Aset Tetap',
             'assets.depreciate' => 'Eksekusi & Posting Penyusutan Aset Tetap',
 
+            // Anggaran & Kontrol Biaya Modul
+            'budgets.view' => 'Lihat Data Anggaran & Laporan Varian',
+            'budgets.manage' => 'Kelola, Buat, Aktifkan, & Tutup Anggaran',
+
             // Master Pengaturan Modul
             'settings.view' => 'Lihat Pengaturan System',
             'settings.company' => 'Kelola Branding & Pengaturan Perusahaan',
@@ -90,10 +94,10 @@ class RoleAndPermissionSeeder extends Seeder
 
         // Create Default Roles
         $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
-        $superAdmin->givePermissionTo(Permission::all());
+        $superAdmin->syncPermissions(Permission::all());
 
         $accountant = Role::firstOrCreate(['name' => 'Akuntan / Finance Manager']);
-        $accountant->givePermissionTo([
+        $accountant->syncPermissions([
             'dashboard.view', 'dashboard.settings', 'dashboard.kpis.manage',
             'accounts.view', 'accounts.create', 'accounts.edit', 'accounts.delete',
             'journals.view', 'journals.create', 'journals.edit', 'journals.post', 'journals.delete', 'journals.import',
@@ -103,11 +107,12 @@ class RoleAndPermissionSeeder extends Seeder
             'reports.changes_in_equity', 'reports.view', 'reports.export',
             'reconciliation.view', 'reconciliation.manage', 'reconciliation.upload',
             'assets.view', 'assets.create', 'assets.edit', 'assets.delete', 'assets.depreciate',
+            'budgets.view', 'budgets.manage',
             'settings.view', 'settings.units', 'settings.journal_types', 'settings.templates', 'settings.manage',
         ]);
 
         $staff = Role::firstOrCreate(['name' => 'Staf Keuangan']);
-        $staff->givePermissionTo([
+        $staff->syncPermissions([
             'accounts.view',
             'journals.view', 'journals.create', 'journals.edit',
             'periods.view',
@@ -117,13 +122,14 @@ class RoleAndPermissionSeeder extends Seeder
         ]);
 
         $auditor = Role::firstOrCreate(['name' => 'Auditor / Viewer']);
-        $auditor->givePermissionTo([
+        $auditor->syncPermissions([
             'accounts.view',
             'journals.view',
             'periods.view',
             'reports.general_ledger', 'reports.subsidiary_ledger', 'reports.trial_balance', 'reports.balance_sheet',
             'reports.profit_loss', 'reports.cash_flow', 'reports.changes_in_equity', 'reports.view', 'reports.export',
             'reconciliation.view',
+            'budgets.view',
             'admin.audit_logs',
         ]);
 
