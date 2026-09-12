@@ -17,6 +17,8 @@ beforeEach(function () {
     if ($staffRole) {
         $this->staffUser->assignRole($staffRole);
     }
+    // Give periods.manage to test the period closure and reopening flow
+    $this->staffUser->givePermissionTo('periods.manage');
 
     $this->superAdminUser = User::factory()->create(['name' => 'Super Admin User']);
     $adminRole = Role::where('name', 'Super Admin')->first();
