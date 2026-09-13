@@ -73,6 +73,11 @@
                 @endif
 
                 <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 dark:text-slate-400">
+                    <input type="checkbox" wire:model.live="includePaidInvoices" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                    Tampilkan Invoice Lunas
+                </label>
+
+                <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 dark:text-slate-400">
                     <input type="checkbox" wire:model.live="hideZeroBalances" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500">
                     Sembunyikan Akun Saldo Nol
                 </label>
@@ -221,10 +226,17 @@
                                 <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/20 transition-colors">
                                     <td class="py-2.5 px-4 pl-10 font-semibold text-slate-700 dark:text-slate-200">
                                         @if ($inv['is_registered_invoice'])
-                                            <span class="inline-flex items-center gap-1.5 font-mono text-indigo-600 dark:text-indigo-400">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                {{ $inv['invoice_number'] }}
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1.5 font-mono text-indigo-600 dark:text-indigo-400">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                    {{ $inv['invoice_number'] }}
+                                                </span>
+                                                @if (!empty($inv['is_paid']))
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                                        ✓ Lunas
+                                                    </span>
+                                                @endif
+                                            </div>
                                         @else
                                             <div class="flex items-center gap-2">
                                                 <input 
@@ -245,7 +257,11 @@
                                     <td class="py-2.5 px-3 text-slate-500 font-mono">{{ $inv['invoice_date'] }}</td>
                                     <td class="py-2.5 px-3 text-slate-500 font-mono">{{ $inv['due_date'] }}</td>
                                     <td class="py-2.5 px-3 text-right font-bold text-slate-800 dark:text-slate-100">
-                                        Rp {{ number_format($inv['remaining_amount'], 2, ',', '.') }}
+                                        @if (!empty($inv['is_paid']))
+                                            <span class="text-emerald-600 dark:text-emerald-400 font-mono">Rp 0,00</span>
+                                        @else
+                                            Rp {{ number_format($inv['remaining_amount'], 2, ',', '.') }}
+                                        @endif
                                     </td>
                                     <td class="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 font-mono">
                                         {{ $inv['buckets']['current'] > 0 ? number_format($inv['buckets']['current'], 2, ',', '.') : '-' }}
@@ -277,11 +293,11 @@
                                                 <button 
                                                     type="button" 
                                                     wire:click="openSettleModal({{ $inv['id'] }})"
-                                                    class="p-1 px-2 rounded bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 shadow-xs"
-                                                    title="Catat Pelunasan / Pembayaran Invoice ini"
+                                                    class="p-1 px-2 rounded {{ !empty($inv['is_paid']) ? 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white' : 'bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white' }} transition-all text-[11px] font-bold flex items-center gap-1 shadow-xs"
+                                                    title="{{ !empty($inv['is_paid']) ? 'Lihat Riwayat & Koreksi / Batalkan Pelunasan' : 'Catat Pelunasan / Pembayaran Invoice ini' }}"
                                                 >
                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                                    <span>Bayar</span>
+                                                    <span>{{ !empty($inv['is_paid']) ? 'Riwayat Bayar' : 'Bayar' }}</span>
                                                 </button>
                                                 <button 
                                                     type="button" 

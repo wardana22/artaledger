@@ -188,3 +188,55 @@ test('can search and link payment line using smart payment line picker in settle
     expect($invoice->fresh()->status)->toBe('paid');
     expect((float) $invoice->fresh()->remaining_amount)->toBe(0.0);
 });
+
+test('can toggle includePaidInvoices to view settled invoices and open settlement modal', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+    $kasAccount = Account::where('code', '11.01.01')->first() ?? Account::where('type', 'like', '%KAS%')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+    $journalTagihan = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-05',
+        'document_number' => 'DOC-LUNAS-LIVEWIRE',
+        'description' => 'Tagihan Client Lunas',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang Jasa', 'debit' => 200000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 200000],
+    ], $this->user->id);
+
+    $lineTagihan = $journalTagihan->lines()->where('account_id', $piutangAccount->id)->first();
+    $managerService = new AgingInvoiceManagerService;
+    $invoice = $managerService->assignSingleInvoice($lineTagihan, [
+        'invoice_number' => 'INV-LUNAS-001',
+        'invoice_date' => '2026-01-05',
+        'due_date' => '2026-01-20',
+        'partner_name' => 'PT Mitra Terpercaya',
+    ], $this->user->id);
+
+    // Langsung lunasi
+    $managerService->quickSettleInvoice($invoice, [
+        'payment_date' => '2026-01-10',
+        'cash_account_id' => $kasAccount->id,
+        'amount' => 200000,
+        'notes' => 'Lunas awal',
+    ], $this->user->id);
+
+    // Cek Livewire: Saat includePaidInvoices = false -> tidak muncul
+    Livewire::actingAs($this->user)
+        ->test(AgingReport::class)
+        ->set('asOfDate', '2026-02-01')
+        ->set('includePaidInvoices', false)
+        ->call('toggleAccount', $piutangAccount->id)
+        ->assertDontSee('INV-LUNAS-001')
+        // Saat includePaidInvoices diaktifkan -> muncul invoice dan badge Lunas
+        ->set('includePaidInvoices', true)
+        ->set('hideZeroBalances', false)
+        ->assertSee('INV-LUNAS-001')
+        ->assertSee('Lunas')
+        ->assertSee('Riwayat Bayar')
+        ->call('openSettleModal', $invoice->id)
+        ->assertSet('showSettleModal', true)
+        ->assertSee('Riwayat Pelunasan Terdahulu')
+        ->assertSee('Rp 200.000,00');
+});

@@ -31,6 +31,8 @@ class AgingReport extends Component
 
     public bool $hideZeroBalances = true;
 
+    public bool $includePaidInvoices = false;
+
     // Filter baris pelunasan existing
     public string $settleDateFilterStart = '';
 
@@ -699,7 +701,8 @@ class AgingReport extends Component
             asOfDate: $this->asOfDate ?: date('Y-m-d'),
             unitFilter: $this->unitFilter,
             hideZeroBalances: $this->hideZeroBalances,
-            startDate: $this->startDate ?: null
+            startDate: $this->startDate ?: null,
+            includePaid: $this->includePaidInvoices
         );
 
         $units = Unit::orderBy('code')->get();

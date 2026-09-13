@@ -18,7 +18,7 @@ class AgingReportService
      * @param  string|null  $startDate  'Y-m-d' | null
      * @return array<string, mixed>
      */
-    public function getAgingReport(string $type, string $asOfDate, string $unitFilter = 'all', bool $hideZeroBalances = true, ?string $startDate = null): array
+    public function getAgingReport(string $type, string $asOfDate, string $unitFilter = 'all', bool $hideZeroBalances = true, ?string $startDate = null, bool $includePaid = false): array
     {
         $cutoffDate = Carbon::parse($asOfDate)->endOfDay();
         $accountTypeMatch = $type === 'receivable' ? 'PIUTANG' : 'HUTANG LANCAR';
@@ -45,7 +45,7 @@ class AgingReportService
         ];
 
         foreach ($accounts as $account) {
-            $accountRows = $this->calculateAccountAgingRows($account, $type, $cutoffDate, $unitFilter, $startDate);
+            $accountRows = $this->calculateAccountAgingRows($account, $type, $cutoffDate, $unitFilter, $startDate, $includePaid);
 
             $accountSubtotal = [
                 'total_outstanding' => 0.0,
@@ -92,6 +92,7 @@ class AgingReportService
             'type' => $type,
             'as_of_date' => $asOfDate,
             'unit_filter' => $unitFilter,
+            'include_paid' => $includePaid,
             'kpi' => $kpiSummary,
             'accounts' => $reportData,
         ];
@@ -102,7 +103,7 @@ class AgingReportService
      *
      * @return array<int, array<string, mixed>>
      */
-    protected function calculateAccountAgingRows(Account $account, string $type, Carbon $cutoffDate, string $unitFilter, ?string $startDate = null): array
+    protected function calculateAccountAgingRows(Account $account, string $type, Carbon $cutoffDate, string $unitFilter, ?string $startDate = null, bool $includePaid = false): array
     {
         // 1. Ambil invoice terdaftar yang dibuat pada/sebelum cutoff date
         $invoicesQuery = ApArInvoice::with(['settlements' => function ($q) use ($cutoffDate) {
@@ -130,16 +131,19 @@ class AgingReportService
 
             $settledSoFar = (float) $invoice->settlements->sum('settled_amount');
             $remaining = max(0.0, (float) $invoice->original_amount - $settledSoFar);
+            $isPaid = $remaining <= 0.001;
 
-            if ($remaining <= 0.001) {
-                continue; // Lunas per tanggal cutoff
+            if ($isPaid && ! $includePaid) {
+                continue; // Lunas per tanggal cutoff dan filter tampilkan lunas nonaktif
             }
 
             // Hitung hari jatuh tempo terhadap cutoff date
             $dueDate = Carbon::parse($invoice->due_date)->startOfDay();
             $daysOverdue = (int) $dueDate->diffInDays($cutoffDate, false); // Positif jika cutoff > due_date
 
-            $buckets = $this->classifyIntoBuckets($remaining, $daysOverdue);
+            $buckets = $isPaid
+                ? ['current' => 0.0, 'overdue_1_30' => 0.0, 'overdue_31_60' => 0.0, 'overdue_61_90' => 0.0, 'overdue_over_90' => 0.0]
+                : $this->classifyIntoBuckets($remaining, $daysOverdue);
 
             $entryNumbers = $invoice->journalLines->map(fn ($jl) => $jl->journalEntry?->entry_number)->filter()->unique()->implode(', ');
             if (empty($entryNumbers)) {
@@ -149,6 +153,7 @@ class AgingReportService
             $rows[] = [
                 'id' => $invoice->id,
                 'is_registered_invoice' => true,
+                'is_paid' => $isPaid,
                 'invoice_number' => $invoice->invoice_number,
                 'partner_name' => $invoice->partner_name ?: '-',
                 'entry_number' => $entryNumbers,
@@ -223,6 +228,7 @@ class AgingReportService
             $unassignedRows[] = [
                 'id' => $line->id,
                 'is_registered_invoice' => false,
+                'is_paid' => false,
                 'invoice_number' => '(Belum Bernomor Invoice)',
                 'partner_name' => $line->description ?: '-',
                 'entry_number' => $line->journalEntry->entry_number,

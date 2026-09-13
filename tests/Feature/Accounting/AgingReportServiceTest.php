@@ -429,3 +429,58 @@ test('can perform quick settlement and cancel settlement on invoice', function (
     expect($invoiceRollback->status)->toBe('partial');
     expect((float) $invoiceRollback->remaining_amount)->toBe(600000.0);
 });
+
+test('can include paid invoices when includePaid option is enabled', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+    $kasAccount = Account::where('code', '11.01.01')->first() ?? Account::where('type', 'like', '%KAS%')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+    $journal = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-01',
+        'document_number' => 'DOC-PAID-TEST',
+        'description' => 'Saldo Awal Piutang 2026',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang Pelanggan Lunas', 'debit' => 500000, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 500000],
+    ], $this->user->id);
+
+    $line = $journal->lines()->where('account_id', $piutangAccount->id)->first();
+    $managerService = new AgingInvoiceManagerService;
+
+    $invoice = $managerService->assignSingleInvoice($line, [
+        'invoice_number' => 'INV-2026-PAID',
+        'invoice_date' => '2026-01-01',
+        'due_date' => '2026-01-15',
+        'partner_name' => 'PT Pelanggan Lunas',
+    ], $this->user->id);
+
+    // Lakukan pelunasan penuh
+    $managerService->quickSettleInvoice($invoice, [
+        'payment_date' => '2026-01-10',
+        'cash_account_id' => $kasAccount->id,
+        'amount' => 500000,
+        'notes' => 'Pelunasan Penuh',
+    ], $this->user->id);
+
+    $reportService = new AgingReportService;
+
+    // Saat includePaid = false (default)
+    $reportDefault = $reportService->getAgingReport('receivable', '2026-02-01', includePaid: false);
+    $accDataDefault = collect($reportDefault['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    $invoicesDefault = $accDataDefault ? collect($accDataDefault['invoices']) : collect();
+    expect($invoicesDefault->firstWhere('invoice_number', 'INV-2026-PAID'))->toBeNull();
+
+    // Saat includePaid = true
+    $reportWithPaid = $reportService->getAgingReport('receivable', '2026-02-01', hideZeroBalances: false, includePaid: true);
+    $accDataWithPaid = collect($reportWithPaid['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    expect($accDataWithPaid)->not->toBeNull();
+    $invoicesWithPaid = collect($accDataWithPaid['invoices']);
+    $item = $invoicesWithPaid->firstWhere('invoice_number', 'INV-2026-PAID');
+    expect($item)->not->toBeNull();
+    expect($item['is_paid'])->toBeTrue();
+    expect($item['remaining_amount'])->toBe(0.0);
+    expect($item['settled_amount'])->toBe(500000.0);
+    expect($reportWithPaid['kpi']['total_outstanding'])->toBe(0.0);
+});
