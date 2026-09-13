@@ -496,8 +496,13 @@ class FinancialReportPdfService
                 $q->where(function ($sub) use ($startYear, $startDate) {
                     $sub->where(function ($obQ) use ($startYear) {
                         $obQ->where('journal_entries.entry_number', 'like', "SA-{$startYear}%")
-                            ->orWhere('journal_entries.source_type', 'opening_balance')
-                            ->orWhere('journal_entries.entry_type', 'opening_balance');
+                            ->orWhere(function ($w) use ($startYear) {
+                                $w->whereYear('journal_entries.entry_date', $startYear)
+                                    ->where(function ($types) {
+                                        $types->where('journal_entries.source_type', 'opening_balance')
+                                            ->orWhere('journal_entries.entry_type', 'opening_balance');
+                                    });
+                            });
                     })->orWhere(function ($priorQ) use ($startYear, $startDate) {
                         $priorQ->where('journal_entries.entry_number', 'not like', 'SA-%')
                             ->where('journal_entries.entry_type', '!=', 'opening_balance')
@@ -695,8 +700,13 @@ class FinancialReportPdfService
                 $q->where(function ($sub) use ($startYear, $startDate) {
                     $sub->where(function ($obQ) use ($startYear) {
                         $obQ->where('entry_number', 'like', "SA-{$startYear}%")
-                            ->orWhere('source_type', 'opening_balance')
-                            ->orWhere('entry_type', 'opening_balance');
+                            ->orWhere(function ($w) use ($startYear) {
+                                $w->whereYear('entry_date', $startYear)
+                                    ->where(function ($types) {
+                                        $types->where('source_type', 'opening_balance')
+                                            ->orWhere('entry_type', 'opening_balance');
+                                    });
+                            });
                     })->orWhere(function ($priorQ) use ($startYear, $startDate) {
                         $priorQ->where('entry_number', 'not like', 'SA-%')
                             ->where('entry_type', '!=', 'opening_balance')
@@ -856,8 +866,13 @@ class FinancialReportPdfService
                 $q->where(function ($sub) use ($startYear, $startDate) {
                     $sub->where(function ($obQ) use ($startYear) {
                         $obQ->where('entry_number', 'like', "SA-{$startYear}%")
-                            ->orWhere('source_type', 'opening_balance')
-                            ->orWhere('entry_type', 'opening_balance');
+                            ->orWhere(function ($w) use ($startYear) {
+                                $w->whereYear('entry_date', $startYear)
+                                    ->where(function ($types) {
+                                        $types->where('source_type', 'opening_balance')
+                                            ->orWhere('entry_type', 'opening_balance');
+                                    });
+                            });
                     })->orWhere(function ($priorQ) use ($startYear, $startDate) {
                         $priorQ->where('entry_number', 'not like', 'SA-%')
                             ->where('entry_type', '!=', 'opening_balance')
@@ -1132,8 +1147,13 @@ class FinancialReportPdfService
                 $q->where(function ($sub) use ($startYear, $startDate) {
                     $sub->where(function ($obQ) use ($startYear) {
                         $obQ->where('journal_entries.entry_number', 'like', "SA-{$startYear}%")
-                            ->orWhere('journal_entries.source_type', 'opening_balance')
-                            ->orWhere('journal_entries.entry_type', 'opening_balance');
+                            ->orWhere(function ($w) use ($startYear) {
+                                $w->whereYear('journal_entries.entry_date', $startYear)
+                                    ->where(function ($types) {
+                                        $types->where('journal_entries.source_type', 'opening_balance')
+                                            ->orWhere('journal_entries.entry_type', 'opening_balance');
+                                    });
+                            });
                     })->orWhere(function ($priorQ) use ($startYear, $startDate) {
                         $priorQ->where('journal_entries.entry_number', 'not like', 'SA-%')
                             ->where('journal_entries.entry_type', '!=', 'opening_balance')

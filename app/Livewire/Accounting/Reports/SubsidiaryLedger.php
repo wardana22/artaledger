@@ -64,8 +64,13 @@ class SubsidiaryLedger extends Component
                     $q->where(function ($sub) use ($startYear) {
                         $sub->where(function ($obQ) use ($startYear) {
                             $obQ->where('entry_number', 'like', "SA-{$startYear}%")
-                                ->orWhere('source_type', 'opening_balance')
-                                ->orWhere('entry_type', 'opening_balance');
+                                ->orWhere(function ($w) use ($startYear) {
+                                    $w->whereYear('entry_date', $startYear)
+                                        ->where(function ($types) {
+                                            $types->where('source_type', 'opening_balance')
+                                                ->orWhere('entry_type', 'opening_balance');
+                                        });
+                                });
                         })->orWhere(function ($priorQ) use ($startYear) {
                             $priorQ->where('entry_number', 'not like', 'SA-%')
                                 ->where('entry_type', '!=', 'opening_balance')

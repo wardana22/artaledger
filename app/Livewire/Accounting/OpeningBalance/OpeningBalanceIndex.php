@@ -184,8 +184,13 @@ class OpeningBalanceIndex extends Component
                         $q->where(function ($subQ) use ($selectedPeriod, $selectedYear) {
                             $subQ->where(function ($obQ) use ($selectedYear) {
                                 $obQ->where('entry_number', 'like', "SA-{$selectedYear}%")
-                                    ->orWhere('entry_type', 'opening_balance')
-                                    ->orWhere('source_type', 'opening_balance');
+                                    ->orWhere(function ($w) use ($selectedYear) {
+                                        $w->whereYear('entry_date', $selectedYear)
+                                            ->where(function ($types) {
+                                                $types->where('entry_type', 'opening_balance')
+                                                    ->orWhere('source_type', 'opening_balance');
+                                            });
+                                    });
                             })->orWhere(function ($priorQ) use ($selectedPeriod, $selectedYear) {
                                 $priorQ->where('entry_number', 'not like', 'SA-%')
                                     ->where('entry_type', '!=', 'opening_balance')
