@@ -82,6 +82,8 @@ class TrialBalance extends Component
             $q->where('status', 'posted')
                 ->where(function ($query) {
                     $query->where('entry_type', 'opening_balance')
+                        ->orWhere('source_type', 'opening_balance')
+                        ->orWhere('entry_number', 'like', 'SA%')
                         ->orWhere('entry_date', '<', $this->startDate);
                 });
         })
@@ -113,6 +115,8 @@ class TrialBalance extends Component
         $mutQuery = JournalLine::whereHas('journalEntry', function ($q) {
             $q->where('status', 'posted')
                 ->where('entry_type', '!=', 'opening_balance')
+                ->where('source_type', '!=', 'opening_balance')
+                ->where('entry_number', 'not like', 'SA%')
                 ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
         })
             ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {

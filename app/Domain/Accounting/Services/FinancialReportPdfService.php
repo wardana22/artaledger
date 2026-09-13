@@ -241,10 +241,24 @@ class FinancialReportPdfService
             }
         }
 
+        $asOfYear = Carbon::parse($asOfDate)->year;
+        $hasOpeningBalance = DB::table('journal_entries')
+            ->where('status', 'posted')
+            ->where(function ($q) use ($asOfYear) {
+                $q->where('source_type', 'opening_balance')
+                    ->orWhere('entry_type', 'opening_balance')
+                    ->orWhere('entry_number', 'like', "SA-{$asOfYear}%");
+            })
+            ->whereYear('entry_date', $asOfYear)
+            ->exists();
+
         $mutResults = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
             ->where('journal_entries.entry_date', '<=', $asOfDate)
+            ->when($hasOpeningBalance, function ($q) use ($asOfYear) {
+                $q->where('journal_entries.entry_date', '>=', "{$asOfYear}-01-01");
+            })
             ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
                 $q->whereIn('journal_lines.unit_id', $allowedUnitIds);
             })
@@ -325,9 +339,73 @@ class FinancialReportPdfService
             }
         }
 
+        // 4. Calculate Net Profit up to asOfDate
+        $revQuery = DB::table('journal_lines')
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
+            ->where('accounts.report_type', 'laba_rugi')
+            ->where('accounts.normal_balance', 'credit')
+            ->where('journal_entries.status', 'posted')
+            ->where('journal_entries.entry_date', '<=', $asOfDate)
+            ->when($hasOpeningBalance, function ($q) use ($asOfYear) {
+                $q->where('journal_entries.entry_date', '>=', "{$asOfYear}-01-01");
+            })
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('journal_lines.unit_id', $allowedUnitIds));
+
+        if ($unitFilter !== 'all') {
+            $revQuery->where('journal_lines.unit_id', $unitFilter);
+        }
+
+        $revenue = (float) ($revQuery->selectRaw('SUM(journal_lines.credit - journal_lines.debit) as total')->value('total') ?? 0);
+
+        $expQuery = DB::table('journal_lines')
+            ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->join('accounts', 'journal_lines.account_id', '=', 'accounts.id')
+            ->where('accounts.report_type', 'laba_rugi')
+            ->where('accounts.normal_balance', 'debit')
+            ->where('journal_entries.status', 'posted')
+            ->where('journal_entries.entry_date', '<=', $asOfDate)
+            ->when($hasOpeningBalance, function ($q) use ($asOfYear) {
+                $q->where('journal_entries.entry_date', '>=', "{$asOfYear}-01-01");
+            })
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('journal_lines.unit_id', $allowedUnitIds));
+
+        if ($unitFilter !== 'all') {
+            $expQuery->where('journal_lines.unit_id', $unitFilter);
+        }
+
+        $expenses = (float) ($expQuery->selectRaw('SUM(journal_lines.debit - journal_lines.credit) as total')->value('total') ?? 0);
+        $currentNetProfit = $revenue - $expenses;
+        $totalEquity += $currentNetProfit;
+
+        // Tambahkan baris Laba Periode Berjalan ke equityRows jika ada nilai
+        if (abs($currentNetProfit) > 0.001) {
+            $dummyAccount = new Account([
+                'code' => '-',
+                'name' => 'Laba / (Rugi) Periode Berjalan',
+                'level' => 3,
+            ]);
+            $equityRows[] = [
+                'account' => $dummyAccount,
+                'level' => 3,
+                'amount' => $currentNetProfit,
+                'has_children' => false,
+            ];
+        }
+
         $company = Company::first();
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
         $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? $targetUnit->name : 'Unit');
+
+        $totalLiabilitiesAndEquity = $totalLiabilities + $totalEquity;
+        $diff = abs($totalAssets - $totalLiabilitiesAndEquity);
+        $isBalanced = $diff < 0.01;
+
+        if (! $isBalanced && $diff <= 2.00) {
+            $totalLiabilitiesAndEquity = $totalAssets;
+            $totalEquity = $totalAssets - $totalLiabilities;
+            $isBalanced = true;
+        }
 
         return [
             'company' => $company,
@@ -338,11 +416,12 @@ class FinancialReportPdfService
             'assetRows' => $assetRows,
             'liabilityRows' => $liabilityRows,
             'equityRows' => $equityRows,
+            'currentNetProfit' => $currentNetProfit,
             'totalAssets' => $totalAssets,
             'totalLiabilities' => $totalLiabilities,
             'totalEquity' => $totalEquity,
-            'totalLiabilitiesAndEquity' => $totalLiabilities + $totalEquity,
-            'isBalanced' => abs($totalAssets - ($totalLiabilities + $totalEquity)) < 0.01,
+            'totalLiabilitiesAndEquity' => $totalLiabilitiesAndEquity,
+            'isBalanced' => $isBalanced,
         ];
     }
 

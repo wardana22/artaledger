@@ -81,11 +81,13 @@ class Worksheet extends Component
             }
         }
 
-        // 1b. Fetch Opening Balances from Journal Lines prior to startDate or entry_type = opening_balance
+        // 1b. Fetch Opening Balances from Journal Lines prior to startDate or source_type = opening_balance / SA%
         $opResults = JournalLine::whereHas('journalEntry', function ($q) {
             $q->where('status', 'posted')
                 ->where(function ($query) {
                     $query->where('entry_type', 'opening_balance')
+                        ->orWhere('source_type', 'opening_balance')
+                        ->orWhere('entry_number', 'like', 'SA%')
                         ->orWhere('entry_date', '<', $this->startDate);
                 });
         })
@@ -119,6 +121,8 @@ class Worksheet extends Component
             $q->where('status', 'posted')
                 ->where('entry_type', '!=', 'adjustment')
                 ->where('entry_type', '!=', 'opening_balance')
+                ->where('source_type', '!=', 'opening_balance')
+                ->where('entry_number', 'not like', 'SA%')
                 ->whereBetween('entry_date', [$this->startDate, $this->endDate]);
         })
             ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {

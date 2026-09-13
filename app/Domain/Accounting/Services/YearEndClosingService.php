@@ -196,6 +196,20 @@ class YearEndClosingService
                 ]);
             }
 
+            // Ratakan selisih pembulatan sen ke akun Saldo Laba jika selisih kecil (<= Rp 2,00)
+            $totD = (float) $entry->lines()->sum('debit');
+            $totC = (float) $entry->lines()->sum('credit');
+            $diffCent = round($totD - $totC, 2);
+
+            if (abs($diffCent) > 0 && abs($diffCent) <= 2.00 && $retainedEarningsId) {
+                $retainedLine = $entry->lines()->where('account_id', $retainedEarningsId)->first();
+                if ($retainedLine) {
+                    $retainedLine->update([
+                        'credit' => (float) $retainedLine->credit + $diffCent,
+                    ]);
+                }
+            }
+
             AuditLogService::record(
                 'period.year_end_closing',
                 "Tutup Buku Akhir Tahun {$closedYear} & Rollover Saldo Awal ke {$entryNumber}",
