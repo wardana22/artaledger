@@ -129,14 +129,19 @@
                     <flux:separator class="my-3 border-zinc-200/80 dark:border-zinc-800/80" />
                 @endif
 
-                @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types') || auth()->user()?->can('settings.units') || auth()->user()?->can('admin.users') || auth()->user()?->can('admin.roles') || auth()->user()?->can('admin.audit_logs'))
+                @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types') || auth()->user()?->can('settings.units') || auth()->user()?->can('settings.company') || auth()->user()?->can('admin.users') || auth()->user()?->can('admin.roles') || auth()->user()?->can('admin.audit_logs'))
                     @php
+                        $companyUnitRoute = route('accounting.settings.company.index');
+                        if (! auth()->user()?->can('settings.company') && auth()->user()?->can('settings.units')) {
+                            $companyUnitRoute = route('accounting.units.index');
+                        }
+
                         $masterRoute = route('accounting.accounts.index');
                         if (! auth()->user()?->can('accounts.view')) {
                             if (auth()->user()?->can('settings.journal_types')) {
                                 $masterRoute = route('accounting.journal-types.index');
-                            } elseif (auth()->user()?->can('settings.units')) {
-                                $masterRoute = route('accounting.units.index');
+                            } elseif (auth()->user()?->can('settings.manage')) {
+                                $masterRoute = route('accounting.initial-balance.index');
                             }
                         }
 
@@ -155,8 +160,13 @@
                                 {{ __('Pengaturan Dashboard') }}
                             </flux:sidebar.item>
                         @endif
-                        @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types') || auth()->user()?->can('settings.units'))
-                            <flux:sidebar.item icon="cog-6-tooth" :href="$masterRoute" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.units.*') || request()->routeIs('accounting.settings.company.*')" wire:navigate>
+                        @if (auth()->user()?->can('settings.company') || auth()->user()?->can('settings.units') || auth()->user()?->can('settings.manage') || auth()->user()?->hasRole('Super Admin'))
+                            <flux:sidebar.item icon="building-office-2" :href="$companyUnitRoute" :current="request()->routeIs('accounting.settings.company.*') || request()->routeIs('accounting.units.*')" wire:navigate>
+                                {{ __('Profil & Unit Perusahaan') }}
+                            </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()?->can('accounts.view') || auth()->user()?->can('settings.view') || auth()->user()?->can('settings.manage') || auth()->user()?->can('settings.journal_types'))
+                            <flux:sidebar.item icon="cog-6-tooth" :href="$masterRoute" :current="request()->routeIs('accounting.accounts.*') || request()->routeIs('accounting.account-groups.*') || request()->routeIs('accounting.journal-types.*') || request()->routeIs('accounting.initial-balance.*')" wire:navigate>
                                 {{ __('Master Akuntansi') }}
                             </flux:sidebar.item>
                         @endif

@@ -21,6 +21,16 @@
 
             @if (auth()->user()?->can('periods.manage') || auth()->user()?->hasRole('Super Admin'))
                 <button 
+                    wire:click="rolloverYearEnd({{ $selectedYear }})"
+                    wire:confirm="Apakah Anda yakin ingin menjalankan Tutup Buku Akhir Tahun {{ $selectedYear }}? Saldo akhir akun neraca (termasuk piutang/hutang) dan akumulasi laba bersih akan otomatis di-rollover menjadi Jurnal Saldo Awal (SA-{{ $selectedYear + 1 }}-001)."
+                    class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl shadow-md shadow-emerald-500/20 gap-2 cursor-pointer transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Tutup Buku & Rollover {{ $selectedYear }}
+                </button>
+
+                <button 
                     wire:click="generateYearPeriods"
                     class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-500/20 gap-2 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

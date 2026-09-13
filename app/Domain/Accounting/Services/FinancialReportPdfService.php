@@ -1306,10 +1306,10 @@ class FinancialReportPdfService
     /**
      * Render Laporan Aging Hutang / Piutang ke format PDF (Landscape).
      */
-    public function renderAgingPdf(string $type, string $asOfDate, string $unitFilter = 'all', ?User $user = null): DomPdfWrapper
+    public function renderAgingPdf(string $type, string $asOfDate, string $unitFilter = 'all', ?User $user = null, ?string $startDate = null): DomPdfWrapper
     {
         $reportService = new AgingReportService;
-        $reportData = $reportService->getAgingReport($type, $asOfDate, $unitFilter, true);
+        $reportData = $reportService->getAgingReport($type, $asOfDate, $unitFilter, true, $startDate);
 
         $company = Company::first();
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;

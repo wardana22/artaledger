@@ -15,8 +15,8 @@
 
         <div class="flex items-center gap-2">
             <x-report-export-dropdown 
-                :pdfUrl="route('accounting.reports.export.pdf', ['type' => $activeTab === 'receivable' ? 'aging-receivable' : 'aging-payable', 'as_of_date' => $asOfDate, 'unit' => $unitFilter])"
-                :excelUrl="route('accounting.reports.export.excel', ['type' => $activeTab === 'receivable' ? 'aging-receivable' : 'aging-payable', 'as_of_date' => $asOfDate, 'unit' => $unitFilter])"
+                :pdfUrl="route('accounting.reports.export.pdf', ['type' => $activeTab === 'receivable' ? 'aging-receivable' : 'aging-payable', 'as_of_date' => $asOfDate, 'start_date' => $startDate, 'unit' => $unitFilter])"
+                :excelUrl="route('accounting.reports.export.excel', ['type' => $activeTab === 'receivable' ? 'aging-receivable' : 'aging-payable', 'as_of_date' => $asOfDate, 'start_date' => $startDate, 'unit' => $unitFilter])"
             />
         </div>
     </div>
@@ -80,7 +80,12 @@
         </div>
 
         <!-- Filter Inputs -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Mulai Periode Buku</label>
+                <input wire:model.live="startDate" type="date" aria-label="Mulai Periode Buku" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-medium dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 transition-all" />
+            </div>
+
             <div>
                 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tanggal Acuan (Cut-Off)</label>
                 <input wire:model.live="asOfDate" type="date" aria-label="Tanggal Acuan" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs md:text-sm font-medium dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 transition-all" />

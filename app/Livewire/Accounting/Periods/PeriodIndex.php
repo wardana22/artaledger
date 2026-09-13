@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Accounting\Periods;
 
+use App\Domain\Accounting\Services\YearEndClosingService;
 use App\Models\AccountingPeriod;
 use App\Models\Company;
 use App\Services\AuditLogService;
@@ -111,7 +112,37 @@ class PeriodIndex extends Component
             ['status' => 'closed', 'lock_key' => $lockKey]
         );
 
-        session()->flash('message', "Periode {$period->name} berhasil ditutup. Kunci Keamanan Rahasia (Lock Key) telah dihasilkan secara otomatis.");
+        $flashMessage = "Periode {$period->name} berhasil ditutup. Kunci Keamanan Rahasia (Lock Key) telah dihasilkan secara otomatis.";
+
+        // Otomatis Tutup Buku Akhir Tahun jika menutup bulan 12 (Desember)
+        if ($period->month === 12) {
+            $saEntry = YearEndClosingService::rolloverYearEndOpeningBalance(
+                $period->year,
+                auth()->id()
+            );
+            $nextYear = $period->year + 1;
+            $flashMessage .= " Tutup Buku Akhir Tahun {$period->year} selesai. Saldo Awal {$nextYear} ({$saEntry->entry_number}) telah digenerate secara otomatis.";
+        }
+
+        session()->flash('message', $flashMessage);
+    }
+
+    public function rolloverYearEnd(int $year): void
+    {
+        abort_unless(
+            auth()->user()?->can('periods.manage') ||
+            auth()->user()?->hasRole('Super Admin'),
+            403,
+            'Akses Ditolak. Anda tidak memiliki izin untuk melakukan tutup buku tahunan.'
+        );
+
+        $saEntry = YearEndClosingService::rolloverYearEndOpeningBalance(
+            $year,
+            auth()->id()
+        );
+
+        $nextYear = $year + 1;
+        session()->flash('message', "Berhasil melakukan Tutup Buku Akhir Tahun {$year}! Saldo Awal {$nextYear} ({$saEntry->entry_number}) telah dimutakhirkan.");
     }
 
     public function lockPeriod(int $periodId): void

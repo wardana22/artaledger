@@ -114,7 +114,7 @@ class FinancialReportPdfController extends Controller
                     abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat Laporan Aging.');
                 }
                 $agingType = $type === 'aging-receivable' ? 'receivable' : 'payable';
-                $pdf = $this->pdfService->renderAgingPdf($agingType, $asOfDate, $unitFilter, $user);
+                $pdf = $this->pdfService->renderAgingPdf($agingType, $asOfDate, $unitFilter, $user, $startDate);
                 $label = $agingType === 'receivable' ? 'Piutang' : 'Hutang';
                 $filename = "Laporan-Aging-{$label}-per-{$asOfDate}.pdf";
                 break;

@@ -114,7 +114,7 @@ class FinancialReportExcelController extends Controller
                     abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat Laporan Aging.');
                 }
                 $agingType = $type === 'aging-receivable' ? 'receivable' : 'payable';
-                $spreadsheet = $this->excelService->exportAging($agingType, $asOfDate, $unitFilter, $user);
+                $spreadsheet = $this->excelService->exportAging($agingType, $asOfDate, $unitFilter, $user, $startDate);
                 $label = $agingType === 'receivable' ? 'Piutang' : 'Hutang';
                 $filename = "Laporan-Aging-{$label}-per-{$asOfDate}.xlsx";
                 break;

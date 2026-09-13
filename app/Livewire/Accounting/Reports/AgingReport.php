@@ -23,6 +23,8 @@ class AgingReport extends Component
 
     public string $activeTab = 'receivable'; // 'receivable' | 'payable'
 
+    public string $startDate = '';
+
     public string $asOfDate = '';
 
     public string $unitFilter = 'all';
@@ -77,6 +79,8 @@ class AgingReport extends Component
     public string $settleNotes = '';
 
     public ?int $settleExistingLineId = null;
+
+    public ?int $settlePaymentLineId = null;
 
     // Assign / Split Modal State
     /** @var array<int, bool> */
@@ -364,8 +368,14 @@ class AgingReport extends Component
     {
         $this->settlePaymentLineId = $lineId;
 
+        $remaining = 0.0;
+        if ($this->settlingInvoice) {
+            $alreadySettled = (float) $this->settlingInvoice->settlements->sum('settled_amount');
+            $remaining = max(0.0, (float) $this->settlingInvoice->original_amount - $alreadySettled);
+        }
+
         // Otomatis isi nominal yang dialokasikan: nilai terkecil antara sisa tagihan invoice dengan sisa kapasitas jurnal
-        $targetAmount = min($this->settleRemainingBalance, $availableAmount);
+        $targetAmount = min($remaining, $availableAmount);
         if ($targetAmount > 0) {
             $this->settleAmount = $targetAmount;
         }
@@ -688,7 +698,8 @@ class AgingReport extends Component
             type: $this->activeTab,
             asOfDate: $this->asOfDate ?: date('Y-m-d'),
             unitFilter: $this->unitFilter,
-            hideZeroBalances: $this->hideZeroBalances
+            hideZeroBalances: $this->hideZeroBalances,
+            startDate: $this->startDate ?: null
         );
 
         $units = Unit::orderBy('code')->get();
@@ -760,11 +771,18 @@ class AgingReport extends Component
             }
         }
 
+        $settleRemainingBalance = 0.0;
+        if ($this->settlingInvoice) {
+            $alreadySettled = (float) $this->settlingInvoice->settlements->sum('settled_amount');
+            $settleRemainingBalance = max(0.0, (float) $this->settlingInvoice->original_amount - $alreadySettled);
+        }
+
         return view('livewire.accounting.reports.aging-report', [
             'report' => $reportData,
             'units' => $units,
             'cashAccounts' => $cashAccounts,
             'availablePaymentLines' => $availablePaymentLines,
+            'settleRemainingBalance' => $settleRemainingBalance,
         ]);
     }
 }

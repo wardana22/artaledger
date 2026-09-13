@@ -15,9 +15,10 @@ class AgingReportService
      * @param  string  $type  'receivable' | 'payable'
      * @param  string  $asOfDate  'Y-m-d'
      * @param  string  $unitFilter  'all' | unit_id
+     * @param  string|null  $startDate  'Y-m-d' | null
      * @return array<string, mixed>
      */
-    public function getAgingReport(string $type, string $asOfDate, string $unitFilter = 'all', bool $hideZeroBalances = true): array
+    public function getAgingReport(string $type, string $asOfDate, string $unitFilter = 'all', bool $hideZeroBalances = true, ?string $startDate = null): array
     {
         $cutoffDate = Carbon::parse($asOfDate)->endOfDay();
         $accountTypeMatch = $type === 'receivable' ? 'PIUTANG' : 'HUTANG LANCAR';
@@ -44,7 +45,7 @@ class AgingReportService
         ];
 
         foreach ($accounts as $account) {
-            $accountRows = $this->calculateAccountAgingRows($account, $type, $cutoffDate, $unitFilter);
+            $accountRows = $this->calculateAccountAgingRows($account, $type, $cutoffDate, $unitFilter, $startDate);
 
             $accountSubtotal = [
                 'total_outstanding' => 0.0,
@@ -101,7 +102,7 @@ class AgingReportService
      *
      * @return array<int, array<string, mixed>>
      */
-    protected function calculateAccountAgingRows(Account $account, string $type, Carbon $cutoffDate, string $unitFilter): array
+    protected function calculateAccountAgingRows(Account $account, string $type, Carbon $cutoffDate, string $unitFilter, ?string $startDate = null): array
     {
         // 1. Ambil invoice terdaftar yang dibuat pada/sebelum cutoff date
         $invoicesQuery = ApArInvoice::with(['settlements' => function ($q) use ($cutoffDate) {
@@ -163,7 +164,7 @@ class AgingReportService
         }
 
         // 2. Ambil baris jurnal yang BELUM didaftarkan invoice (Unassigned Transactions)
-        $unassignedLines = $this->getUnassignedJournalLines($account, $type, $cutoffDate, $unitFilter, $processedLineIds);
+        $unassignedLines = $this->getUnassignedJournalLines($account, $type, $cutoffDate, $unitFilter, $processedLineIds, $startDate);
 
         foreach ($unassignedLines as $unassigned) {
             $rows[] = $unassigned;
@@ -178,13 +179,17 @@ class AgingReportService
      * @param  array<int, int>  $excludeLineIds
      * @return array<int, array<string, mixed>>
      */
-    protected function getUnassignedJournalLines(Account $account, string $type, Carbon $cutoffDate, string $unitFilter, array $excludeLineIds): array
+    protected function getUnassignedJournalLines(Account $account, string $type, Carbon $cutoffDate, string $unitFilter, array $excludeLineIds, ?string $startDate = null): array
     {
         $linesQuery = JournalLine::with(['journalEntry', 'unit'])
             ->where('account_id', $account->id)
-            ->whereHas('journalEntry', function ($q) use ($cutoffDate) {
+            ->whereHas('journalEntry', function ($q) use ($cutoffDate, $startDate) {
                 $q->where('status', 'posted')
                     ->where('entry_date', '<=', $cutoffDate->format('Y-m-d'));
+
+                if (! empty($startDate)) {
+                    $q->where('entry_date', '>=', $startDate);
+                }
             });
 
         if ($unitFilter !== 'all') {

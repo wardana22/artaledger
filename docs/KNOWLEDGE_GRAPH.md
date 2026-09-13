@@ -22,6 +22,7 @@ graph TD
         A_GRP["Route: /accounting/account-groups"] --> B_GRP["Livewire: AccountGroupIndex"]
         A_UNT["Route: /accounting/units"] --> B_UNT["Livewire: UnitIndex"]
         A_JTY["Route: /accounting/journal-types"] --> B_JTY["Livewire: JournalTypeIndex"]
+        A_PRD["Route: /accounting/periods"] --> B_PRD["Livewire: PeriodIndex"]
         A_CMP["Route: /accounting/settings/company"] --> B_CMP["Livewire: CompanySettingsIndex"]
         A_INI["Route: /accounting/initial-balance"] --> B_INI["Livewire: InitialBalanceIndex"]
         
@@ -29,6 +30,9 @@ graph TD
         B_GRP --> M_AGRP["Model: AccountGroup"]
         B_UNT --> M_UNT["Model: Unit"]
         B_JTY --> M_JTY["Model: JournalType"]
+        B_PRD --> S_YEC["Service: YearEndClosingService"]
+        S_YEC --> M_JE
+        S_YEC --> M_JL
         B_CMP --> M_CMP["Model: Company (Branding & Signers)"]
         B_INI --> M_JE["Model: JournalEntry (SA-...)"]
         B_INI --> M_JL["Model: JournalLine"]
@@ -181,14 +185,15 @@ graph TD
   - [DashboardKpi.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/DashboardKpi.php) (Evaluasi rumus formula dinamis, urutan `order_index`, dan status visibilitas).
   - [DashboardChart.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/DashboardChart.php) (Konfigurasi grafik ApexCharts dan pemetaan metrik).
 
-### 1. Master Data & Pengaturan Perusahaan
-- **Chart of Accounts (COA)**: [routes/web.php](file:///d:/Belajar%20Laravel/artaledger/routes/web.php) (`/accounting/accounts`) $\rightarrow$ [AccountIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Accounts/AccountIndex.php) $\rightarrow$ [Account.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/Account.php)
-- **Account Groups**: `/accounting/account-groups` $\rightarrow$ [AccountGroupIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Accounts/AccountGroupIndex.php) $\rightarrow$ [AccountGroup.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/AccountGroup.php)
-- **Unit Perusahaan**: `/accounting/units` $\rightarrow$ [UnitIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/UnitIndex.php) $\rightarrow$ [Unit.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/Unit.php)
-- **Jenis Jurnal**: `/accounting/journal-types` $\rightarrow$ [JournalTypeIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/JournalTypeIndex.php) $\rightarrow$ [JournalType.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/JournalType.php)
-- **Branding & Penandatangan Dokumen**: `/accounting/settings/company` $\rightarrow$ [CompanySettingsIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/CompanySettingsIndex.php) $\rightarrow$ [Company.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/Company.php)
-  - Mengatur Logo Perusahaan, Favicon dinamis, Nama Perusahaan, dan Pejabat Penandatangan Laporan Keuangan (*Disusun*, *Diperiksa*, *Disetujui*).
-- **Saldo Awal Perdana (Wizard Initial Balance)**: `/accounting/initial-balance` $\rightarrow$ [InitialBalanceIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/InitialBalanceIndex.php) $\rightarrow$ [initial-balance-index.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/settings/initial-balance-index.blade.php)
+### 1. Master Data, Unit & Pengaturan Akuntansi
+- **Chart of Accounts (COA)**: `/accounting/accounts` $\rightarrow$ [AccountIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Accounts/AccountIndex.php)
+- **Grup Akun**: `/accounting/account-groups` $\rightarrow$ [AccountGroupIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Accounts/AccountGroupIndex.php)
+- **Unit Bisnis / Cabang**: `/accounting/units` $\rightarrow$ [UnitIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Units/UnitIndex.php)
+- **Tipe Jurnal**: `/accounting/journal-types` $\rightarrow$ [JournalTypeIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/JournalTypes/JournalTypeIndex.php)
+- **Periode Akuntansi & Tutup Buku**: `/accounting/periods` $\rightarrow$ [PeriodIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Periods/PeriodIndex.php)
+  - Otomasi **Tutup Buku Akhir Tahun (Year-End Closing & Rollover)** via [YearEndClosingService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/YearEndClosingService.php). Saat menutup bulan 12 (Desember) atau menekan tombol *Tutup Buku & Rollover*, sistem otomatis menghitung saldo kumulatif neraca, memindahkan laba/rugi bersih berjalan ke akun Laba Ditahan (`31.02`), dan men-generate jurnal Saldo Awal tahun baru (`SA-{N+1}-001`).
+- **Profil Perusahaan & Penandatangan**: `/accounting/settings/company` $\rightarrow$ [CompanySettingsIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Company/CompanySettingsIndex.php)
+- **Saldo Awal Perdana (Initial Balance Wizard)**: `/accounting/initial-balance` $\rightarrow$ [InitialBalanceIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Settings/InitialBalanceIndex.php)
   - Formulir terpandu setup saldo awal neraca sekali pakai (*initial cut-off setup*).
   - Dilengkapi perhitungan **Auto-Balance** real-time yang menyeimbangkan selisih Debit/Kredit secara otomatis ke akun **Laba Ditahan (Retained Earnings)**.
   - Mekanisme penguncian resmi (**Locking Mechanism**): Berstatus terkunci (*Locked*) saat saldo awal sudah terdaftar (`SA-...`), dengan verifikasi wajib password Super Admin dan pencatatan alasan audit (*Audit Trail*) saat membuka kunci darurat (*reopen/unlock*).
@@ -315,6 +320,8 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/BudgetServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/BudgetServiceTest.php) (Validasi akurasi perhitungan varian BudgetCalculationService dan deteksi proteksi pelampauan pagu BudgetGuardService)
 - [tests/Feature/Accounting/AgingReportServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportServiceTest.php) (Validasi Single Assign, Split Invoicing 1-ke-Banyak, Specific Invoice Settlement, dan Akurasi Bucket Umur)
 - [tests/Feature/Accounting/AgingReportLivewireTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingReportLivewireTest.php) (Uji UI Livewire AgingReport, Tab Switcher, Modal Penugasan Invoice, serta Ekspor PDF & Excel)
+- [tests/Feature/Accounting/AgingCutoff2025ScenarioTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingCutoff2025ScenarioTest.php) (Simulasi & Verifikasi Cut-Off Aging 31 Januari 2026: Pendaftaran Invoice Saldo Awal 2025, Mutasi Kas Pelunasan Januari 2026, Smart Settlement, Keseimbangan Buku Besar, dan Time-Traveling Cut-Off)
+- [tests/Feature/Accounting/AgingYearFilterTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/AgingYearFilterTest.php) (Validasi Filter Mulai Periode Buku / startDate pada Aging Report: Otomasi Penyaringan Transaksi Historis Tanpa Faktur dari Tahun Lalu)
 - [tests/Feature/Dashboard/DashboardMetricEngineTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Dashboard/DashboardMetricEngineTest.php) (Validasi Engine 12 Metrik Eksekutif, Rasio Finansial, Multi-series Tren 12 Bulan, dan Seeder Grup Akun Kustom)
 - [tests/Feature/Dashboard/DashboardSettingsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Dashboard/DashboardSettingsTest.php) (Validasi Pengaturan Kartu KPI, Visibilitas, Urutan, dan Aksen Warna)
 - [tests/Feature/Accounting/CashFlowDirectMethodTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/CashFlowDirectMethodTest.php) (Perhitungan Metode Langsung, Drilldown Akun Pembentuk, CRUD Baris & Rumus, serta Ekspor PDF/Excel)
@@ -330,6 +337,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Accounting/FinancialReportsTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportsTest.php) (Pengujian Komponen Laporan Keuangan & Validasi Penempatan Kolom Strict Neraca Lajur)
 - [tests/Feature/Accounting/OpeningBalanceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/OpeningBalanceTest.php)
 - [tests/Feature/Accounting/ImportJournalTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/ImportJournalTest.php)
+- [tests/Feature/Accounting/YearEndClosingServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/YearEndClosingServiceTest.php) (Validasi Otomasi Tutup Buku Akhir Tahun: Kalkulasi Laba Bersih, Pengalokasian ke Saldo Laba/Laba Ditahan 31.02, Rollover Saldo Awal SA-{N+1}-001, dan Pemunculan Saldo Piutang/Hutang di Laporan Aging)
 - [tests/Feature/Accounting/SubModuleAuthorizationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/SubModuleAuthorizationTest.php) (Validasi Otorisasi RBAC Sub-modul & Proteksi Jurnal Terkunci is_locked)
 - [tests/Feature/Accounting/GlobalPeriodSyncTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/GlobalPeriodSyncTest.php) (Validasi Sinkronisasi Periode Global Lintas Menu: Default 1 Jan tahun berjalan, Two-Way State Sync antara Dashboard, Jurnal, dan Laporan Keuangan)
 - [tests/Feature/Accounting/InitialBalanceWizardTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/InitialBalanceWizardTest.php) (Validasi Setup Saldo Awal, Auto-Balance Retained Earnings, & Hardening Buka Kunci Super Admin)

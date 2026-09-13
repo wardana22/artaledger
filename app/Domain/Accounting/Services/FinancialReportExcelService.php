@@ -816,10 +816,10 @@ class FinancialReportExcelService
     /**
      * Export Laporan Aging Hutang / Piutang ke Spreadsheet Excel.
      */
-    public function exportAging(string $type, string $asOfDate, string $unitFilter = 'all', ?User $user = null): Spreadsheet
+    public function exportAging(string $type, string $asOfDate, string $unitFilter = 'all', ?User $user = null, ?string $startDate = null): Spreadsheet
     {
         $reportService = new AgingReportService;
-        $reportData = $reportService->getAgingReport($type, $asOfDate, $unitFilter, true);
+        $reportData = $reportService->getAgingReport($type, $asOfDate, $unitFilter, true, $startDate);
 
         $company = Company::first();
         $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;

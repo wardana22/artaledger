@@ -1,5 +1,5 @@
 <div>
-    <x-settings-nav active="company" />
+    <x-company-profile-nav active="company" />
 
     <div class="space-y-6">
         @if (session()->has('message'))
