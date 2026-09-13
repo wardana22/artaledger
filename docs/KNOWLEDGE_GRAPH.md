@@ -254,6 +254,8 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
    - Modal kustomisasi CRUD baris, urutan (*order index*), penentuan grup akun sumber, akun spesifik, atau rumus kalkulasi kustom (*formula expression*).
 8. **Perubahan Ekuitas (Changes in Equity)**: `/accounting/reports/changes-in-equity` ([ChangesInEquity.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/ChangesInEquity.php))
 9. **Saldo Awal**: `/accounting/reports/opening-balance` ([OpeningBalanceIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/OpeningBalance/OpeningBalanceIndex.php))
+   - Dilengkapi toolbar filter simetris 5-kolom responsif (`Mode Laporan`, `Unit Perusahaan`, `Bulan`, `Tahun`, `Cari Akun`) dengan tinggi seragam `h-10` dan `rounded-xl`.
+   - Filter **Bulan** (Januari–Desember) dan **Tahun** terpisah mandiri: opsi tahun dihasilkan secara dinamis mulai tahun 2025 sampai tahun transaksi tertinggi atau tahun berjalan (`range(2025, max(2025, $maxDataYear, now()->year))`), otomatis mengakomodasi tahun-tahun berikutnya (2027+) tanpa intervensi kode manual.
    - Dilengkapi toggle mode dwifungsi:
      - **Saldo Awal Neraca Murni (Post-Closing / Default)**: Menampilkan posisi akun Riil (Aset, Kewajiban, Ekuitas) pasca tutup buku tahunan dengan pengalokasian laba bersih kumulatif otomatis ke akun Ekuitas/Saldo Laba (`31.02`), seimbang 100% (Rp 79,12 M) dengan toleransi selisih pembulatan sen.
      - **Neraca Saldo Kumulatif (Pre-Closing)**: Menampilkan posisi seluruh akun aktif (Kelompok 1 - 9) sebelum penutupan nominal (Rp 186,06 M).

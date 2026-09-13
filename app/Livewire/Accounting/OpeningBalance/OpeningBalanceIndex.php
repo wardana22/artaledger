@@ -28,6 +28,10 @@ class OpeningBalanceIndex extends Component
 
     public ?int $periodId = null;
 
+    public int $selectedYear = 2026;
+
+    public int $selectedMonth = 1;
+
     public string $viewMode = 'balance_sheet'; // 'balance_sheet' (Post-Closing / Neraca Murni) atau 'all' (Pre-Closing / Kumulatif)
 
     public function updatedSearch(): void
@@ -47,6 +51,25 @@ class OpeningBalanceIndex extends Component
 
     public function updatedPeriodId(): void
     {
+        if ($this->periodId) {
+            $period = AccountingPeriod::find($this->periodId);
+            if ($period) {
+                $this->selectedYear = (int) $period->year;
+                $this->selectedMonth = (int) $period->month;
+            }
+        }
+        $this->resetPage();
+    }
+
+    public function updatedSelectedYear(): void
+    {
+        $this->syncPeriodFromMonthYear();
+        $this->resetPage();
+    }
+
+    public function updatedSelectedMonth(): void
+    {
+        $this->syncPeriodFromMonthYear();
         $this->resetPage();
     }
 
@@ -55,26 +78,47 @@ class OpeningBalanceIndex extends Component
         $this->resetPage();
     }
 
+    protected function syncPeriodFromMonthYear(): void
+    {
+        $period = AccountingPeriod::where('year', $this->selectedYear)
+            ->where('month', $this->selectedMonth)
+            ->first();
+
+        if ($period) {
+            $this->periodId = $period->id;
+        } else {
+            // Fallback: cari periode terdekat di tahun yang sama
+            $fallback = AccountingPeriod::where('year', $this->selectedYear)->first();
+            $this->periodId = $fallback?->id;
+        }
+    }
+
     public function mount(): void
     {
         if (auth()->check() && ! auth()->user()->can('reports.opening_balance') && ! auth()->user()->can('reports.view')) {
             abort(403, 'THIS ACTION IS UNAUTHORIZED.');
         }
 
-        $firstJournalDate = JournalEntry::min('entry_date');
-        $firstPeriod = null;
-
-        if ($firstJournalDate) {
-            $firstPeriod = AccountingPeriod::where('start_date', '<=', $firstJournalDate)
-                ->where('end_date', '>=', $firstJournalDate)
-                ->first();
+        // Tentukan default tahun & bulan: prioritaskan data transaksi terbaru, default ke tahun sekarang atau 2026
+        $latestJournal = JournalEntry::where('status', 'posted')->latest('entry_date')->first();
+        if ($latestJournal) {
+            $this->selectedYear = (int) $latestJournal->entry_date->year;
+            $this->selectedMonth = (int) $latestJournal->entry_date->month;
+        } else {
+            $this->selectedYear = max(2025, (int) now()->year);
+            $this->selectedMonth = 1;
         }
 
-        if (! $firstPeriod) {
+        $this->syncPeriodFromMonthYear();
+
+        if (! $this->periodId) {
             $firstPeriod = AccountingPeriod::orderBy('start_date', 'asc')->first();
+            $this->periodId = $firstPeriod?->id;
+            if ($firstPeriod) {
+                $this->selectedYear = (int) $firstPeriod->year;
+                $this->selectedMonth = (int) $firstPeriod->month;
+            }
         }
-
-        $this->periodId = $firstPeriod?->id;
 
         $user = auth()->user();
         if ($user && ! $user->hasGlobalUnitAccess()) {
@@ -278,6 +322,18 @@ class OpeningBalanceIndex extends Component
             ['path' => LengthAwarePaginator::resolveCurrentPath()]
         );
 
+        // Hitung daftar tahun dinamis: mulai 2025 sampai max(2025, tahun data transaksi, tahun sekarang)
+        $latestEntryDate = JournalEntry::where('status', 'posted')->max('entry_date');
+        $maxDataYear = $latestEntryDate ? Carbon::parse($latestEntryDate)->year : now()->year;
+        $maxYear = max(2025, (int) $maxDataYear, (int) now()->year);
+        $availableYears = range(2025, $maxYear);
+
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+
         return view('livewire.accounting.opening-balance.opening-balance-index', [
             'lines' => $paginatedLines,
             'totalDebit' => $totalDebit,
@@ -287,6 +343,10 @@ class OpeningBalanceIndex extends Component
             'periods' => $periods,
             'selectedPeriod' => $selectedPeriod,
             'viewMode' => $this->viewMode,
+            'availableYears' => $availableYears,
+            'months' => $months,
+            'selectedYear' => $this->selectedYear,
+            'selectedMonth' => $this->selectedMonth,
         ]);
     }
 }

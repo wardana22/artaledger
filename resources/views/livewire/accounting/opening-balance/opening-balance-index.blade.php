@@ -64,49 +64,87 @@
 
     <!-- FILTER BAR & DATA TABLE -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-4 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    <span>Laporan Saldo Awal</span>
-                    @if ($selectedPeriod)
-                        <span class="px-2 py-0.5 text-xs font-mono font-bold rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                            {{ $selectedPeriod->name }}
-                        </span>
-                    @endif
-                    @if ($viewMode === 'balance_sheet')
-                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                            Neraca Murni (Post-Closing)
-                        </span>
-                    @else
-                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            Neraca Saldo Kumulatif (Pre-Closing)
-                        </span>
-                    @endif
-                </h3>
+        <!-- HEADER KETERANGAN PERIODE & BADGES -->
+        <div class="px-5 py-4 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-100">Posisi Saldo Awal:</span>
+                <span class="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    📅 {{ $months[$selectedMonth] ?? 'Januari' }} {{ $selectedYear }}
+                </span>
+                @if ($viewMode === 'balance_sheet')
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        Neraca Murni (Post-Closing)
+                    </span>
+                @else
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                        Neraca Saldo Kumulatif (Pre-Closing)
+                    </span>
+                @endif
             </div>
 
-            <div class="flex flex-wrap items-center gap-3">
-                <!-- VIEW MODE SELECTOR -->
-                <select 
-                    wire:model.live="viewMode" 
-                    aria-label="Pilih Mode Laporan"
-                    class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="balance_sheet">📑 Saldo Awal Neraca Murni</option>
-                    <option value="all">📊 Neraca Saldo Kumulatif</option>
-                </select>
+            @if ($selectedPeriod && ! $selectedPeriod->isOpen())
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Periode Terkunci (Closed)
+                </span>
+            @endif
+        </div>
 
-                <!-- PERIOD SELECTOR -->
-                <select 
-                    wire:model.live="periodId" 
-                    aria-label="Pilih Periode Akuntansi"
-                    class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    @foreach ($periods as $p)
-                        <option value="{{ $p->id }}">📅 {{ $p->name }}</option>
-                    @endforeach
-                </select>
+        <!-- SIMETRICAL 5-CONTROL FILTER TOOLBAR -->
+        <div class="p-4 bg-slate-50/40 dark:bg-slate-800/20 border-b border-slate-200 dark:border-slate-800">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 items-center">
+                <!-- 1. MODE LAPORAN -->
+                <div class="w-full">
+                    <select 
+                        wire:model.live="viewMode" 
+                        aria-label="Pilih Mode Laporan"
+                        class="w-full h-10 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition">
+                        <option value="balance_sheet">📑 Saldo Awal Neraca Murni</option>
+                        <option value="all">📊 Neraca Saldo Kumulatif</option>
+                    </select>
+                </div>
 
-                <!-- SEARCH INPUT -->
-                <div class="relative w-full sm:w-56">
+                <!-- 2. UNIT PERUSAHAAN -->
+                <div class="w-full">
+                    <select 
+                        wire:model.live="unitFilter" 
+                        aria-label="Filter Unit Perusahaan"
+                        class="w-full h-10 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition truncate">
+                        @if (auth()->user()?->hasGlobalUnitAccess())
+                            <option value="all">🏢 Semua Unit Perusahaan</option>
+                        @endif
+                        @foreach ($units as $u)
+                            <option value="{{ $u->id }}">{{ $u->code }} - {{ $u->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 3. BULAN -->
+                <div class="w-full">
+                    <select 
+                        wire:model.live="selectedMonth" 
+                        aria-label="Pilih Bulan"
+                        class="w-full h-10 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition">
+                        @foreach ($months as $num => $mName)
+                            <option value="{{ $num }}">📅 {{ $mName }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 4. TAHUN (DINAMIS DARI 2025+) -->
+                <div class="w-full">
+                    <select 
+                        wire:model.live="selectedYear" 
+                        aria-label="Pilih Tahun"
+                        class="w-full h-10 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition">
+                        @foreach ($availableYears as $yr)
+                            <option value="{{ $yr }}">📆 Tahun {{ $yr }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 5. SEARCH INPUT -->
+                <div class="w-full relative">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -115,24 +153,11 @@
                     <input 
                         type="text" 
                         wire:model.live.debounce.300ms="search"
-                        placeholder="Cari kode/nama akun..."
+                        placeholder="Cari kode / nama akun..."
                         aria-label="Cari Baris Saldo Awal"
-                        class="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200" 
+                        class="w-full h-10 pl-9 pr-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200 shadow-sm placeholder:text-slate-400" 
                     />
                 </div>
-
-                <!-- UNIT FILTER SELECT -->
-                <select 
-                    wire:model.live="unitFilter" 
-                    aria-label="Filter Unit Perusahaan"
-                    class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    @if (auth()->user()?->hasGlobalUnitAccess())
-                        <option value="all">Semua Unit Perusahaan</option>
-                    @endif
-                    @foreach ($units as $u)
-                        <option value="{{ $u->id }}">{{ $u->code }} - {{ $u->name }}</option>
-                    @endforeach
-                </select>
             </div>
         </div>
 

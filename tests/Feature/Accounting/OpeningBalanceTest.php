@@ -47,6 +47,20 @@ it('can switch view mode between balance_sheet and all', function () {
         ->assertSee('Neraca Saldo Kumulatif (Pre-Closing)');
 });
 
+it('can filter opening balance report by month and year', function () {
+    $test = Livewire::test(OpeningBalanceIndex::class);
+    $initialYear = $test->get('selectedYear');
+    $initialMonth = $test->get('selectedMonth');
+
+    expect($initialYear)->not->toBeNull()
+        ->and($initialMonth)->not->toBeNull();
+
+    $test->set('selectedYear', 2025)
+        ->set('selectedMonth', 12)
+        ->assertSet('selectedYear', 2025)
+        ->assertSet('selectedMonth', 12);
+});
+
 it('can export opening balance report to pdf and excel with mode', function () {
     $responsePdf = $this->get(route('accounting.reports.export.pdf', [
         'type' => 'opening-balance',
