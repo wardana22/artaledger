@@ -4,8 +4,10 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Unit;
+use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -78,14 +80,41 @@ class TrialBalance extends Component
         }
 
         // 1. Fetch Opening Balances from Journal Lines
-        $opResults = JournalLine::whereHas('journalEntry', function ($q) {
-            $q->where('status', 'posted')
-                ->where(function ($query) {
+        $startYear = Carbon::parse($this->startDate)->year;
+        $hasOpeningBalance = JournalEntry::where('status', 'posted')
+            ->where(function ($q) use ($startYear) {
+                $q->where('source_type', 'opening_balance')
+                    ->orWhere('entry_type', 'opening_balance')
+                    ->orWhere('entry_number', 'like', "SA-{$startYear}%");
+            })
+            ->whereYear('entry_date', $startYear)
+            ->exists();
+
+        $opResults = JournalLine::whereHas('journalEntry', function ($q) use ($startYear, $hasOpeningBalance) {
+            $q->where('status', 'posted');
+
+            if ($hasOpeningBalance) {
+                $q->where(function ($sub) use ($startYear) {
+                    $sub->where(function ($obQ) use ($startYear) {
+                        $obQ->where('entry_number', 'like', "SA-{$startYear}%")
+                            ->orWhere('source_type', 'opening_balance')
+                            ->orWhere('entry_type', 'opening_balance');
+                    })->orWhere(function ($priorQ) use ($startYear) {
+                        $priorQ->where('entry_number', 'not like', 'SA-%')
+                            ->where('entry_type', '!=', 'opening_balance')
+                            ->where('source_type', '!=', 'opening_balance')
+                            ->where('entry_date', '>=', "{$startYear}-01-01")
+                            ->where('entry_date', '<', $this->startDate);
+                    });
+                });
+            } else {
+                $q->where(function ($query) {
                     $query->where('entry_type', 'opening_balance')
                         ->orWhere('source_type', 'opening_balance')
                         ->orWhere('entry_number', 'like', 'SA%')
                         ->orWhere('entry_date', '<', $this->startDate);
                 });
+            }
         })
             ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
                 $q->whereIn('unit_id', $allowedUnitIds);

@@ -342,7 +342,8 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Accounting/ImportJournalTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/ImportJournalTest.php)
 - [tests/Feature/Accounting/YearEndClosingServiceTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/YearEndClosingServiceTest.php) (Validasi Otomasi Tutup Buku Akhir Tahun: Kalkulasi Laba Bersih, Pengalokasian ke Saldo Laba/Laba Ditahan 31.02, Rollover Saldo Awal SA-{N+1}-001, dan Pemunculan Saldo Piutang/Hutang di Laporan Aging)
 - [tests/Feature/Accounting/SubModuleAuthorizationTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/SubModuleAuthorizationTest.php) (Validasi Otorisasi RBAC Sub-modul & Proteksi Jurnal Terkunci is_locked)
-- [tests/Feature/Accounting/GlobalPeriodSyncTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/GlobalPeriodSyncTest.php) (Validasi Sinkronisasi Periode Global Lintas Menu: Default 1 Jan tahun berjalan, Two-Way State Sync antara Dashboard, Jurnal, dan Laporan Keuangan)
+- [tests/Feature/Accounting/BalanceSheetRolloverTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/BalanceSheetRolloverTest.php) (Validasi Keseimbangan Neraca Pasca Tutup Buku Tanpa Akumulasi Ganda)
+- [tests/Feature/Accounting/FinancialReportRolloverTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportRolloverTest.php) (Validasi Isolasi Saldo Awal Neraca Lajur & Neraca Saldo Pasca Rollover Tutup Buku 2026 Tanpa Menumpuk Mutasi 2025)
 - [tests/Feature/Accounting/InitialBalanceWizardTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/InitialBalanceWizardTest.php) (Validasi Setup Saldo Awal, Auto-Balance Retained Earnings, & Hardening Buka Kunci Super Admin)
 
 ### 8. Tata Kelola Antarmuka UI/UX Enterprise (Navigation & Layout)

@@ -478,12 +478,41 @@ class FinancialReportPdfService
             }
         }
 
+        $startYear = Carbon::parse($startDate)->year;
+        $hasOpeningBalance = DB::table('journal_entries')
+            ->where('status', 'posted')
+            ->where(function ($q) use ($startYear) {
+                $q->where('source_type', 'opening_balance')
+                    ->orWhere('entry_type', 'opening_balance')
+                    ->orWhere('entry_number', 'like', "SA-{$startYear}%");
+            })
+            ->whereYear('entry_date', $startYear)
+            ->exists();
+
         $opResults = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
-            ->where(function ($query) use ($startDate) {
-                $query->where('journal_entries.entry_type', 'opening_balance')
-                    ->orWhere('journal_entries.entry_date', '<', $startDate);
+            ->when($hasOpeningBalance, function ($q) use ($startYear, $startDate) {
+                $q->where(function ($sub) use ($startYear, $startDate) {
+                    $sub->where(function ($obQ) use ($startYear) {
+                        $obQ->where('journal_entries.entry_number', 'like', "SA-{$startYear}%")
+                            ->orWhere('journal_entries.source_type', 'opening_balance')
+                            ->orWhere('journal_entries.entry_type', 'opening_balance');
+                    })->orWhere(function ($priorQ) use ($startYear, $startDate) {
+                        $priorQ->where('journal_entries.entry_number', 'not like', 'SA-%')
+                            ->where('journal_entries.entry_type', '!=', 'opening_balance')
+                            ->where('journal_entries.source_type', '!=', 'opening_balance')
+                            ->where('journal_entries.entry_date', '>=', "{$startYear}-01-01")
+                            ->where('journal_entries.entry_date', '<', $startDate);
+                    });
+                });
+            }, function ($q) use ($startDate) {
+                $q->where(function ($query) use ($startDate) {
+                    $query->where('journal_entries.entry_type', 'opening_balance')
+                        ->orWhere('journal_entries.source_type', 'opening_balance')
+                        ->orWhere('journal_entries.entry_number', 'like', 'SA%')
+                        ->orWhere('journal_entries.entry_date', '<', $startDate);
+                });
             })
             ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
                 $q->whereIn('journal_lines.unit_id', $allowedUnitIds);
@@ -648,12 +677,42 @@ class FinancialReportPdfService
             $descendantIds = [$account->id];
         }
 
-        $opQuery = JournalLine::whereHas('journalEntry', function ($q) use ($startDate) {
-            $q->where('status', 'posted')
-                ->where(function ($sub) use ($startDate) {
+        $startYear = Carbon::parse($startDate)->year;
+        $hasOpeningBalance = DB::table('journal_entries')
+            ->where('status', 'posted')
+            ->where(function ($q) use ($startYear) {
+                $q->where('source_type', 'opening_balance')
+                    ->orWhere('entry_type', 'opening_balance')
+                    ->orWhere('entry_number', 'like', "SA-{$startYear}%");
+            })
+            ->whereYear('entry_date', $startYear)
+            ->exists();
+
+        $opQuery = JournalLine::whereHas('journalEntry', function ($q) use ($startYear, $startDate, $hasOpeningBalance) {
+            $q->where('status', 'posted');
+
+            if ($hasOpeningBalance) {
+                $q->where(function ($sub) use ($startYear, $startDate) {
+                    $sub->where(function ($obQ) use ($startYear) {
+                        $obQ->where('entry_number', 'like', "SA-{$startYear}%")
+                            ->orWhere('source_type', 'opening_balance')
+                            ->orWhere('entry_type', 'opening_balance');
+                    })->orWhere(function ($priorQ) use ($startYear, $startDate) {
+                        $priorQ->where('entry_number', 'not like', 'SA-%')
+                            ->where('entry_type', '!=', 'opening_balance')
+                            ->where('source_type', '!=', 'opening_balance')
+                            ->where('entry_date', '>=', "{$startYear}-01-01")
+                            ->where('entry_date', '<', $startDate);
+                    });
+                });
+            } else {
+                $q->where(function ($sub) use ($startDate) {
                     $sub->where('entry_type', 'opening_balance')
+                        ->orWhere('source_type', 'opening_balance')
+                        ->orWhere('entry_number', 'like', 'SA%')
                         ->orWhere('entry_date', '<', $startDate);
                 });
+            }
         })
             ->whereIn('account_id', $descendantIds)
             ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
@@ -779,8 +838,55 @@ class FinancialReportPdfService
             $linesQuery->where('unit_id', $unitFilter);
         }
 
-        $lines = $linesQuery->get()->sortBy('journalEntry.entry_date');
-        $openingBalance = (float) $account->opening_balance;
+        $startYear = Carbon::parse($startDate)->year;
+        $hasOpeningBalance = DB::table('journal_entries')
+            ->where('status', 'posted')
+            ->where(function ($q) use ($startYear) {
+                $q->where('source_type', 'opening_balance')
+                    ->orWhere('entry_type', 'opening_balance')
+                    ->orWhere('entry_number', 'like', "SA-{$startYear}%");
+            })
+            ->whereYear('entry_date', $startYear)
+            ->exists();
+
+        $opQuery = JournalLine::whereHas('journalEntry', function ($q) use ($startYear, $startDate, $hasOpeningBalance) {
+            $q->where('status', 'posted');
+
+            if ($hasOpeningBalance) {
+                $q->where(function ($sub) use ($startYear, $startDate) {
+                    $sub->where(function ($obQ) use ($startYear) {
+                        $obQ->where('entry_number', 'like', "SA-{$startYear}%")
+                            ->orWhere('source_type', 'opening_balance')
+                            ->orWhere('entry_type', 'opening_balance');
+                    })->orWhere(function ($priorQ) use ($startYear, $startDate) {
+                        $priorQ->where('entry_number', 'not like', 'SA-%')
+                            ->where('entry_type', '!=', 'opening_balance')
+                            ->where('source_type', '!=', 'opening_balance')
+                            ->where('entry_date', '>=', "{$startYear}-01-01")
+                            ->where('entry_date', '<', $startDate);
+                    });
+                });
+            } else {
+                $q->where(function ($sub) use ($startDate) {
+                    $sub->where('entry_type', 'opening_balance')
+                        ->orWhere('source_type', 'opening_balance')
+                        ->orWhere('entry_number', 'like', 'SA%')
+                        ->orWhere('entry_date', '<', $startDate);
+                });
+            }
+        })
+            ->where('account_id', $account->id)
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
+
+        if ($unitFilter !== 'all') {
+            $opQuery->where('unit_id', $unitFilter);
+        }
+
+        $opTotals = $opQuery->selectRaw('SUM(debit) as tot_d, SUM(credit) as tot_c')->first();
+        $opD = (float) ($opTotals->tot_d ?? 0);
+        $opC = (float) ($opTotals->tot_c ?? 0);
+        $openingBalance = $account->normal_balance === 'debit' ? ($opD - $opC) : ($opC - $opD);
+
         $runningBalance = $openingBalance;
         $reportLines = [];
         $totalDebit = 0.0;
@@ -1008,12 +1114,41 @@ class FinancialReportPdfService
         }
 
         // 1. Opening
+        $startYear = Carbon::parse($startDate)->year;
+        $hasOpeningBalance = DB::table('journal_entries')
+            ->where('status', 'posted')
+            ->where(function ($q) use ($startYear) {
+                $q->where('source_type', 'opening_balance')
+                    ->orWhere('entry_type', 'opening_balance')
+                    ->orWhere('entry_number', 'like', "SA-{$startYear}%");
+            })
+            ->whereYear('entry_date', $startYear)
+            ->exists();
+
         $opResults = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
             ->where('journal_entries.status', 'posted')
-            ->where(function ($query) use ($startDate) {
-                $query->where('journal_entries.entry_type', 'opening_balance')
-                    ->orWhere('journal_entries.entry_date', '<', $startDate);
+            ->when($hasOpeningBalance, function ($q) use ($startYear, $startDate) {
+                $q->where(function ($sub) use ($startYear, $startDate) {
+                    $sub->where(function ($obQ) use ($startYear) {
+                        $obQ->where('journal_entries.entry_number', 'like', "SA-{$startYear}%")
+                            ->orWhere('journal_entries.source_type', 'opening_balance')
+                            ->orWhere('journal_entries.entry_type', 'opening_balance');
+                    })->orWhere(function ($priorQ) use ($startYear, $startDate) {
+                        $priorQ->where('journal_entries.entry_number', 'not like', 'SA-%')
+                            ->where('journal_entries.entry_type', '!=', 'opening_balance')
+                            ->where('journal_entries.source_type', '!=', 'opening_balance')
+                            ->where('journal_entries.entry_date', '>=', "{$startYear}-01-01")
+                            ->where('journal_entries.entry_date', '<', $startDate);
+                    });
+                });
+            }, function ($q) use ($startDate) {
+                $q->where(function ($query) use ($startDate) {
+                    $query->where('journal_entries.entry_type', 'opening_balance')
+                        ->orWhere('journal_entries.source_type', 'opening_balance')
+                        ->orWhere('journal_entries.entry_number', 'like', 'SA%')
+                        ->orWhere('journal_entries.entry_date', '<', $startDate);
+                });
             })
             ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('journal_lines.unit_id', $allowedUnitIds))
             ->when($unitFilter !== 'all', fn ($q) => $q->where('journal_lines.unit_id', $unitFilter))
@@ -1237,9 +1372,24 @@ class FinancialReportPdfService
         }
         $accounts = $query->orderBy('code', 'asc')->get();
 
-        // Hitung laba kumulatif periode lalu untuk mode neraca murni
+        // Cek apakah ada Jurnal Saldo Awal (SA) untuk tahun periode terpilih
+        $selectedYear = $selectedPeriod ? Carbon::parse($selectedPeriod->start_date)->year : null;
+        $hasOpeningBalance = false;
+        if ($selectedYear) {
+            $hasOpeningBalance = DB::table('journal_entries')
+                ->where('status', 'posted')
+                ->where(function ($q) use ($selectedYear) {
+                    $q->where('source_type', 'opening_balance')
+                        ->orWhere('entry_type', 'opening_balance')
+                        ->orWhere('entry_number', 'like', "SA-{$selectedYear}%");
+                })
+                ->whereYear('entry_date', $selectedYear)
+                ->exists();
+        }
+
+        // Hitung laba kumulatif periode lalu untuk mode neraca murni (hanya jika belum ada jurnal SA rollover)
         $priorNetProfit = 0.0;
-        if ($mode === 'balance_sheet' && $selectedPeriod) {
+        if ($mode === 'balance_sheet' && $selectedPeriod && ! $hasOpeningBalance) {
             $nominalAccounts = Account::active()
                 ->where('report_type', 'laba_rugi')
                 ->where('is_group', false)
@@ -1287,9 +1437,25 @@ class FinancialReportPdfService
 
         foreach ($accounts as $acc) {
             $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) use ($selectedPeriod) {
-                    $q->where('status', 'posted')
-                        ->where(function ($subQ) use ($selectedPeriod) {
+                ->whereHas('journalEntry', function ($q) use ($selectedPeriod, $hasOpeningBalance, $selectedYear) {
+                    $q->where('status', 'posted');
+
+                    if ($hasOpeningBalance && $selectedPeriod) {
+                        $q->where(function ($subQ) use ($selectedPeriod, $selectedYear) {
+                            $subQ->where(function ($obQ) use ($selectedYear) {
+                                $obQ->where('entry_number', 'like', "SA-{$selectedYear}%")
+                                    ->orWhere('entry_type', 'opening_balance')
+                                    ->orWhere('source_type', 'opening_balance');
+                            })->orWhere(function ($priorQ) use ($selectedPeriod, $selectedYear) {
+                                $priorQ->where('entry_number', 'not like', 'SA-%')
+                                    ->where('entry_type', '!=', 'opening_balance')
+                                    ->where('source_type', '!=', 'opening_balance')
+                                    ->where('entry_date', '>=', "{$selectedYear}-01-01")
+                                    ->where('entry_date', '<', $selectedPeriod->start_date);
+                            });
+                        });
+                    } else {
+                        $q->where(function ($subQ) use ($selectedPeriod) {
                             $subQ->where(function ($obQ) use ($selectedPeriod) {
                                 $obQ->where(function ($types) {
                                     $types->where('entry_number', 'like', 'SA-%')
@@ -1303,6 +1469,7 @@ class FinancialReportPdfService
                                     ->where('entry_date', '<', $selectedPeriod ? $selectedPeriod->start_date : now());
                             });
                         });
+                    }
                 })
                 ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
 

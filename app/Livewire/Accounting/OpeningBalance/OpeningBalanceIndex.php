@@ -7,6 +7,7 @@ use App\Models\AccountingPeriod;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Unit;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -109,9 +110,23 @@ class OpeningBalanceIndex extends Component
 
         $accounts = $query->orderBy('code', 'asc')->get();
 
-        // Hitung laba bersih kumulatif periode lalu untuk mode neraca murni
+        // Cek apakah ada Jurnal Saldo Awal (SA) untuk tahun periode terpilih
+        $selectedYear = $selectedPeriod ? Carbon::parse($selectedPeriod->start_date)->year : null;
+        $hasOpeningBalance = false;
+        if ($selectedYear) {
+            $hasOpeningBalance = JournalEntry::where('status', 'posted')
+                ->where(function ($q) use ($selectedYear) {
+                    $q->where('source_type', 'opening_balance')
+                        ->orWhere('entry_type', 'opening_balance')
+                        ->orWhere('entry_number', 'like', "SA-{$selectedYear}%");
+                })
+                ->whereYear('entry_date', $selectedYear)
+                ->exists();
+        }
+
+        // Hitung laba bersih kumulatif periode lalu untuk mode neraca murni (hanya jika belum ada jurnal SA rollover)
         $priorNetProfit = 0.0;
-        if ($this->viewMode === 'balance_sheet' && $selectedPeriod) {
+        if ($this->viewMode === 'balance_sheet' && $selectedPeriod && ! $hasOpeningBalance) {
             $nominalAccounts = Account::active()
                 ->where('report_type', 'laba_rugi')
                 ->where('is_group', false)
@@ -162,22 +177,39 @@ class OpeningBalanceIndex extends Component
 
         foreach ($accounts as $acc) {
             $mutQuery = JournalLine::where('account_id', $acc->id)
-                ->whereHas('journalEntry', function ($q) use ($selectedPeriod) {
-                    $q->where('status', 'posted')
-                        ->where(function ($subQ) use ($selectedPeriod) {
+                ->whereHas('journalEntry', function ($q) use ($selectedPeriod, $hasOpeningBalance, $selectedYear) {
+                    $q->where('status', 'posted');
+
+                    if ($hasOpeningBalance && $selectedPeriod) {
+                        $q->where(function ($subQ) use ($selectedPeriod, $selectedYear) {
+                            $subQ->where(function ($obQ) use ($selectedYear) {
+                                $obQ->where('entry_number', 'like', "SA-{$selectedYear}%")
+                                    ->orWhere('entry_type', 'opening_balance')
+                                    ->orWhere('source_type', 'opening_balance');
+                            })->orWhere(function ($priorQ) use ($selectedPeriod, $selectedYear) {
+                                $priorQ->where('entry_number', 'not like', 'SA-%')
+                                    ->where('entry_type', '!=', 'opening_balance')
+                                    ->where('source_type', '!=', 'opening_balance')
+                                    ->where('entry_date', '>=', "{$selectedYear}-01-01")
+                                    ->where('entry_date', '<', $selectedPeriod->start_date);
+                            });
+                        });
+                    } else {
+                        $q->where(function ($subQ) use ($selectedPeriod) {
                             $subQ->where(function ($obQ) use ($selectedPeriod) {
                                 $obQ->where(function ($types) {
                                     $types->where('entry_number', 'like', 'SA-%')
                                         ->orWhere('entry_type', 'opening_balance')
                                         ->orWhere('source_type', 'opening_balance');
-                                })->where('entry_date', '<=', $selectedPeriod->end_date);
+                                })->where('entry_date', '<=', $selectedPeriod ? $selectedPeriod->end_date : now());
                             })->orWhere(function ($regQ) use ($selectedPeriod) {
                                 $regQ->where('entry_number', 'not like', 'SA-%')
                                     ->where('entry_type', '!=', 'opening_balance')
                                     ->where('source_type', '!=', 'opening_balance')
-                                    ->where('entry_date', '<', $selectedPeriod->start_date);
+                                    ->where('entry_date', '<', $selectedPeriod ? $selectedPeriod->start_date : now());
                             });
                         });
+                    }
                 })
                 ->when(! empty($allowedUnitIds), function ($q) use ($allowedUnitIds) {
                     $q->whereIn('unit_id', $allowedUnitIds);

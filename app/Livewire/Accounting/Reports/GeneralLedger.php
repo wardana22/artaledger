@@ -4,8 +4,10 @@ namespace App\Livewire\Accounting\Reports;
 
 use App\Livewire\Concerns\SyncsGlobalPeriod;
 use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Unit;
+use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -65,8 +67,54 @@ class GeneralLedger extends Component
             $targetAccountIds = array_merge([$selectedAccount->id], $childAccountIds);
             $childAccountsCount = count($childAccountIds);
 
-            // Sum opening balance of header + children
-            $openingBalance = (float) Account::whereIn('id', $targetAccountIds)->sum('opening_balance');
+            // Hitung opening balance dari jurnal lines (SA + mutasi sebelum startDate)
+            $startYear = Carbon::parse($this->startDate)->year;
+            $hasOpeningBalance = JournalEntry::where('status', 'posted')
+                ->where(function ($q) use ($startYear) {
+                    $q->where('source_type', 'opening_balance')
+                        ->orWhere('entry_type', 'opening_balance')
+                        ->orWhere('entry_number', 'like', "SA-{$startYear}%");
+                })
+                ->whereYear('entry_date', $startYear)
+                ->exists();
+
+            $opQuery = JournalLine::whereHas('journalEntry', function ($q) use ($startYear, $hasOpeningBalance) {
+                $q->where('status', 'posted');
+
+                if ($hasOpeningBalance) {
+                    $q->where(function ($sub) use ($startYear) {
+                        $sub->where(function ($obQ) use ($startYear) {
+                            $obQ->where('entry_number', 'like', "SA-{$startYear}%")
+                                ->orWhere('source_type', 'opening_balance')
+                                ->orWhere('entry_type', 'opening_balance');
+                        })->orWhere(function ($priorQ) use ($startYear) {
+                            $priorQ->where('entry_number', 'not like', 'SA-%')
+                                ->where('entry_type', '!=', 'opening_balance')
+                                ->where('source_type', '!=', 'opening_balance')
+                                ->where('entry_date', '>=', "{$startYear}-01-01")
+                                ->where('entry_date', '<', $this->startDate);
+                        });
+                    });
+                } else {
+                    $q->where(function ($sub) {
+                        $sub->where('entry_type', 'opening_balance')
+                            ->orWhere('source_type', 'opening_balance')
+                            ->orWhere('entry_number', 'like', 'SA%')
+                            ->orWhere('entry_date', '<', $this->startDate);
+                    });
+                }
+            })
+                ->whereIn('account_id', $targetAccountIds)
+                ->when(! empty($allowedUnitIds), fn ($q) => $q->whereIn('unit_id', $allowedUnitIds));
+
+            if ($this->unitFilter !== 'all') {
+                $opQuery->where('unit_id', $this->unitFilter);
+            }
+
+            $opTotals = $opQuery->selectRaw('SUM(debit) as tot_d, SUM(credit) as tot_c')->first();
+            $opD = (float) ($opTotals->tot_d ?? 0);
+            $opC = (float) ($opTotals->tot_c ?? 0);
+            $openingBalance = $selectedAccount->normal_balance === 'debit' ? ($opD - $opC) : ($opC - $opD);
 
             $linesQuery = JournalLine::with(['journalEntry', 'account', 'unit'])
                 ->whereIn('account_id', $targetAccountIds)
