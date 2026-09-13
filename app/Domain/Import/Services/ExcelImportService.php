@@ -138,6 +138,11 @@ class ExcelImportService
                     $rawAccountCode = '';
                 }
 
+                // Rule: Abaikan baris jika tidak memiliki kode akun (kode akun kosong)
+                if (empty($rawAccountCode)) {
+                    continue;
+                }
+
                 $debit = (float) str_replace(',', '.', (string) ($rawDebit ?? 0));
                 $credit = (float) str_replace(',', '.', (string) ($rawCredit ?? 0));
 
