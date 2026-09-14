@@ -187,7 +187,7 @@
                             $isExpanded = isset($expandedAccounts[$accId]);
                         @endphp
                         <!-- Header Baris Akun (Level 1) -->
-                        <tr class="bg-slate-100/70 dark:bg-slate-800/40 hover:bg-slate-200/50 dark:hover:bg-slate-800/70 cursor-pointer transition-all font-bold" wire:click="toggleAccount({{ $accId }})">
+                        <tr wire:key="aging-acc-header-{{ $accId }}" class="bg-slate-100/70 dark:bg-slate-800/40 hover:bg-slate-200/50 dark:hover:bg-slate-800/70 cursor-pointer transition-all font-bold" wire:click="toggleAccount({{ $accId }})">
                             <td class="py-3 px-4 flex items-center gap-2" colspan="4">
                                 <svg class="w-4 h-4 text-slate-500 transition-transform {{ $isExpanded ? 'rotate-90' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -223,7 +223,7 @@
                         <!-- Baris Rincian Invoice (Level 2) -->
                         @if ($isExpanded)
                             @forelse ($accItem['invoices'] as $inv)
-                                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/20 transition-colors">
+                                <tr wire:key="aging-row-{{ $inv['is_registered_invoice'] ? 'inv' : 'line' }}-{{ $inv['id'] }}" class="hover:bg-slate-50/60 dark:hover:bg-slate-800/20 transition-colors">
                                     <td class="py-2.5 px-4 pl-10 font-semibold text-slate-700 dark:text-slate-200">
                                         @if ($inv['is_registered_invoice'])
                                             <div class="flex items-center gap-1.5 flex-wrap">
@@ -240,14 +240,17 @@
                                         @else
                                             <div class="flex items-center gap-2">
                                                 <input 
+                                                    wire:key="chk-line-{{ $inv['id'] }}"
+                                                    id="chk-line-{{ $inv['id'] }}"
                                                     type="checkbox" 
+                                                    value="{{ $inv['id'] }}"
                                                     wire:model.live="selectedLineIds.{{ $inv['id'] }}"
-                                                    class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
+                                                    class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                                     title="Centang untuk menggabungkan beberapa jurnal menjadi 1 invoice"
                                                 >
-                                                <span class="inline-flex items-center gap-1 text-slate-400 italic">
+                                                <label for="chk-line-{{ $inv['id'] }}" class="inline-flex items-center gap-1 text-slate-400 italic cursor-pointer">
                                                     <span>{{ $inv['entry_number'] }} (Belum Bernomor Invoice)</span>
-                                                </span>
+                                                </label>
                                             </div>
                                         @endif
                                     </td>

@@ -111,6 +111,45 @@ test('can merge multiple journal lines into single invoice from livewire modal',
         ->assertSee('Client Konsolidasi Livewire');
 });
 
+test('checkbox selection maintains isolated state across different unassigned journal lines', function () {
+    $piutangAccount = Account::where('type', 'PIUTANG')->where('is_group', false)->first();
+    $pendapatanAccount = Account::where('report_type', 'laba_rugi')->where('is_group', false)->first();
+
+    $postingService = new JournalPostingService;
+    $jA = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-02-28',
+        'document_number' => 'DOC-CHK-A',
+        'description' => 'Tagihan RS Tandun',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang BPJS RS Tandun', 'debit' => 291275486, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 291275486],
+    ], $this->user->id);
+
+    $jB = $postingService->postManualEntry([
+        'company_id' => $this->company->id,
+        'entry_date' => '2026-01-31',
+        'document_number' => 'DOC-CHK-B',
+        'description' => 'Tagihan BPJS Klinik Utama',
+    ], [
+        ['account_id' => $piutangAccount->id, 'description' => 'Piutang BPJS Klinik', 'debit' => 191988820, 'credit' => 0],
+        ['account_id' => $pendapatanAccount->id, 'description' => 'Pendapatan', 'debit' => 0, 'credit' => 191988820],
+    ], $this->user->id);
+
+    $lineA = $jA->lines()->where('account_id', $piutangAccount->id)->first();
+    $lineB = $jB->lines()->where('account_id', $piutangAccount->id)->first();
+
+    Livewire::actingAs($this->user)
+        ->test(AgingReport::class)
+        ->set('asOfDate', '2026-03-01')
+        ->call('toggleAccount', $piutangAccount->id)
+        // Set hanya line A yang dicentang
+        ->set("selectedLineIds.{$lineA->id}", true)
+        ->assertSet("selectedLineIds.{$lineA->id}", true)
+        // Pastikan line B tetap tidak terpilih (null/falsy)
+        ->assertSet("selectedLineIds.{$lineB->id}", null);
+});
+
 test('can export aging report to pdf and excel', function () {
     $this->actingAs($this->user);
 

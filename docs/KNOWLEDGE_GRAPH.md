@@ -267,7 +267,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
       - **Specific Invoice Matching**: Menghindari salah sasaran pelunasan FIFO; pembayaran ditargetkan secara presisi ke faktur spesifik.
       - **Many-to-Many Relational Flexibility**:
         - *Split Invoicing (1 Jurnal Banyak Invoice)*: Memecah 1 baris pengakuan jurnal menjadi banyak nomor invoice dengan kalkulator validasi nominal real-time.
-        - *Multi-Journal Consolidation (Banyak Jurnal 1 Invoice)*: Menggabungkan 2 atau lebih jurnal pengiriman/pekerjaan bertahap menjadi 1 lembar faktur fisik gabungan via seleksi checkbox.
+        - *Multi-Journal Consolidation (Banyak Jurnal 1 Invoice)*: Menggabungkan 2 atau lebih jurnal pengiriman/pekerjaan bertahap menjadi 1 lembar faktur fisik gabungan via seleksi checkbox. Dilengkapi isolasi stabil DOM Morphing (`wire:key="aging-row-..."` dan `wire:key="chk-line-..."`) dengan `id`/`<label>` terikat untuk mencegah bentrok/terpilihnya baris transaksi lain saat proses centang reaktif.
         - *Multi-Journal to Multi-Invoice (Banyak Jurnal Banyak Invoice / M:N)*: Memecah akumulasi beberapa transaksi jurnal sekaligus menjadi beberapa lembar nomor faktur fisik dengan alokasi pivot proporsional dan kalkulator penyeimbang nominal real-time.
       - **Post-Period Invoice Assignment**: Menginput/menugaskan nomor faktur fisik yang terbit menyusul tanpa merusak kunci periode tutup buku akuntansi.
       - **Invoice Correction & Unlink Engine**:
