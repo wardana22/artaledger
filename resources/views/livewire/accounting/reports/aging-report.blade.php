@@ -254,8 +254,19 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">
-                                        {{ $inv['partner_name'] }}
+                                    <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">
+                                        @if (!empty($inv['is_registered_invoice']) && !empty($inv['raw_partner_name']) && $inv['raw_partner_name'] !== '-')
+                                            <div class="font-semibold text-slate-800 dark:text-slate-100">
+                                                {{ $inv['raw_partner_name'] }}
+                                            </div>
+                                            @if (!empty($inv['journal_description']) && $inv['journal_description'] !== '-' && strcasecmp($inv['raw_partner_name'], $inv['journal_description']) !== 0)
+                                                <div class="text-[11px] text-slate-500 dark:text-slate-400 font-normal mt-0.5 line-clamp-1" title="{{ $inv['journal_description'] }}">
+                                                    {{ $inv['journal_description'] }}
+                                                </div>
+                                            @endif
+                                        @else
+                                            <span class="line-clamp-2" title="{{ $inv['partner_name'] }}">{{ $inv['partner_name'] }}</span>
+                                        @endif
                                     </td>
                                     <td class="py-2.5 px-3 text-slate-500 font-mono">{{ $inv['invoice_date'] }}</td>
                                     <td class="py-2.5 px-3 text-slate-500 font-mono">{{ $inv['due_date'] }}</td>

@@ -108,7 +108,7 @@ class AgingReportService
         // 1. Ambil invoice terdaftar yang dibuat pada/sebelum cutoff date
         $invoicesQuery = ApArInvoice::with(['settlements' => function ($q) use ($cutoffDate) {
             $q->where('settled_date', '<=', $cutoffDate->format('Y-m-d'));
-        }, 'journalLines.journalEntry', 'unit'])
+        }, 'journalLines.journalEntry', 'journalLine.journalEntry', 'unit'])
             ->where('account_id', $account->id)
             ->where('type', $type)
             ->where('invoice_date', '<=', $cutoffDate->format('Y-m-d'));
@@ -150,12 +150,45 @@ class AgingReportService
                 $entryNumbers = $invoice->journalLine?->journalEntry?->entry_number ?: '-';
             }
 
+            // Ambil deskripsi baris jurnal / header jurnal / notes invoice
+            $descriptions = $invoice->journalLines->pluck('description')->filter()->unique();
+            if ($descriptions->isEmpty() && $invoice->journalLine?->description) {
+                $descriptions = collect([$invoice->journalLine->description]);
+            }
+            if ($descriptions->isEmpty() && $invoice->journalLine?->journalEntry?->description) {
+                $descriptions = collect([$invoice->journalLine->journalEntry->description]);
+            }
+            if ($descriptions->isEmpty() && ! empty($invoice->notes)) {
+                $descriptions = collect([$invoice->notes]);
+            }
+
+            $journalDesc = $descriptions->implode('; ');
+
+            // Susun nama rekanan dan kombinasi rekanan + keterangan
+            $rawPartnerName = trim((string) $invoice->partner_name);
+            if (! empty($rawPartnerName) && ! empty($journalDesc)) {
+                // Jika nama rekanan dan keterangan jurnal sama/mengandung kemiripan persis, hindari duplikasi
+                if (strcasecmp($rawPartnerName, $journalDesc) === 0) {
+                    $combinedPartnerDesc = $rawPartnerName;
+                } else {
+                    $combinedPartnerDesc = "{$rawPartnerName} - {$journalDesc}";
+                }
+            } elseif (! empty($rawPartnerName)) {
+                $combinedPartnerDesc = $rawPartnerName;
+            } elseif (! empty($journalDesc)) {
+                $combinedPartnerDesc = $journalDesc;
+            } else {
+                $combinedPartnerDesc = '-';
+            }
+
             $rows[] = [
                 'id' => $invoice->id,
                 'is_registered_invoice' => true,
                 'is_paid' => $isPaid,
                 'invoice_number' => $invoice->invoice_number,
-                'partner_name' => $invoice->partner_name ?: '-',
+                'partner_name' => $combinedPartnerDesc,
+                'raw_partner_name' => $rawPartnerName ?: '-',
+                'journal_description' => $journalDesc ?: '-',
                 'entry_number' => $entryNumbers,
                 'invoice_date' => $invoice->invoice_date->format('Y-m-d'),
                 'due_date' => $invoice->due_date->format('Y-m-d'),
@@ -231,6 +264,8 @@ class AgingReportService
                 'is_paid' => false,
                 'invoice_number' => '(Belum Bernomor Invoice)',
                 'partner_name' => $line->description ?: '-',
+                'raw_partner_name' => '-',
+                'journal_description' => $line->description ?: '-',
                 'entry_number' => $line->journalEntry->entry_number,
                 'invoice_date' => $entryDate->format('Y-m-d'),
                 'due_date' => $entryDate->format('Y-m-d'),

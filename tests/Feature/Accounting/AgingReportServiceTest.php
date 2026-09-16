@@ -55,6 +55,13 @@ test('can assign single invoice and calculate aging report correctly', function 
 
     expect($report['kpi']['total_outstanding'])->toBe(150000.0);
     expect($report['kpi']['overdue_1_30'])->toBe(150000.0);
+
+    $accData = collect($report['accounts'])->firstWhere('account.id', $piutangAccount->id);
+    $invRow = collect($accData['invoices'])->firstWhere('invoice_number', 'INV-2026-001');
+    expect($invRow)->not->toBeNull();
+    expect($invRow['partner_name'])->toBe('PT ABC Sukses - Piutang PT ABC');
+    expect($invRow['raw_partner_name'])->toBe('PT ABC Sukses');
+    expect($invRow['journal_description'])->toBe('Piutang PT ABC');
 });
 
 test('can split single journal line into multiple invoices and settle specific invoice', function () {
