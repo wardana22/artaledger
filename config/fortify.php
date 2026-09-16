@@ -161,7 +161,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Registrasi publik dinonaktifkan: akun hanya dibuat oleh Super Admin di /admin/users
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

@@ -228,8 +228,18 @@ graph TD
 - **Eksekusi Depresiasi Periodik**: `/accounting/fixed-assets/depreciation` $\rightarrow$ [DepreciationRun.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Assets/DepreciationRun.php)
   - [FixedAssetDepreciationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Asset/Services/FixedAssetDepreciationService.php) (Perhitungan metode Garis Lurus / Straight-Line dan penjurnalan otomatis ke Buku Besar)
 - **Halaman Pemindaian Publik**: `/a/{code}` $\rightarrow$ [AssetScanController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/AssetScanController.php) $\rightarrow$ [scan.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/assets/scan.blade.php)
+  - Dilengkapi middleware proteksi bot *Rate Limiting* (`throttle:60,1`) guna mencegah enumerasi kode aset dan serangan DoS web crawler.
 
-### 6. Paket Laporan Keuangan & Ekspor Multi-Format
+### 6. Keamanan Sistem & Mitigasi Bot / Spam (AgentShield Posture)
+- **Registrasi Publik Dinonaktifkan**: Fitur registrasi mandiri publik (`Features::registration()`) dinonaktifkan secara permanen; seluruh pembuatan akun pengguna baru dipusatkan secara eksklusif kepada Super Admin melalui antarmuka [UserIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Admin/UserIndex.php).
+- **Rate Limiting Bertingkat**:
+  - **Login**: Dibatasi maksimal 5 percobaan per menit per kombinasi email dan IP.
+  - **Two-Factor Authentication**: Dibatasi 5 percobaan per menit.
+  - **Passkeys (WebAuthn)**: Dibatasi 10 request per menit.
+  - **Forgot Password**: Dibatasi 3 permohonan link per menit untuk mengamankan mail relay SMTP dari flooding/spam.
+  - **Scan QR Aset Publik**: Dibatasi 60 request per menit per IP untuk mencegah hit bot dan scraping massal.
+
+### 7. Paket Laporan Keuangan & Ekspor Multi-Format
 Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-export-dropdown.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/components/report-export-dropdown.blade.php)):
 1. **Buku Besar (General Ledger)**: `/accounting/reports/general-ledger` ([GeneralLedger.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/GeneralLedger.php))
 2. **Buku Besar Pembantu (Subsidiary Ledger)**: `/accounting/reports/subsidiary-ledger` ([SubsidiaryLedger.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/SubsidiaryLedger.php))

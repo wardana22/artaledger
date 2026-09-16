@@ -2,26 +2,16 @@
 
 use Laravel\Fortify\Features;
 
-beforeEach(function () {
-    $this->skipUnlessFortifyHas(Features::registration());
+test('public registration is disabled and returns 404', function () {
+    expect(Features::enabled(Features::registration()))->toBeFalse();
+
+    $response = $this->get('/register');
+    $response->assertNotFound();
 });
 
-test('registration screen can be rendered', function () {
-    $response = $this->get(route('register'));
-
+test('login page does not display sign up link when registration is disabled', function () {
+    $response = $this->get(route('login'));
     $response->assertOk();
-});
-
-test('new users can register', function () {
-    $response = $this->post(route('register.store'), [
-        'name' => 'John Doe',
-        'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
-
-    $response->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
-
-    $this->assertAuthenticated();
+    $response->assertDontSee('Sign up');
+    $response->assertSee('Sistem Terproteksi — Registrasi akun baru hanya melalui Administrator.');
 });
