@@ -1647,7 +1647,7 @@ class FinancialReportPdfService
      * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
-    public function getJournalRegisterData(array $filters = [], ?User $user = null): array
+    public function getJournalRegisterData(array $filters = [], ?User $user = null, ?int $limit = null): array
     {
         $user = $user ?? auth()->user();
         $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
@@ -1673,7 +1673,16 @@ class FinancialReportPdfService
             ->orderBy('entry_date', 'asc')
             ->orderBy('id', 'asc');
 
-        $journals = $query->get();
+        // Menghindari memory exhausted pada Dompdf jika dataset jurnal sangat besar
+        $totalCount = (clone $query)->count();
+        $isTruncated = false;
+
+        if ($limit !== null && $totalCount > $limit) {
+            $isTruncated = true;
+            $journals = $query->limit($limit)->get();
+        } else {
+            $journals = $query->get();
+        }
 
         $totalDebit = 0.0;
         $totalCredit = 0.0;
@@ -1705,6 +1714,9 @@ class FinancialReportPdfService
             'statusLabel' => $statusLabelMap[$statusFilter] ?? strtoupper($statusFilter),
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
+            'isTruncated' => $isTruncated,
+            'totalCount' => $totalCount,
+            'limit' => $limit,
             'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
             'printedBy' => $user ? $user->name : 'Staff Akuntansi',
         ];
@@ -1717,10 +1729,16 @@ class FinancialReportPdfService
      */
     public function renderJournalRegisterPdf(array $filters = [], ?User $user = null): DomPdfWrapper
     {
-        $data = $this->getJournalRegisterData($filters, $user);
+        // Tetapkan limit aman untuk PDF rendering agar tidak kehabisan memori server
+        $maxPdfEntries = 150;
+        $data = $this->getJournalRegisterData($filters, $user, $maxPdfEntries);
 
         return Pdf::loadView('pdf.reports.journal-register', $data)
             ->setPaper('a4', 'landscape')
-            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'Helvetica',
+            ]);
     }
 }

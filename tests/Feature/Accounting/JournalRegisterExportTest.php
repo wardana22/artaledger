@@ -103,6 +103,14 @@ test('user with journals.view permission can export journal register pdf', funct
     $response->assertHeader('content-type', 'application/pdf');
 });
 
+test('user can export journal register with exact browser query parameters', function () {
+    $response = $this->actingAs($this->user)
+        ->get('/accounting/journals/export/pdf?start_date=2026-01-01&end_date=2026-01-31&unit=all&status=all&search=');
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+});
+
 test('user with journals.view permission can export journal register excel', function () {
     $response = $this->actingAs($this->user)
         ->get(route('accounting.journals.export.excel', [

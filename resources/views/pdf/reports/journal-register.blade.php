@@ -5,7 +5,24 @@
     Periode: {{ $startDate }} s/d {{ $endDate }} | Status: {{ strtoupper($statusLabel) }}
 @endsection
 
+@section('custom_styles')
+<style>
+    .data-table {
+        table-layout: fixed;
+    }
+    .data-table tr {
+        page-break-inside: auto;
+    }
+</style>
+@endsection
+
 @section('content')
+    @if(!empty($isTruncated))
+        <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b; padding: 5px 8px; margin-bottom: 8px; font-size: 8px; color: #92400e; border-radius: 2px;">
+            <strong>Pemberitahuan Sistem:</strong> Menampilkan <strong>{{ count($journals) }}</strong> entri jurnal pertama dari total <strong>{{ $totalCount }}</strong> transaksi untuk menjaga keandalan rendering PDF. Untuk analisis lengkap seluruh data mutasi tanpa batas, silakan gunakan fitur <strong>Ekspor Excel (.xlsx)</strong>.
+        </div>
+    @endif
+
     <table class="data-table">
         <thead>
             <tr>
