@@ -902,6 +902,7 @@ class FinancialReportPdfService
         $opC = (float) ($opTotals->tot_c ?? 0);
         $openingBalance = $account->normal_balance === 'debit' ? ($opD - $opC) : ($opC - $opD);
 
+        $lines = $linesQuery->get();
         $runningBalance = $openingBalance;
         $reportLines = [];
         $totalDebit = 0.0;
