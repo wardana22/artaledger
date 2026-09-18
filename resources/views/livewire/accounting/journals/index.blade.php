@@ -25,7 +25,25 @@
             </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
+            <x-report-export-dropdown 
+                :pdfUrl="route('accounting.journals.export.pdf', [
+                    'start_date' => $startDate, 
+                    'end_date' => $endDate, 
+                    'unit' => $unitFilter, 
+                    'status' => $statusFilter, 
+                    'search' => $search
+                ])"
+                :excelUrl="route('accounting.journals.export.excel', [
+                    'start_date' => $startDate, 
+                    'end_date' => $endDate, 
+                    'unit' => $unitFilter, 
+                    'status' => $statusFilter, 
+                    'search' => $search
+                ])"
+                label="Cetak / Ekspor Jurnal"
+            />
+
             <a 
                 href="{{ route('accounting.journals.create') }}"
                 wire:navigate
@@ -200,6 +218,17 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                         </svg>
                                     </button>
+
+                                    <!-- 2. Tombol Cetak Bukti Jurnal Langsung (PDF) -->
+                                    <a 
+                                        href="{{ route('accounting.journals.pdf', $journal->id) }}" 
+                                        target="_blank"
+                                        title="Cetak Bukti Jurnal (PDF) {{ $journal->entry_number }}"
+                                        class="p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-400 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-2xs hover:shadow-md hover:shadow-indigo-500/20 transition-all duration-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                        </svg>
+                                    </a>
 
                                     @if ($journal->status === 'draft')
                                         <!-- AKSI JURNAL DRAFT: Approve, Edit, Delete -->
@@ -440,19 +469,19 @@
 
                 <!-- Modal Footer -->
                 <div class="p-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2">
-                    <button 
-                        type="button" 
-                        onclick="window.print()" 
-                        class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5">
+                    <a 
+                        href="{{ route('accounting.journals.pdf', $selectedJournalDetail->id) }}" 
+                        target="_blank"
+                        class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm shadow-indigo-500/20">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
                         </svg>
-                        Cetak Bukti Jurnal
-                    </button>
+                        Cetak Bukti Jurnal (PDF)
+                    </a>
                     <button 
                         type="button" 
                         wire:click="closeDetailModal" 
-                        class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all">
+                        class="px-4 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold rounded-lg transition-all">
                         Tutup
                     </button>
                 </div>
