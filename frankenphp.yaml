@@ -1,0 +1,10 @@
+listeners:
+  - addr: "0.0.0.0:80"
+    fallback: "index.php"
+    static:
+      dir: public
+      fallthrough: true
+
+workers:
+  script: artisan
+  command: queue:work

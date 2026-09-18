@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: artaledger-app
+    container_name: artaledger-app
+    ports:
+      - "5529:80"
+    volumes:
+      - ./storage:/app/storage
+      - ./frankenphp.yaml:/etc/frankenphp/frankenphp.yaml
+      - ./.env:/app/.env
+    environment:
+      APP_ENV: production
+      APP_KEY: ${APP_KEY}
+      DB_HOST: mysql
+    depends_on:
+      - mysql
+    networks:
+      - artaledger-app-network
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    container_name: artaledger-app-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: artaledger
+    ports:
+      - "5307:3306"
+    volumes:
+      - artaledger_mysql_data:/var/lib/mysql
+    networks:
+      - artaledger-app-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+networks:
+  artaledger-app-network:
+    driver: bridge
+
+volumes:
+  artaledger_mysql_data:

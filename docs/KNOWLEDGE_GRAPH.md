@@ -373,3 +373,16 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 
 ### 9. Laporan Audit & Kepatuhan Sistem
 - [docs/AUDIT_REPORT.md](file:///d:/Belajar%20Laravel/artaledger/docs/AUDIT_REPORT.md) (Laporan audit sistem menyeluruh: arsitektur, keamanan RBAC, integritas akuntansi, performa basis data, dan kualitas kode)
+
+---
+
+### 10. Kontainerisasi & Infrastruktur Deployment (Docker & FrankenPHP)
+- [Dockerfile](file:///d:/Belajar%20Laravel/artaledger/Dockerfile): Arsitektur *Multi-Stage Build* berbasis FrankenPHP (PHP 8.4 Alpine) & Node 22 Alpine:
+  - **Stage 1 (Backend - Composer)**: Instalasi pustaka PHP dan ekstensi produksi (`intl`, `zip`, `pdo_mysql`, `pdo_pgsql`, `bcmath`, `opcache`, `gd` [freetype/jpeg], `exif`).
+  - **Stage 2 (Frontend - Vite)**: Kompilasi bundle CSS (Tailwind CSS v4) dan JavaScript aset publik.
+  - **Stage 3 (Runtime)**: Konfigurasi PHP produksi (`memory_limit=512M`, `max_execution_time=300`, `upload_max_filesize=100M`), symlink storage, dan kepemilikan permission `www-data`.
+- [docker-compose.yml](file:///d:/Belajar%20Laravel/artaledger/docker-compose.yml): Orkestrasi multi-container:
+  - **App Service**: Image `artaledger-app`, port web `5529:80`, volume mounting storage & environment, network bridge `artaledger-app-network`.
+  - **MySQL Service**: MySQL 8.0, port `5307:3306`, healthcheck ping, dan persistensi volume `artaledger_mysql_data`.
+- [frankenphp.yaml](file:///d:/Belajar%20Laravel/artaledger/frankenphp.yaml): Konfigurasi web server Caddy/FrankenPHP terintegrasi dan worker otomatis `artisan queue:work`.
+- [.dockerignore](file:///d:/Belajar%20Laravel/artaledger/.dockerignore): Pengabaian folder dependensi lokal (`vendor`, `node_modules`, `.git`) untuk optimasi context build.
