@@ -129,4 +129,25 @@ class FinancialReportPdfController extends Controller
 
         return $pdf->stream($filename);
     }
+
+    /**
+     * Export / Stream Bukti Memorial Jurnal (Journal Voucher) ke format PDF.
+     */
+    public function exportJournalVoucher(Request $request, int $id): Response
+    {
+        $user = $request->user();
+        if ($user && ! $user->can('journals.view')) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk mencetak Bukti Jurnal.');
+        }
+
+        $pdf = $this->pdfService->renderJournalVoucherPdf($id, $user);
+        $isDownload = $request->boolean('download', false);
+        $filename = "Bukti-Jurnal-{$id}.pdf";
+
+        if ($isDownload) {
+            return $pdf->download($filename);
+        }
+
+        return $pdf->stream($filename);
+    }
 }

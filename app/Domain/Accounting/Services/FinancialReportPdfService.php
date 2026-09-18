@@ -1593,4 +1593,51 @@ class FinancialReportPdfService
             ->setPaper('a4', 'landscape')
             ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
     }
+
+    /**
+     * Ambil data Bukti Memorial / Voucher Jurnal Umum (Journal Voucher).
+     *
+     * @return array<string, mixed>
+     */
+    public function getJournalVoucherData(JournalEntry $entry, ?User $user = null): array
+    {
+        $user = $user ?? auth()->user();
+        $company = $entry->company ?? Company::first();
+
+        $entry->loadMissing([
+            'lines.account',
+            'lines.unit',
+            'journalType',
+            'postedBy',
+            'period',
+        ]);
+
+        // Cari nama unit dominan dari baris jurnal jika ada
+        $firstLineUnit = $entry->lines->first(fn ($l) => $l->unit !== null)?->unit;
+        $unitName = $firstLineUnit ? "{$firstLineUnit->code} - {$firstLineUnit->name}" : 'Konsolidasi / Kantor Pusat';
+
+        return [
+            'company' => $company,
+            'entry' => $entry,
+            'unitName' => $unitName,
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Staff Akuntansi',
+        ];
+    }
+
+    /**
+     * Render Bukti Memorial / Voucher Jurnal Umum ke format PDF (Ukuran A4 Portrait).
+     */
+    public function renderJournalVoucherPdf(JournalEntry|int $entry, ?User $user = null): DomPdfWrapper
+    {
+        $journal = $entry instanceof JournalEntry
+            ? $entry
+            : JournalEntry::with(['lines.account', 'lines.unit', 'journalType', 'postedBy', 'company', 'period'])->findOrFail($entry);
+
+        $data = $this->getJournalVoucherData($journal, $user);
+
+        return Pdf::loadView('pdf.reports.journal-voucher', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
 }

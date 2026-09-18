@@ -292,7 +292,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
       - **Executive KPI Cards & Bucket Umur**: Total Saldo Terbuka, Lancar/Current, Overdue 1-30, 31-60, 61-90, dan >90 hari.
       - **Informatif Rekanan & Keterangan Jurnal**: Kolom *REKANAN / DESKRIPSI* pada hasil ekspor Excel/PDF dan tabel web secara cerdas menggabungkan nama rekanan dan keterangan baris transaksi jurnal (`[Rekanan] - [Keterangan Jurnal]`), menyajikan konteks transaksi secara jelas tanpa duplikasi teks.
       - **Drill-down Accordion**: Menampilkan rincian invoice per akun, nomor jurnal pembentuk, dan riwayat pelunasannya.
-- **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 landscape cetak siap tanda tangan)
+- **Ekspor Dokumen PDF**: [FinancialReportPdfController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportPdfController.php) $\rightarrow$ [FinancialReportPdfService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportPdfService.php) (Layout A4 landscape cetak siap tanda tangan untuk laporan berkala, serta Layout A4 portrait untuk **Bukti Memorial / Voucher Jurnal** `[pdf.reports.journal-voucher]`)
 - **Ekspor Dokumen Excel**: [FinancialReportExcelController.php](file:///d:/Belajar%20Laravel/artaledger/app/Http/Controllers/FinancialReportExcelController.php) $\rightarrow$ [FinancialReportExcelService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/FinancialReportExcelService.php) (Spreadsheet multi-kolom bucket dengan format akuntansi)
 
 ### 7. Kontrol Anggaran & Biaya (Budgeting vs Actual)
@@ -357,6 +357,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 - [tests/Feature/Accounting/BalanceSheetRolloverTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/BalanceSheetRolloverTest.php) (Validasi Keseimbangan Neraca Pasca Tutup Buku Tanpa Akumulasi Ganda)
 - [tests/Feature/Accounting/FinancialReportRolloverTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/FinancialReportRolloverTest.php) (Validasi Isolasi Saldo Awal Neraca Lajur & Neraca Saldo Pasca Rollover Tutup Buku 2026 Tanpa Menumpuk Mutasi 2025)
 - [tests/Feature/Accounting/InitialBalanceWizardTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/InitialBalanceWizardTest.php) (Validasi Setup Saldo Awal, Auto-Balance Retained Earnings, & Hardening Buka Kunci Super Admin)
+- [tests/Feature/Accounting/JournalVoucherPdfTest.php](file:///d:/Belajar%20Laravel/artaledger/tests/Feature/Accounting/JournalVoucherPdfTest.php) (Validasi Ekspor Dokumen Resmi Bukti Memorial / Voucher Jurnal PDF, Otorisasi Akses, dan Header Attachment Download)
 
 ### 8. Tata Kelola Antarmuka UI/UX Enterprise (Navigation & Layout)
 - **Komponen Sidebar Utama**: [resources/views/layouts/app/sidebar.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/layouts/app/sidebar.blade.php)

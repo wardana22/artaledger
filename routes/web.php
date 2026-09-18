@@ -82,6 +82,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/accounting/journals', JournalIndex::class)->name('accounting.journals.index');
     Route::get('/accounting/journals/create', JournalForm::class)->name('accounting.journals.create');
     Route::get('/accounting/journals/{id}/edit', JournalForm::class)->name('accounting.journals.edit');
+    Route::get('/accounting/journals/{id}/pdf', [FinancialReportPdfController::class, 'exportJournalVoucher'])->name('accounting.journals.pdf');
     Route::get('/accounting/adjustments', AdjustmentIndex::class)->name('accounting.adjustments.index');
     Route::get('/accounting/adjustments/create', AdjustmentForm::class)->name('accounting.adjustments.create');
 
