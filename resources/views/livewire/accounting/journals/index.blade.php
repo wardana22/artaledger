@@ -25,7 +25,25 @@
             </p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
+            <x-report-export-dropdown 
+                :pdfUrl="route('accounting.journals.export.pdf', [
+                    'start_date' => $startDate, 
+                    'end_date' => $endDate, 
+                    'unit' => $unitFilter, 
+                    'status' => $statusFilter, 
+                    'search' => $search
+                ])"
+                :excelUrl="route('accounting.journals.export.excel', [
+                    'start_date' => $startDate, 
+                    'end_date' => $endDate, 
+                    'unit' => $unitFilter, 
+                    'status' => $statusFilter, 
+                    'search' => $search
+                ])"
+                label="Cetak / Ekspor Jurnal"
+            />
+
             <a 
                 href="{{ route('accounting.journals.create') }}"
                 wire:navigate

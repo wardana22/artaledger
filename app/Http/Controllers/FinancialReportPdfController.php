@@ -150,4 +150,34 @@ class FinancialReportPdfController extends Controller
 
         return $pdf->stream($filename);
     }
+
+    /**
+     * Export / Stream Rekapitulasi Daftar Jurnal Transaksi (Journal Register) ke format PDF.
+     */
+    public function exportJournalRegister(Request $request): Response
+    {
+        $user = $request->user();
+        if ($user && ! $user->can('journals.view')) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk mencetak Daftar Jurnal.');
+        }
+
+        $filters = [
+            'search' => $request->query('search', ''),
+            'status' => $request->query('status', 'all'),
+            'unit' => $request->query('unit', 'all'),
+            'start_date' => $request->query('start_date', ''),
+            'end_date' => $request->query('end_date', ''),
+        ];
+
+        $pdf = $this->pdfService->renderJournalRegisterPdf($filters, $user);
+        $isDownload = $request->boolean('download', false);
+        $dateSuffix = ! empty($filters['start_date']) ? "{$filters['start_date']}-sd-{$filters['end_date']}" : date('Ymd');
+        $filename = "Daftar-Jurnal-Transaksi-{$dateSuffix}.pdf";
+
+        if ($isDownload) {
+            return $pdf->download($filename);
+        }
+
+        return $pdf->stream($filename);
+    }
 }

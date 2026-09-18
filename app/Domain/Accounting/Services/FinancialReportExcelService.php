@@ -909,4 +909,97 @@ class FinancialReportExcelService
 
         return $spreadsheet;
     }
+
+    /**
+     * Export Rekapitulasi Daftar Jurnal Transaksi (Journal Register) ke format Excel.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function exportJournalRegister(array $filters = [], ?User $user = null): Spreadsheet
+    {
+        $data = $this->pdfService->getJournalRegisterData($filters, $user);
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Daftar Jurnal');
+
+        $periodStr = $data['startDate'].' s/d '.$data['endDate'];
+        $row = $this->applyReportHeader(
+            $spreadsheet,
+            $data['company'],
+            'Daftar Jurnal Transaksi (Journal Register)',
+            $periodStr.' | Status: '.$data['statusLabel'],
+            $data['unitName'],
+            'G'
+        );
+
+        // Header Table
+        $sheet->setCellValue("A{$row}", 'Tanggal');
+        $sheet->setCellValue("B{$row}", 'No. Jurnal');
+        $sheet->setCellValue("C{$row}", 'No. Bukti');
+        $sheet->setCellValue("D{$row}", 'Unit');
+        $sheet->setCellValue("E{$row}", 'Kode & Nama Akun / Keterangan');
+        $sheet->setCellValue("F{$row}", 'Debet (IDR)');
+        $sheet->setCellValue("G{$row}", 'Kredit (IDR)');
+
+        $sheet->getStyle("A{$row}:G{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:G{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E2E8F0');
+        $sheet->getStyle("A{$row}:D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("F{$row}:G{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        $row++;
+        $currencyFormat = '#,##0.00;(#,##0.00);"-"';
+
+        foreach ($data['journals'] as $journal) {
+            // Header Baris Entri Jurnal
+            $sheet->setCellValue("A{$row}", $journal->entry_date->format('d/m/Y'));
+            $sheet->setCellValue("B{$row}", $journal->entry_number);
+            $sheet->setCellValue("C{$row}", $journal->document_number ?: '-');
+            $sheet->setCellValue("D{$row}", $journal->lines->first()?->unit?->code ?: 'Global');
+            $sheet->setCellValue("E{$row}", $journal->description.' ['.strtoupper($journal->status).']');
+            $sheet->setCellValue("F{$row}", $journal->total_debit);
+            $sheet->setCellValue("G{$row}", $journal->total_credit);
+
+            $sheet->getStyle("A{$row}:G{$row}")->getFont()->setBold(true);
+            $sheet->getStyle("A{$row}:G{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
+            $sheet->getStyle("A{$row}:D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("F{$row}:G{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+            $row++;
+
+            // Detail Lines
+            foreach ($journal->lines as $line) {
+                $sheet->setCellValue("A{$row}", '');
+                $sheet->setCellValue("B{$row}", '');
+                $sheet->setCellValue("C{$row}", '');
+                $sheet->setCellValue("D{$row}", $line->unit ? $line->unit->code : 'Global');
+                $lineDesc = $line->account ? $line->account->code.' - '.$line->account->name : '-';
+                if ($line->description && $line->description !== $journal->description) {
+                    $lineDesc .= ' ('.$line->description.')';
+                }
+                $sheet->setCellValue("E{$row}", '   '.$lineDesc);
+                $sheet->setCellValue("F{$row}", $line->debit > 0 ? $line->debit : 0);
+                $sheet->setCellValue("G{$row}", $line->credit > 0 ? $line->credit : 0);
+
+                $sheet->getStyle("D{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("F{$row}:G{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+                $row++;
+            }
+        }
+
+        // Grand Total Row
+        $sheet->setCellValue("A{$row}", 'TOTAL MUTASI TRANSAKSI JURNAL');
+        $sheet->mergeCells("A{$row}:E{$row}");
+        $sheet->setCellValue("F{$row}", $data['totalDebit']);
+        $sheet->setCellValue("G{$row}", $data['totalCredit']);
+
+        $sheet->getStyle("A{$row}:G{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("F{$row}:G{$row}")->getNumberFormat()->setFormatCode($currencyFormat);
+        $sheet->getStyle("A{$row}:G{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle("A{$row}:G{$row}")->getBorders()->getBottom()->setBorderStyle(Border::BORDER_DOUBLE);
+        $row++;
+
+        $this->applySignatures($spreadsheet, $data['company'], $row, 'A', 'D', 'G');
+        $this->autoSizeColumns($spreadsheet, ['A', 'B', 'C', 'D', 'E', 'F', 'G']);
+
+        return $spreadsheet;
+    }
 }

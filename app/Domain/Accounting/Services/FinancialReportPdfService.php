@@ -1640,4 +1640,87 @@ class FinancialReportPdfService
             ->setPaper('a4', 'portrait')
             ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
     }
+
+    /**
+     * Ambil data Rekapitulasi Daftar Jurnal Transaksi (Journal Register).
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
+    public function getJournalRegisterData(array $filters = [], ?User $user = null): array
+    {
+        $user = $user ?? auth()->user();
+        $allowedUnitIds = $user ? $user->allowedUnitIds() : [];
+
+        $search = $filters['search'] ?? '';
+        $statusFilter = $filters['status'] ?? 'all';
+        $unitFilter = $filters['unit'] ?? 'all';
+        $startDate = $filters['start_date'] ?? '';
+        $endDate = $filters['end_date'] ?? '';
+
+        $query = JournalEntry::with(['lines.account', 'lines.unit', 'journalType', 'postedBy', 'period'])
+            ->when($search !== '', fn ($q) => $q->where(fn ($sq) => $sq->where('entry_number', 'like', "%{$search}%")
+                ->orWhere('document_number', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")))
+            ->when($statusFilter === 'draft', fn ($q) => $q->where('status', 'draft'))
+            ->when($statusFilter === 'posted', fn ($q) => $q->where('status', 'posted'))
+            ->when($statusFilter === 'reversed', fn ($q) => $q->where('status', 'reversed'))
+            ->when($statusFilter === 'all', fn ($q) => $q->whereIn('status', ['posted', 'reversed']))
+            ->when(! empty($allowedUnitIds), fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->whereIn('unit_id', $allowedUnitIds)))
+            ->when($unitFilter !== 'all', fn ($q) => $q->whereHas('lines', fn ($lq) => $lq->where('unit_id', $unitFilter)))
+            ->when(! empty($startDate), fn ($q) => $q->whereDate('entry_date', '>=', $startDate))
+            ->when(! empty($endDate), fn ($q) => $q->whereDate('entry_date', '<=', $endDate))
+            ->orderBy('entry_date', 'asc')
+            ->orderBy('id', 'asc');
+
+        $journals = $query->get();
+
+        $totalDebit = 0.0;
+        $totalCredit = 0.0;
+        foreach ($journals as $j) {
+            $totalDebit += (float) $j->total_debit;
+            $totalCredit += (float) $j->total_credit;
+        }
+
+        $company = Company::first();
+        $targetUnit = $unitFilter !== 'all' ? Unit::find($unitFilter) : null;
+        $unitName = $unitFilter === 'all' ? 'Konsolidasi (Seluruh Unit)' : ($targetUnit ? "{$targetUnit->code} - {$targetUnit->name}" : 'Unit');
+
+        $startFormatted = ! empty($startDate) ? Carbon::parse($startDate)->isoFormat('D MMMM Y') : 'Awal Pembukuan';
+        $endFormatted = ! empty($endDate) ? Carbon::parse($endDate)->isoFormat('D MMMM Y') : Carbon::now()->isoFormat('D MMMM Y');
+
+        $statusLabelMap = [
+            'all' => 'Semua (Posted & Reversed)',
+            'posted' => 'Posted (Dibukukan)',
+            'draft' => 'Draft (Menunggu Approval)',
+            'reversed' => 'Reversed (Dibalikkan)',
+        ];
+
+        return [
+            'company' => $company,
+            'journals' => $journals,
+            'unitName' => $unitName,
+            'startDate' => $startFormatted,
+            'endDate' => $endFormatted,
+            'statusLabel' => $statusLabelMap[$statusFilter] ?? strtoupper($statusFilter),
+            'totalDebit' => $totalDebit,
+            'totalCredit' => $totalCredit,
+            'printedAt' => Carbon::now()->isoFormat('D MMMM Y HH:mm'),
+            'printedBy' => $user ? $user->name : 'Staff Akuntansi',
+        ];
+    }
+
+    /**
+     * Render Rekapitulasi Daftar Jurnal Transaksi ke format PDF (Ukuran A4 Landscape).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function renderJournalRegisterPdf(array $filters = [], ?User $user = null): DomPdfWrapper
+    {
+        $data = $this->getJournalRegisterData($filters, $user);
+
+        return Pdf::loadView('pdf.reports.journal-register', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+    }
 }

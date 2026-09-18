@@ -134,4 +134,38 @@ class FinancialReportExcelController extends Controller
 
         return $response;
     }
+
+    /**
+     * Export Rekapitulasi Daftar Jurnal Transaksi (Journal Register) ke format Excel.
+     */
+    public function exportJournalRegister(Request $request): StreamedResponse
+    {
+        $user = $request->user();
+        if ($user && ! $user->can('journals.view')) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengekspor Daftar Jurnal.');
+        }
+
+        $filters = [
+            'search' => $request->query('search', ''),
+            'status' => $request->query('status', 'all'),
+            'unit' => $request->query('unit', 'all'),
+            'start_date' => $request->query('start_date', ''),
+            'end_date' => $request->query('end_date', ''),
+        ];
+
+        $spreadsheet = $this->excelService->exportJournalRegister($filters, $user);
+        $dateSuffix = ! empty($filters['start_date']) ? "{$filters['start_date']}-sd-{$filters['end_date']}" : date('Ymd');
+        $filename = "Daftar-Jurnal-Transaksi-{$dateSuffix}.xlsx";
+
+        $response = new StreamedResponse(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        });
+
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
+        $response->headers->set('Cache-Control', 'max-age=0');
+
+        return $response;
+    }
 }
