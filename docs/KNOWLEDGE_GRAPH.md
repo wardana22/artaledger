@@ -255,6 +255,7 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
 7. **Arus Kas (Cash Flow - Direct Method)**: `/accounting/reports/cash-flow` ([CashFlow.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Reports/CashFlow.php))
    - Menggunakan [CashFlowService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Accounting/Services/CashFlowService.php) dan entitas dinamis [CashFlowRow.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/CashFlowRow.php).
    - Format 3 aktivitas utama (*Operasi*, *Investasi*, *Pembiayaan*) dengan rekonsiliasi Kenaikan Bersih Kas, Saldo Kas Awal, dan Saldo Kas Akhir.
+   - Menggunakan mekanisme *Rollover-Aware Opening Cash*: Mendeteksi keberadaan Jurnal Saldo Awal (`SA-{$startYear}%` atau `source_type = 'opening_balance'`) pada tahun buku yang dipilih. Jika ada jurnal tutup buku/saldo awal, saldo kas awal tahun diambil dari baris kas SA tahun tersebut ditambah mutasi kas reguler tahun berjalan sebelum `$startDate`. Logika ini mencegah terjadinya akumulasi ganda (*double-counting*) mutasi kas historis tahun-tahun sebelumnya yang telah ditutup buku.
    - Perhitungan otomatis Metode Langsung tersinkronisasi 100% dengan standar referensi akuntansi:
      - **Penerimaan Pelanggan**: Pendapatan neto dikurangi kenaikan piutang usaha.
      - **Pembayaran Karyawan**: Mutasi netto beban gaji & tunjangan operasional (`51.01`, `61.01` s/d `61.05`).

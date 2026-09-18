@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\AccountGroup;
 use App\Models\CashFlowRow;
 use App\Models\Company;
+use Carbon\Carbon;
 use Database\Seeders\CashFlowRowSeeder;
 use Illuminate\Support\Facades\DB;
 
@@ -164,6 +165,64 @@ class CashFlowService
             return 0.0;
         }
 
+        $startYear = Carbon::parse($startDate)->year;
+
+        // Cek apakah di tahun buku $startYear terdapat Jurnal Saldo Awal (SA hasil Tutup Buku / Setup)
+        $hasOpeningBalance = DB::table('journal_entries')
+            ->where('company_id', $companyId)
+            ->where('status', 'posted')
+            ->where(function ($q) use ($startYear) {
+                $q->where('source_type', 'opening_balance')
+                    ->orWhere('entry_type', 'opening_balance')
+                    ->orWhere('entry_number', 'like', "SA-{$startYear}%");
+            })
+            ->whereYear('entry_date', $startYear)
+            ->exists();
+
+        if ($hasOpeningBalance) {
+            // A. Ambil saldo kas dari Jurnal Saldo Awal (SA) khusus tahun berjalan
+            $saQuery = DB::table('journal_lines')
+                ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+                ->whereIn('journal_lines.account_id', $cashAccounts)
+                ->where('journal_entries.status', 'posted')
+                ->where(function ($q) use ($startYear) {
+                    $q->where('journal_entries.entry_number', 'like', "SA-{$startYear}%")
+                        ->orWhere(function ($sub) use ($startYear) {
+                            $sub->whereYear('journal_entries.entry_date', $startYear)
+                                ->where(function ($types) {
+                                    $types->where('journal_entries.source_type', 'opening_balance')
+                                        ->orWhere('journal_entries.entry_type', 'opening_balance');
+                                });
+                        });
+                });
+
+            if ($unitFilter !== 'all') {
+                $saQuery->where('journal_lines.unit_id', $unitFilter);
+            }
+
+            $saBalance = (float) $saQuery->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
+
+            // B. Ambil mutasi kas reguler tahun berjalan SEBELUM $startDate (misal $startDate = 2026-03-01 -> hitung 2026-01-01 s.d. 2026-02-28)
+            $currentYearPriorQuery = DB::table('journal_lines')
+                ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
+                ->whereIn('journal_lines.account_id', $cashAccounts)
+                ->where('journal_entries.status', 'posted')
+                ->where('journal_entries.entry_number', 'not like', 'SA-%')
+                ->where('journal_entries.source_type', '!=', 'opening_balance')
+                ->where('journal_entries.entry_type', '!=', 'opening_balance')
+                ->where('journal_entries.entry_date', '>=', "{$startYear}-01-01")
+                ->where('journal_entries.entry_date', '<', $startDate);
+
+            if ($unitFilter !== 'all') {
+                $currentYearPriorQuery->where('journal_lines.unit_id', $unitFilter);
+            }
+
+            $currentYearPrior = (float) $currentYearPriorQuery->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
+
+            return round($saBalance + $currentYearPrior, 2);
+        }
+
+        // Fallback untuk tahun yang belum memiliki tutup buku (kalkulasi historis kumulatif)
         // 1. Initial Opening Balance from Account Master
         $masterOpening = (float) Account::whereIn('id', $cashAccounts)->sum('opening_balance');
 
@@ -177,7 +236,6 @@ class CashFlowService
             $priorQuery->where('journal_lines.unit_id', $unitFilter);
         }
 
-        // When $startDate is 2025-01-01, journals on 2025-01-01 with SA entry_number are opening balance journals
         $saBalance = (float) (clone $priorQuery)
             ->where('journal_entries.entry_number', 'like', 'SA%')
             ->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
@@ -187,7 +245,6 @@ class CashFlowService
             ->where('journal_entries.entry_date', '<', $startDate)
             ->sum(DB::raw('journal_lines.debit - journal_lines.credit'));
 
-        // If masterOpening is 0 and SA exists, use SA + prior mutations
         $totalOpening = $masterOpening > 0 ? ($masterOpening + $priorMutations) : ($saBalance + $priorMutations);
 
         return round($totalOpening, 2);
