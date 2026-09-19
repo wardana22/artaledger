@@ -392,3 +392,18 @@ Modul pelaporan keuangan dilengkapi tombol dropdown ekspor terpadu ([report-expo
   - **MySQL Service**: MySQL 8.0, port `5307:3306`, healthcheck ping, dan persistensi volume `artaledger_mysql_data`.
 - [frankenphp.yaml](file:///d:/Belajar%20Laravel/artaledger/frankenphp.yaml): Konfigurasi web server Caddy/FrankenPHP terintegrasi dan worker otomatis `artisan queue:work`.
 - [.dockerignore](file:///d:/Belajar%20Laravel/artaledger/.dockerignore): Pengabaian folder dependensi lokal (`vendor`, `node_modules`, `.git`) untuk optimasi context build.
+
+---
+
+### 11. Arsitektur Agen Cerdas & Tata Kelola Skill Proyek (.agents/skills)
+Sistem otomasi agen ArtaLedger diperkuat oleh repositori spesialis untuk menjamin kualitas kode, keamanan data finansial, dan pengujian skeptis:
+- [.agents/skills/accounting-core-guardian/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/accounting-core-guardian/SKILL.md) (Pengawas aturan pembukuan ganda, toleransi nol selisih debit/kredit, pembatasan mutasi periode tutup buku, validasi akun posting COA, dan audit trail transaksi finansial)
+- [.agents/skills/code-quality-and-testing/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/code-quality-and-testing/SKILL.md) (Standarisasi pemformatan kode Laravel Pint, uji Pest PHP otomatis, serta integrasi protokol pengujian skeptis *Reality Checker* berbasis bukti empiris)
+- [.agents/skills/agentic-awesome-skills/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/agentic-awesome-skills/SKILL.md) (Prinsip inti agen: Observe First, Atomic Mutations, AgentShield Security, dan isolasi branching Git)
+- [.agents/skills/database-schema-management/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/database-schema-management/SKILL.md) (Manajemen migrasi, relasi Eloquent, dan konsistensi skema basis data)
+- [.agents/skills/ecc-agent-toolkit/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/ecc-agent-toolkit/SKILL.md) (Protokol Engineering Control Center: siklus Plan -> Test -> Implement -> Review -> Verify)
+- [.agents/skills/ui-ux-pro-max/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/ui-ux-pro-max/SKILL.md) (Desain UI/UX tingkat lanjut, responsive layout, glassmorphic styling, dan mikro-interaksi)
+- [.agents/skills/context-knowledge-graph/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/context-knowledge-graph/SKILL.md) & [.agents/skills/graphify/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/graphify/SKILL.md) (Otomasi sinkronisasi Directed Acyclic Graph antarmodul)
+- [.agents/skills/seo-optimization/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/seo-optimization/SKILL.md) (Optimasi metadata web, OpenGraph, dan skema JSON-LD)
+- [.agents/skills/documentation-generator/SKILL.md](file:///d:/Belajar%20Laravel/artaledger/.agents/skills/documentation-generator/SKILL.md) (Standarisasi PHPDoc dan dokumentasi teknis sistem)
+

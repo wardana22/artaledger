@@ -30,7 +30,8 @@ Dokumen ini mendefinisikan aturan dan alur kerja utama bagi AI Agen yang beroper
    - Pastikan perlindungan CSRF, otorisasi Gate/Policy Laravel, dan validasi input selalu aktif pada setiap Form Request.
 
 6. **Mandatory Project Skill Execution (Penggunaan Skill Proyek Wajib)**
-   - Setiap kali memproses permintaan pengguna, agen WAJIB menginspeksi dan mematuhi pedoman skill terkait di folder `.agents/skills/` (seperti `ui-ux-pro-max`, `code-quality-and-testing`, `database-schema-management`, `ecc-agent-toolkit`, `seo-optimization`) sebelum merancang dan menulis kode.
+   - Setiap kali memproses permintaan pengguna, agen WAJIB menginspeksi dan mematuhi pedoman skill terkait di folder `.agents/skills/` (seperti `accounting-core-guardian`, `ui-ux-pro-max`, `code-quality-and-testing`, `database-schema-management`, `ecc-agent-toolkit`, `seo-optimization`) sebelum merancang dan menulis kode.
+
 
 7. **Isolated Topic Branching & Controlled Push Strategy (Manajemen Branch & Push Terkontrol)**
    - **Pembuatan Branch Baru**: Setiap kali mengerjakan topik/fitur baru di luar konteks branch saat ini, agen WAJIB membuat Git branch baru yang spesifik (contoh: `feature/update-dashboard`, `fix/journal-validation`, `feature/accounting-report`).
