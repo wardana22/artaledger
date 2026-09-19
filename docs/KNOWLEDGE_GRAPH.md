@@ -49,12 +49,13 @@ graph TD
         B_TPL --> M_JTPL["Model: JournalTemplate"]
     end
 
-    subgraph SG_Import["3. Modul Impor Excel"]
+    subgraph SG_Import["3. Modul Impor Excel Dinamis"]
         A_IMP["Route: /accounting/import"] --> B_IMP["Livewire: JournalImportWizard"]
-        B_IMP --> S_IMP1["Service: ExcelImportService"]
+        B_IMP --> S_IMP1["Service: ExcelImportService (Dynamic Mapping & Inspect)"]
         B_IMP --> S_IMP2["Service: ImportValidationService"]
         B_IMP --> S_IMP3["Service: ImportCommitService"]
         S_IMP1 --> M_IMP["Models: ImportBatch, ImportFile, ImportRow"]
+        B_IMP --> M_PRE["Model: ImportMappingPreset"]
         S_IMP3 --> M_JE
         S_IMP3 --> M_JL
     end
@@ -204,10 +205,13 @@ graph TD
 - **Template Jurnal**: `/accounting/journals/templates` $\rightarrow$ [JournalTemplateIndex.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Journals/JournalTemplateIndex.php)
 - **Model Inti**: [JournalEntry.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/JournalEntry.php), [JournalLine.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/JournalLine.php)
 
-### 3. Modul Impor Jurnal Excel (`/accounting/import`)
-- **Controller Web**: [JournalImportWizard.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Import/JournalImportWizard.php)
+### 3. Modul Impor Jurnal Excel Dinamis (`/accounting/import`)
+- **Antarmuka Wizard & Pengaturan**: `/accounting/import` $\rightarrow$ [JournalImportWizard.php](file:///d:/Belajar%20Laravel/artaledger/app/Livewire/Accounting/Import/JournalImportWizard.php) $\rightarrow$ [journal-import-wizard.blade.php](file:///d:/Belajar%20Laravel/artaledger/resources/views/livewire/accounting/import/journal-import-wizard.blade.php)
+  - Tab Switcher: Tab **"Unggah & Impor"** (Wizard Alur Impor) vs Tab **"Pengaturan Mapping & Preset"** (Manajemen Preset Pemetaan) dengan gaya badge aktif solid glow seragam dengan modul lainnya.
+  - 3-Step Wizard: (1) Unggah File & Riwayat Batch, (2) Pemetaan Kolom Dinamis & Live Pratinjau 5 Baris, (3) Validasi & Staging Batch.
+  - Dukungan pemilihan Sheet file multi-sheet, penyesuaian baris awal transaksi, pemetaan kolom akun induk dan sub-akun opsional dengan auto-fallback prioritas (Sub Akun $\rightarrow$ Akun Induk), simpan preset baru dari Langkah 2 maupun tombol mandiri **Tambah Preset** pada tab pengaturan, serta manajemen preset kustom dengan aksi tombol icon rapi (Edit & Hapus) ([ImportMappingPreset.php](file:///d:/Belajar%20Laravel/artaledger/app/Models/ImportMappingPreset.php)).
 - **Domain Services**:
-  - [ExcelImportService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Import/Services/ExcelImportService.php) (Parsing Sheet & VLOOKUP Engine)
+  - [ExcelImportService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Import/Services/ExcelImportService.php) (Inspeksi struktur Sheet, sampel baris dinamis, pemetaan kolom fleksibel termasuk sub-akun opsional dengan fallback akun induk, dan VLOOKUP Engine)
   - [ImportValidationService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Import/Services/ImportValidationService.php) (Validasi Kode Akun & Balance)
   - [ImportCommitService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Import/Services/ImportCommitService.php) (Posting ke Buku Besar)
   - [UnitMappingService.php](file:///d:/Belajar%20Laravel/artaledger/app/Domain/Import/Services/UnitMappingService.php) (Deteksi Kata Kunci Unit Otomatis)

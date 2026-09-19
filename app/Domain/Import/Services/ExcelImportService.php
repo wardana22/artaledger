@@ -25,9 +25,80 @@ class ExcelImportService
     }
 
     /**
-     * Process Excel file, parse Sheet 'Jurnal Umum' or Cleaned Format, and save to staging tables.
+     * Inspect uploaded Excel file to extract available sheet names and raw sample preview rows.
+     *
+     * @return array{sheets: array<string>, active_sheet: string, sample_rows: array<int, array<string, mixed>>, columns: array<string>}
      */
-    public function importFile(string $filePath, string $originalFilename, ?int $userId = null): ImportBatch
+    public function inspectSpreadsheet(string $filePath, ?string $sheetName = null, int $maxSampleRows = 15): array
+    {
+        if (! file_exists($filePath)) {
+            throw new Exception("File tidak ditemukan pada path: {$filePath}");
+        }
+
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        $reader = IOFactory::createReaderForFile($filePath);
+        $reader->setReadDataOnly(true);
+        $reader->setReadEmptyCells(false);
+
+        $spreadsheet = $reader->load($filePath);
+        $sheetNames = $spreadsheet->getSheetNames();
+
+        if (empty($sheetNames)) {
+            throw new Exception('Berkas Excel tidak memiliki sheet yang valid.');
+        }
+
+        $activeSheetName = $sheetName && in_array($sheetName, $sheetNames, true)
+            ? $sheetName
+            : ($spreadsheet->getSheetByName('Jurnal Umum') ? 'Jurnal Umum' : ($spreadsheet->getSheetByName('Jurnal Umum Cleaned') ? 'Jurnal Umum Cleaned' : $sheetNames[0]));
+
+        $sheet = $spreadsheet->getSheetByName($activeSheetName) ?? $spreadsheet->getActiveSheet();
+
+        // Ambil sample baris hingga maxSampleRows
+        $allRows = $sheet->toArray(null, false, false, true);
+        $sampleRows = [];
+        $columnsFound = [];
+
+        $count = 0;
+        foreach ($allRows as $rowIndex => $row) {
+            $hasData = false;
+            foreach ($row as $colKey => $val) {
+                if ($val !== null && trim((string) $val) !== '') {
+                    $hasData = true;
+                    if (! in_array($colKey, $columnsFound, true)) {
+                        $columnsFound[] = $colKey;
+                    }
+                }
+            }
+
+            if ($hasData || $count < 10) {
+                $sampleRows[$rowIndex] = $row;
+                $count++;
+            }
+
+            if ($count >= $maxSampleRows) {
+                break;
+            }
+        }
+
+        // Urutkan kolom secara alfabetis (A, B, C, ... Z, AA, dst.)
+        sort($columnsFound);
+
+        return [
+            'sheets' => $sheetNames,
+            'active_sheet' => $activeSheetName,
+            'sample_rows' => $sampleRows,
+            'columns' => $columnsFound,
+        ];
+    }
+
+    /**
+     * Process Excel file, parse Sheet with dynamic or preset mapping, and save to staging tables.
+     *
+     * @param  array<string, mixed>  $mapping
+     */
+    public function importFile(string $filePath, string $originalFilename, ?int $userId = null, array $mapping = []): ImportBatch
     {
         if (! file_exists($filePath)) {
             throw new Exception("File tidak ditemukan pada path: {$filePath}");
@@ -49,7 +120,10 @@ class ExcelImportService
         $reader->setReadEmptyCells(false);
 
         $spreadsheet = $reader->load($filePath);
-        $sheet = $spreadsheet->getSheetByName('Jurnal Umum')
+
+        $targetSheetName = $mapping['sheet_name'] ?? null;
+        $sheet = ($targetSheetName ? $spreadsheet->getSheetByName($targetSheetName) : null)
+            ?? $spreadsheet->getSheetByName('Jurnal Umum')
             ?? $spreadsheet->getSheetByName('Jurnal Umum Cleaned')
             ?? $spreadsheet->getActiveSheet();
 
@@ -64,11 +138,14 @@ class ExcelImportService
         $accountMap = Account::pluck('id', 'code')->toArray();
         $unitMap = Unit::all()->keyBy('code');
 
-        // Detect if this is a Cleaned Output File or Raw Excel
-        $isCleanedFormat = $this->isCleanedPresetFormat($rows);
-        $startRowIndex = $isCleanedFormat ? 4 : 10;
+        // Check if dynamic mapping is provided
+        $isDynamic = ! empty($mapping) && ! empty($mapping['col_account']) && ! empty($mapping['col_debit']) && ! empty($mapping['col_credit']);
 
-        return DB::transaction(function () use ($filePath, $originalFilename, $fileHash, $userId, $sheet, $rows, $accountMap, $isCleanedFormat, $startRowIndex) {
+        // Fallback: Detect if this is a Cleaned Output File or Raw Excel
+        $isCleanedFormat = ! $isDynamic && $this->isCleanedPresetFormat($rows);
+        $startRowIndex = $isDynamic ? (int) ($mapping['start_row'] ?? 2) : ($isCleanedFormat ? 4 : 10);
+
+        return DB::transaction(function () use ($filePath, $originalFilename, $fileHash, $userId, $sheet, $rows, $accountMap, $isCleanedFormat, $startRowIndex, $isDynamic, $mapping) {
             $batchCode = 'IMP-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
 
             $batch = ImportBatch::create([
@@ -94,7 +171,42 @@ class ExcelImportService
                     continue;
                 }
 
-                if ($isCleanedFormat) {
+                if ($isDynamic) {
+                    // Dynamic User Mapping
+                    $colDate = strtoupper(trim((string) ($mapping['col_date'] ?? '')));
+                    $colDocNo = strtoupper(trim((string) ($mapping['col_doc_no'] ?? '')));
+                    $colDesc = strtoupper(trim((string) ($mapping['col_desc'] ?? '')));
+                    $colAccount = strtoupper(trim((string) ($mapping['col_account'] ?? '')));
+                    $colSubAccount = strtoupper(trim((string) ($mapping['col_sub_account'] ?? '')));
+                    $colUnit = strtoupper(trim((string) ($mapping['col_unit'] ?? '')));
+                    $colDebit = strtoupper(trim((string) ($mapping['col_debit'] ?? '')));
+                    $colCredit = strtoupper(trim((string) ($mapping['col_credit'] ?? '')));
+
+                    $rawDate = $colDate !== '' ? $this->resolveCellValue($row[$colDate] ?? null, $sheet, $colDate, $rowIndex) : null;
+                    $entryDate = $this->parseDate($rawDate);
+
+                    $documentNumber = $colDocNo !== '' ? trim((string) ($this->resolveCellValue($row[$colDocNo] ?? null, $sheet, $colDocNo, $rowIndex) ?? '')) : '';
+                    $description = $colDesc !== '' ? trim((string) ($this->resolveCellValue($row[$colDesc] ?? null, $sheet, $colDesc, $rowIndex) ?? '')) : '';
+
+                    // Account mapping: Prioritize sub-account if provided, fallback to parent account
+                    $rawParentAccount = $colAccount !== '' ? trim((string) ($this->resolveCellValue($row[$colAccount] ?? null, $sheet, $colAccount, $rowIndex) ?? '')) : '';
+                    $rawSubAccount = $colSubAccount !== '' ? trim((string) ($this->resolveCellValue($row[$colSubAccount] ?? null, $sheet, $colSubAccount, $rowIndex) ?? '')) : '';
+                    $rawAccountCode = ! empty($rawSubAccount) ? $rawSubAccount : $rawParentAccount;
+
+                    $rawUnitVal = $colUnit !== '' ? trim((string) ($this->resolveCellValue($row[$colUnit] ?? null, $sheet, $colUnit, $rowIndex) ?? '')) : '';
+                    $rawDebit = $colDebit !== '' ? $this->resolveCellValue($row[$colDebit] ?? null, $sheet, $colDebit, $rowIndex) : 0;
+                    $rawCredit = $colCredit !== '' ? $this->resolveCellValue($row[$colCredit] ?? null, $sheet, $colCredit, $rowIndex) : 0;
+
+                    // Detect unit: from column first, fallback to text description
+                    $unitId = null;
+                    if ($rawUnitVal !== '') {
+                        $matchedUnit = Unit::where('code', $rawUnitVal)->orWhere('name', $rawUnitVal)->first();
+                        $unitId = $matchedUnit?->id;
+                    }
+                    if (! $unitId) {
+                        $unitId = $this->unitMappingService->detectUnitId($rawUnitVal.' '.$description);
+                    }
+                } elseif ($isCleanedFormat) {
                     // Cleaned Preset Column Mapping: B=Tanggal, C=No.Bukti, D=Keterangan, E=Kode Akun, G=Unit, H=Debit, I=Kredit
                     $rawDate = $this->resolveCellValue($row['B'] ?? null, $sheet, 'B', $rowIndex);
                     $entryDate = $this->parseDate($rawDate);
@@ -105,6 +217,7 @@ class ExcelImportService
 
                     $rawDebit = $this->resolveCellValue($row['H'] ?? null, $sheet, 'H', $rowIndex);
                     $rawCredit = $this->resolveCellValue($row['I'] ?? null, $sheet, 'I', $rowIndex);
+                    $unitId = $this->unitMappingService->detectUnitId($description);
                 } else {
                     // Raw Template Column Mapping: M=Tanggal, N=No.Bukti, O=Keterangan, Q=Parent, S=Sub, T=Debit, U=Kredit
                     if ($this->isEmptyColumnsNtoU($row)) {
@@ -125,6 +238,7 @@ class ExcelImportService
 
                     $rawDebit = $this->resolveCellValue($row['T'] ?? null, $sheet, 'T', $rowIndex);
                     $rawCredit = $this->resolveCellValue($row['U'] ?? null, $sheet, 'U', $rowIndex);
+                    $unitId = $this->unitMappingService->detectUnitId($description);
                 }
 
                 // Clean trailing '.0' suffix
