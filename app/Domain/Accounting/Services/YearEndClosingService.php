@@ -46,26 +46,31 @@ class YearEndClosingService
             );
 
             // 2. Hitung Laba/Rugi Bersih Akumulatif s.d. 31 Desember $closedYear (Prior Net Profit)
-            // Mengikuti logika persis OpeningBalanceIndex: iterasi akun nominal detail (is_group = false)
+            // Dioptimalkan menjadi single batch query agregasi untuk mencegah N+1 overhead
             $nominalAccounts = Account::active()
                 ->where('report_type', 'laba_rugi')
                 ->where('is_group', false)
-                ->get();
+                ->get()
+                ->keyBy('id');
+
+            $nominalTotals = JournalLine::whereIn('account_id', $nominalAccounts->keys())
+                ->whereHas('journalEntry', function ($q) use ($asOfDate) {
+                    $q->where('status', 'posted')
+                        ->where('entry_date', '<=', $asOfDate);
+                })
+                ->select('account_id')
+                ->selectRaw('SUM(debit) as tot_debit, SUM(credit) as tot_credit')
+                ->groupBy('account_id')
+                ->get()
+                ->keyBy('account_id');
 
             $totRev = 0.0;
             $totExp = 0.0;
 
-            foreach ($nominalAccounts as $nAcc) {
-                $nomTotals = JournalLine::where('account_id', $nAcc->id)
-                    ->whereHas('journalEntry', function ($q) use ($asOfDate) {
-                        $q->where('status', 'posted')
-                            ->where('entry_date', '<=', $asOfDate);
-                    })
-                    ->selectRaw('SUM(debit) as tot_debit, SUM(credit) as tot_credit')
-                    ->first();
-
-                $nD = (float) ($nomTotals->tot_debit ?? 0);
-                $nC = (float) ($nomTotals->tot_credit ?? 0);
+            foreach ($nominalAccounts as $accId => $nAcc) {
+                $totals = $nominalTotals->get($accId);
+                $nD = (float) ($totals?->tot_debit ?? 0);
+                $nC = (float) ($totals?->tot_credit ?? 0);
 
                 if ($nAcc->normal_balance === 'credit') {
                     $totRev += ($nC - $nD);
